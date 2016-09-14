@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request
 from dateutil.parser import parse
-from nova import Nova
+from collaboratory import Collaboratory
 
 app = Flask(__name__)
 
-database = Nova.default_init()
+database = Collaboratory.default_init()
 
 
 @app.route('/')

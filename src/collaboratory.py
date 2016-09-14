@@ -1,9 +1,10 @@
 import records
 
 
-class Nova:
+class Collaboratory:
 
     def __init__(self, database_url):
+
         print "Acquiring database"
         self.database = records.Database(database_url)
         print "Successfully connected to database"
@@ -49,10 +50,10 @@ class Nova:
                 SUM(
                     CEIL(
                         TIMESTAMPDIFF(
-                            hour,
+                            SECOND,
                             created_at,
                             :end_date
-                        )
+                        ) / 3600
                     ) * vcpus
                 ) AS core_hours
 
@@ -85,10 +86,10 @@ class Nova:
                 SUM(
                     CEIL(
                         TIMESTAMPDIFF(
-                            HOUR,
+                            SECOND,
                             created_at,
                             deleted_at
-                        )
+                        ) / 3600
                     ) * vcpus
                 ) AS core_hours
 
@@ -118,10 +119,10 @@ class Nova:
                 SUM(
                     CEIL(
                         TIMESTAMPDIFF(
-                            HOUR,
+                            SECOND,
                             :start_date,
                             :end_date
-                        )
+                        ) / 3600
                     ) * vcpus
                 ) AS core_hours
 
@@ -153,10 +154,10 @@ class Nova:
                 SUM(
                     CEIL(
                         TIMESTAMPDIFF(
-                            HOUR,
+                            SECOND,
                             :start_date,
                             deleted_at
-                        )
+                        ) / 3600
                     ) * vcpus
                 ) AS core_hours
 
@@ -186,7 +187,7 @@ class Nova:
                 SUM(
                     CEIL(
                         TIMESTAMPDIFF(
-                            HOUR,
+                            SECOND,
                             GREATEST(
                                 :start_date,
                                 created_at
@@ -198,7 +199,7 @@ class Nova:
                                     :end_date
                                 )
                             )
-                        )
+                        ) / 3600
                     ) * vcpus
                 ) AS core_hours
 
