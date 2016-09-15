@@ -223,3 +223,45 @@ class Collaboratory:
         else:
             return results[0]['core_hours']
 
+    def get_volume_gigabyte_hours(self, start_date, end_date, user_id):
+        default = 0
+        results = self.database.query(
+            '''
+            SELECT
+                SUM(
+                    CEIL(
+                        TIMESTAMPDIFF(
+                            SECOND,
+                            GREATEST(
+                                :start_date,
+                                created_at
+                            ),
+                            LEAST(
+                                :end_date,
+                                COALESCE(
+                                    deleted_at,
+                                    :end_date
+                                )
+                            )
+                        ) / 3600
+                    ) * size
+                ) AS gigabyte_hours
+
+            FROM
+                cinder.volumes
+
+            WHERE
+                (
+                    deleted_at >  :start_date  OR
+                    deleted_at IS NULL
+                )                              AND
+                created_at <  :end_date        AND
+                user_id    =  :user_id;
+            ''',
+            end_date=end_date,
+            start_date=start_date,
+            user_id=user_id)
+        if results[0]['gigabyte_hours'] is None:
+            return default
+        else:
+            return results[0]['gigabyte_hours']

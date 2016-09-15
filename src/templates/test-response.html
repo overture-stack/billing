@@ -1,9 +1,12 @@
 {% extends "template.html" %}
 {% block title_suffix %} RESPONSE {% endblock %}
 {% block body %}
-    {{ start_date }}
-    <br/>
-    {{ end_date }}
-    <br/>
-    Core Hours: {{ core_hours }}
+    <div>
+        From {{ start_date }} <br/> &nbsp &nbsp to {{ end_date }}
+        <br/>
+        <br/>
+        Core Hours: {{ core_hours }}
+        <br/>
+        Giga Byte Hours: {{ gb_hours }}
+    </div>
 {% endblock %}

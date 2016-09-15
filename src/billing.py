@@ -31,14 +31,15 @@ def calculate_cost():
 
     # INSTANCES---------------------------------------------------------------------------------------------------------
 
-    core_hours = database.get_instance_core_hours(start_date, end_date, user_id)
+    core_hours = database.get_instance_core_hours_one_query(start_date, end_date, user_id)
 
-    print(database.get_instance_core_hours_one_query(start_date, end_date, user_id))
+    gigabyte_hours = database.get_volume_gigabyte_hours(start_date, end_date, user_id)
 
     return render_template('test-response.html',
                            start_date=start_date,
                            end_date=end_date,
-                           core_hours=core_hours)
+                           core_hours=core_hours,
+                           gb_hours=gigabyte_hours)
 
 
 if __name__ == '__main__':
