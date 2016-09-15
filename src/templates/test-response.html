@@ -1,5 +1,7 @@
 {% extends "template.html" %}
 {% block title_suffix %} RESPONSE {% endblock %}
+{% block start_date %} {{ start_date }} {% endblock %}
+{% block end_date %} {{ end_date }} {% endblock %}
 {% block body %}
     <div>
         From {{ start_date }} <br/> &nbsp &nbsp to {{ end_date }}
@@ -7,6 +9,8 @@
         <br/>
         VM Instance Core Hours: {{ instance_core_hours }}
         <br/>
-        Volume Giga Byte Hours: {{ volume_gb_hours }}
+        Volume GigaByte Hours: {{ volume_gb_hours }}
+        <br/>
+        Image GigaByte Hours: {{ image_gb_hours }}
     </div>
 {% endblock %}

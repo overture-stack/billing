@@ -9,11 +9,11 @@
     <form action="{{ url_for('calculate_cost') }}" method=get>
         <div>
             Start Date (yyyy-mm-dd)
-            <input type="date" name="start_date" autocomplete="on">
+            <input type="date" name="start_date" autocomplete="on" value="{% block start_date %}{% endblock %}">
         </div>
         <div>
             &nbsp; End Date (yyyy-mm-dd)
-            <input type="date" name="end_date" autocomplete="on">
+            <input type="date" name="end_date" autocomplete="on" value="{% block end_date %}{% endblock %}">
             <input type="submit" value="Submit">
         </div>
     </form>

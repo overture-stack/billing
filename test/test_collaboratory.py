@@ -8,25 +8,27 @@ class TestCollaboratory(TestCase):
         self.database = Collaboratory.default_init()
         self.start_date = "2016-08-01T00:00:00"
         self.end_date = "2016-09-01T00:00:00"
+        self.project_id = "8e95a3bd98bb4560a12a0dc6d9f265e4"
         self.user_id = "19f5e963e6e1429897ecabb52f958c2f"
 
     def tearDown(self):
         self.database.database.close()
 
-    def test_get_instance_core_hours(self):
-        self.assertEqual(self.database.get_instance_core_hours(self.start_date,
-                                                                         self.end_date,
-                                                                         self.user_id),
+    def test_get_instance_core_hours_by_user(self):
+        self.assertEqual(self.database.get_instance_core_hours_by_user(self.start_date,
+                                                                       self.end_date,
+                                                                       self.user_id),
                          34012)
 
-    def test_get_volume_gigabyte_hours(self):
-        self.assertEqual(self.database.get_volume_gigabyte_hours(self.start_date,
-                                                                 self.end_date,
-                                                                 self.user_id),
+    def test_get_volume_gigabyte_hours_by_user(self):
+        self.assertEqual(self.database.get_volume_gigabyte_hours_by_user(self.start_date,
+                                                                         self.end_date,
+                                                                         self.user_id),
                          409760)
 
 ''' Test Data located at mysql://root:test@142.1.177.124:3306
 nova.instances:
+  user_id: 19f5e963e6e1429897ecabb52f958c2f
     created_at = 2010-01-01             96      hours
     deleted_at = 2016-08-05             96      core_hours
     cores      = 1
@@ -74,11 +76,12 @@ nova.instances:
     created_at = 2016-08-08             576     hours
     deleted_at = 2016-09-01             18432   core_hours
     cores      = 32
-
                                         34012   total core_hours
+  user_id: ee5cd68120c84c16b16f870915b9e654
 
 
 cinder.volumes:
+  user_id: 19f5e963e6e1429897ecabb52f958c2f
     created_at = 2016-06-23             81      hours
     deleted_at = 2016-08-04 08:03:12    6480    GB_hours
     size       = 80
@@ -126,6 +129,9 @@ cinder.volumes:
     created_at = 2016-08-30             48      hours
     deleted_at = NULL                   3840    GB_hours
     size       = 80
-
                                         409760  total GB_hours
+  user_id: ee5cd68120c84c16b16f870915b9e654
+
+glance.images
+  owner: 8e95a3bd98bb4560a12a0dc6d9f265e4
 '''
