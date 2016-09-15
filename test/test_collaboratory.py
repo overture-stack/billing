@@ -13,38 +13,8 @@ class TestCollaboratory(TestCase):
     def tearDown(self):
         self.database.database.close()
 
-    def test_get_new_active_instance_core_hours(self):
-        self.assertEqual(self.database.get_new_active_instance_core_hours(self.start_date,
-                                                                          self.end_date,
-                                                                          self.user_id),
-                         960)
-
-    def test_get_new_terminated_instance_core_hours(self):
-        self.assertEqual(self.database.get_new_terminated_instance_core_hours(self.start_date,
-                                                                              self.end_date,
-                                                                              self.user_id),
-                         24004)
-
-    def test_get_old_active_instance_core_hours(self):
-        self.assertEqual(self.database.get_old_active_instance_core_hours(self.start_date,
-                                                                          self.end_date,
-                                                                          self.user_id),
-                         8928)
-
-    def test_get_old_terminated_instance_core_hours(self):
-        self.assertEqual(self.database.get_old_terminated_instance_core_hours(self.start_date,
-                                                                              self.end_date,
-                                                                              self.user_id),
-                         120)
-
     def test_get_instance_core_hours(self):
         self.assertEqual(self.database.get_instance_core_hours(self.start_date,
-                                                               self.end_date,
-                                                               self.user_id),
-                         34012)
-
-    def test_get_instance_core_hours_one_query(self):
-        self.assertEqual(self.database.get_instance_core_hours_one_query(self.start_date,
                                                                          self.end_date,
                                                                          self.user_id),
                          34012)
@@ -159,37 +129,3 @@ cinder.volumes:
 
                                         409760  total GB_hours
 '''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
