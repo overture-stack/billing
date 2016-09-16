@@ -8,12 +8,22 @@
 <body>
     <form action="{{ url_for('calculate_cost_by_project') }}" method=get>
         <div>
-            Start Date (yyyy-mm-dd)
-            <input type="date" name="start_date" autocomplete="on" value="{% block default_start_date %}{% endblock %}">
+            <label for="start_date">Start Date (yyyy-mm-dd)</label>
+            <input id="start_date" type="date" name="start_date" autocomplete="on" value={{ start_date }}>
         </div>
         <div>
-            &nbsp End Date (yyyy-mm-dd)
-            <input type="date" name="end_date" autocomplete="on" value="{% block default_end_date %}{% endblock %}">
+            <label for="end_date"> End Date (yyyy-mm-dd)</label>
+            <input id="end_date" type="date" name="end_date" autocomplete="on" value={{ end_date }}>
+        </div>
+        <div>
+            <label for="project_id">Project </label>
+            <select id="project_id" name="project_id">
+                {% for project in projects %}
+                    <option value="{{ project.project_id }}" {% if project_id == project.project_id %}selected{% endif %}>
+                        {{ project.project_id }}
+                    </option>
+                {% endfor %}
+            </select>
             <input type="submit" value="Search by project">
         </div>
     </form>

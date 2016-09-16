@@ -1,11 +1,9 @@
 {% extends "template.html" %}
 {% block title_suffix %} PROJECT {% endblock %}
-{% block default_start_date %} {{ start_date }} {% endblock %}
-{% block default_end_date %} {{ end_date }} {% endblock %}
 {% block body %}
     <div>
         {% block search_by %}
-            Project {{ project }}
+            Project {{ project_id }}
         {% endblock %}
     </div>
     <br/>
@@ -27,6 +25,7 @@
             <a href="{{ url_for('calculate_cost_by_user',
                                 start_date=start_date,
                                 end_date=end_date,
+                                project_id=project_id,
                                 user_id=user.user_id) }}"> {{ user.user_id }}</a>
             {% if user.user_id == current_user_id %}
                 <- ME!

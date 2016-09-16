@@ -8,6 +8,7 @@ class Collaboratory:
         print "Acquiring database"
         self.database = records.Database(database_url)
         print "Successfully connected to database"
+        self.projects = self.get_projects()
 
     @classmethod
     def default_init(cls):
@@ -16,6 +17,10 @@ class Collaboratory:
     @classmethod
     def from_file(cls, file_name):
         return cls(file_name)
+
+    def close(self):
+        if hasattr(self, "database"):
+            self.database.close()
 
     def get_instance_core_hours_by_user(self, start_date, end_date, project_id, user_id):
         default = 0
@@ -240,6 +245,7 @@ class Collaboratory:
         else:
             return results[0]['gigabyte_hours']
 
+    # Eventually wanna use keystone for this
     def get_users_by_project(self, project_id):
         return self.database.query(
             '''
@@ -270,3 +276,42 @@ class Collaboratory:
               ) as user_ids
             ''',
             project_id=project_id)
+
+    # Eventually wanna use keystone for this
+    # Save this stuff! Don't wanna run this all the time
+    def get_projects(self):
+        if not hasattr(self, "projects"):
+            self.refresh_projects()
+        return self.projects
+
+    def refresh_projects(self):
+        self.projects = self.database.query(
+            '''
+            SELECT
+              DISTINCT project_id
+
+            FROM
+              (
+                SELECT
+                  DISTINCT project_id
+
+                  FROM
+                    nova.instances
+
+                UNION
+
+                SELECT
+                  DISTINCT project_id
+
+                  FROM
+                    cinder.volumes
+
+                UNION
+
+                SELECT
+                  DISTINCT owner AS project_id
+
+                FROM
+                  glance.images
+              ) as project_ids;
+            ''')

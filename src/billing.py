@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, g
+from flask_login import login_required
 from dateutil.parser import parse
 from collaboratory import Collaboratory
 
@@ -9,16 +10,15 @@ database = Collaboratory.default_init()
 
 @app.route('/')
 def root():
-    return render_template('template.html')
+    return render_template('template.html', projects=database.get_projects())
 
 
-@app.route('/project/user', methods=['GET'])
+@app.route('/by_user', methods=['GET'])
 def calculate_cost_by_user():
     start_date = parse(request.args.get('start_date'), ignoretz=True)
     end_date = parse(request.args.get('end_date'), ignoretz=True)
+    project_id = request.args.get('project_id')
     user_id = request.args.get('user_id')
-
-    project_id = "8e95a3bd98bb4560a12a0dc6d9f265e4"
 
     instance_core_hours = database.get_instance_core_hours_by_user(start_date, end_date, project_id, user_id)
 
@@ -31,17 +31,18 @@ def calculate_cost_by_user():
                            end_date=end_date,
                            instance_core_hours=instance_core_hours,
                            volume_gb_hours=volume_gigabyte_hours,
-                           project=project_id,
+                           project_id=project_id,
                            users=users,
-                           current_user_id=user_id)
+                           current_user_id=user_id,
+                           projects=database.get_projects())
 
 
-@app.route('/project', methods=['GET'])
+# Might wanna do javascript in order to allow for a dynamic path variable
+@app.route('/by_project', methods=['GET'])
 def calculate_cost_by_project():
     start_date = parse(request.args.get('start_date'), ignoretz=True)
     end_date = parse(request.args.get('end_date'), ignoretz=True)
-
-    project_id = "8e95a3bd98bb4560a12a0dc6d9f265e4"
+    project_id = request.args.get('project_id')
 
     instance_core_hours = database.get_instance_core_hours_by_project(start_date, end_date, project_id)
 
@@ -57,8 +58,9 @@ def calculate_cost_by_project():
                            instance_core_hours=instance_core_hours,
                            volume_gb_hours=volume_gigabyte_hours,
                            image_gb_hours=image_gigabyte_hours,
-                           project=project_id,
-                           users=users)
+                           project_id=project_id,
+                           users=users,
+                           projects=database.get_projects())
 
 
 if __name__ == '__main__':
