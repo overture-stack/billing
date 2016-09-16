@@ -6,15 +6,15 @@
 </head>
 
 <body>
-    <form action="{{ url_for('calculate_cost') }}" method=get>
+    <form action="{{ url_for('calculate_cost_by_project') }}" method=get>
         <div>
             Start Date (yyyy-mm-dd)
-            <input type="date" name="start_date" autocomplete="on" value="{% block start_date %}{% endblock %}">
+            <input type="date" name="start_date" autocomplete="on" value="{% block default_start_date %}{% endblock %}">
         </div>
         <div>
-            &nbsp; End Date (yyyy-mm-dd)
-            <input type="date" name="end_date" autocomplete="on" value="{% block end_date %}{% endblock %}">
-            <input type="submit" value="Submit">
+            &nbsp End Date (yyyy-mm-dd)
+            <input type="date" name="end_date" autocomplete="on" value="{% block default_end_date %}{% endblock %}">
+            <input type="submit" value="Search by project">
         </div>
     </form>
     <br/>

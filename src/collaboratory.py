@@ -17,7 +17,7 @@ class Collaboratory:
     def from_file(cls, file_name):
         return cls(file_name)
 
-    def get_instance_core_hours_by_user(self, start_date, end_date, user_id):
+    def get_instance_core_hours_by_user(self, start_date, end_date, project_id, user_id):
         default = 0
         results = self.database.query(
             '''
@@ -51,11 +51,13 @@ class Collaboratory:
                     deleted_at IS NULL
                 )                              AND
                 created_at <  :end_date        AND
-                user_id    =  :user_id
+                user_id    =  :user_id         AND
+                project_id =  :project_id;
             ''',
             end_date=end_date,
             start_date=start_date,
-            user_id=user_id)
+            user_id=user_id,
+            project_id=project_id)
         if results[0]['core_hours'] is None:
             return default
         else:
@@ -95,7 +97,7 @@ class Collaboratory:
                     deleted_at IS NULL
                 )                              AND
                 created_at <  :end_date        AND
-                project_id =  :project_id
+                project_id =  :project_id;
             ''',
             end_date=end_date,
             start_date=start_date,
@@ -105,7 +107,7 @@ class Collaboratory:
         else:
             return results[0]['core_hours']
 
-    def get_volume_gigabyte_hours_by_user(self, start_date, end_date, user_id):
+    def get_volume_gigabyte_hours_by_user(self, start_date, end_date, project_id, user_id):
         default = 0
         results = self.database.query(
             '''
@@ -138,11 +140,13 @@ class Collaboratory:
                     deleted_at IS NULL
                 )                              AND
                 created_at <  :end_date        AND
-                user_id    =  :user_id;
+                user_id    =  :user_id         AND
+                project_id =  :project_id;
             ''',
             end_date=end_date,
             start_date=start_date,
-            user_id=user_id)
+            user_id=user_id,
+            project_id=project_id)
         if results[0]['gigabyte_hours'] is None:
             return default
         else:
@@ -214,7 +218,7 @@ class Collaboratory:
                                 )
                             ) / 3600
                         ) * size
-                    ) / 2^30
+                    ) / POWER(2, 30)
                 ) AS gigabyte_hours
 
             FROM
@@ -235,3 +239,34 @@ class Collaboratory:
             return default
         else:
             return results[0]['gigabyte_hours']
+
+    def get_users_by_project(self, project_id):
+        return self.database.query(
+            '''
+            SELECT
+              DISTINCT user_id
+
+            FROM
+              (
+                SELECT
+                  DISTINCT user_id
+
+                  FROM
+                    nova.instances
+
+                  WHERE
+                    project_id = :project_id
+
+                UNION
+
+                SELECT
+                  DISTINCT user_id
+
+                  FROM
+                    cinder.volumes
+
+                  WHERE
+                    project_id = :project_id
+              ) as user_ids
+            ''',
+            project_id=project_id)

@@ -9,7 +9,7 @@ class TestCollaboratory(TestCase):
         self.start_date = "2016-08-01T00:00:00"
         self.end_date = "2016-09-01T00:00:00"
         self.project_id = "8e95a3bd98bb4560a12a0dc6d9f265e4"
-        self.user_id = "19f5e963e6e1429897ecabb52f958c2f"
+        self.user_1 = "19f5e963e6e1429897ecabb52f958c2f"
 
     def tearDown(self):
         self.database.database.close()
@@ -17,13 +17,15 @@ class TestCollaboratory(TestCase):
     def test_get_instance_core_hours_by_user(self):
         self.assertEqual(self.database.get_instance_core_hours_by_user(self.start_date,
                                                                        self.end_date,
-                                                                       self.user_id),
+                                                                       self.project_id,
+                                                                       self.user_1),
                          34012)
 
     def test_get_volume_gigabyte_hours_by_user(self):
         self.assertEqual(self.database.get_volume_gigabyte_hours_by_user(self.start_date,
                                                                          self.end_date,
-                                                                         self.user_id),
+                                                                         self.project_id,
+                                                                         self.user_1),
                          409760)
 
 ''' Test Data located at mysql://root:test@142.1.177.124:3306

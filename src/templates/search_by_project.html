@@ -1,0 +1,36 @@
+{% extends "template.html" %}
+{% block title_suffix %} PROJECT {% endblock %}
+{% block default_start_date %} {{ start_date }} {% endblock %}
+{% block default_end_date %} {{ end_date }} {% endblock %}
+{% block body %}
+    <div>
+        {% block search_by %}
+            Project {{ project }}
+        {% endblock %}
+    </div>
+    <br/>
+    <div>
+        From {{ start_date }} <br/> &nbsp &nbsp to {{ end_date }}
+    </div>
+    <br/>
+    <div>
+        {% block instance_core_hours %} VM Instance Core Hours: {{ instance_core_hours }} {% endblock %}
+        <br/>
+        {% block volume_gb_hours %} Volume GigaByte Hours: {{ volume_gb_hours }} {% endblock %}
+        <br/>
+        {% block image_gb_hours %} Image GigaByte Hours: {{ image_gb_hours }} {% endblock %}
+    </div>
+    <br/>
+    Users in this project
+    {% for user in users %}
+        {% if user.user_id != current_user_id %}
+            <li>
+                <a href="{{ url_for('calculate_cost_by_user',
+                                    start_date=start_date,
+                                    end_date=end_date,
+                                    user_id=user.user_id) }}"> {{ user.user_id }}</a>
+            </li>
+        {% endif %}
+    {% endfor %}
+
+{% endblock %}

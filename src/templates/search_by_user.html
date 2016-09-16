@@ -1,0 +1,11 @@
+{% extends "search_by_project.html" %}
+{% block title_suffix %} USER {% endblock %}
+{% block search_by %}
+    <div>
+        {{ super() }}
+    </div>
+    <div>
+        User {{ current_user_id }}
+    </div>
+{% endblock %}
+{% block image_gb_hours %}{% endblock %}
