@@ -23,14 +23,15 @@
     <br/>
     Users in this project
     {% for user in users %}
-        {% if user.user_id != current_user_id %}
-            <li>
-                <a href="{{ url_for('calculate_cost_by_user',
-                                    start_date=start_date,
-                                    end_date=end_date,
-                                    user_id=user.user_id) }}"> {{ user.user_id }}</a>
-            </li>
-        {% endif %}
+        <li>
+            <a href="{{ url_for('calculate_cost_by_user',
+                                start_date=start_date,
+                                end_date=end_date,
+                                user_id=user.user_id) }}"> {{ user.user_id }}</a>
+            {% if user.user_id == current_user_id %}
+                <- ME!
+            {% endif %}
+        </li>
     {% endfor %}
 
 {% endblock %}
