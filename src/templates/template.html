@@ -6,6 +6,15 @@
 </head>
 
 <body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+                {% for message in messages %}
+                    <strong>{{ message }}</strong>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     <form action="{{ url_for('calculate_cost_by_project') }}" method=get>
         <div>
             <label for="start_date">Start Date (yyyy-mm-dd)</label>
@@ -30,6 +39,13 @@
     <br/>
     <div>
         {% block body %}{% endblock %}
+    </div>
+    <div>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <a href="{{ url_for('logout') }}">Log out</a>
     </div>
 </body>
 </html>
