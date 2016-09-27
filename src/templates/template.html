@@ -28,8 +28,8 @@
             <label for="project_id">Project </label>
             <select id="project_id" name="project_id">
                 {% for project in projects %}
-                    <option value="{{ project.project_id }}" {% if project_id == project.project_id %}selected{% endif %}>
-                        {{ project.project_id }}
+                    <option value="{{ project }}" {% if project_id == project %}selected{% endif %}>
+                        {{ project }}
                     </option>
                 {% endfor %}
             </select>

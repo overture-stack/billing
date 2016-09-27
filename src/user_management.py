@@ -1,16 +1,21 @@
 import records
+import bcrypt
 
 
 class User:
 
-    def __init__(self, user_id, username, password, projects):
+    def __init__(self, user_id, username, hashed_password, projects):
         self.username = username
-        self.password = password
+        self.hashed_password = hashed_password
         self.user_id = user_id
         self.anonymous = False
         self.active = True
-        self.authenticated = False
+        self.authenticated = True
         self.projects = projects
+
+    def authenticate(self, username, password):
+        return (username == self.username) and bcrypt.checkpw(password.encode('utf-8'),
+                                                              self.hashed_password.encode('utf-8'))
 
     def is_authenticated(self):
         return self.authenticated
@@ -42,7 +47,7 @@ class UserDatabase:
             ''')
 
     def get_test_user(self, user_id):
-        return User(7, "admin", "test", [])
+        return User(7, "admin", bcrypt.hashpw("test", bcrypt.gensalt()), [])
 
     def get_user_by_id(self, user_id):
         user_data = self.database.query(
@@ -59,27 +64,23 @@ class UserDatabase:
         user = user_data[0]
         return User(user["id"], user["username"], user["password"], user["projects"].split(","))
 
-    def update_user(self, user):
-        self.database.query(
+    def get_user_by_username(self, username):
+        user_data = self.database.query(
             '''
-            UPDATE
+            SELECT *
+
+            FROM
               users
 
-            SET
-              username = :username,
-              password = :password,
-              projects = :projects
-
             WHERE
-              id = :user_id;
+              username = :username;
             ''',
-            user_id=user.user_id,
-            username=user.username,
-            password=user.password,
-            projects=','.join(user.projects))
+            username=username)
+        user = user_data[0]
+        return User(user["id"], user["username"], user["password"], user["projects"].split(","))
 
     def create_user(self, username, password, projects):
-        user_id = self.database.query(
+        self.database.query(
             '''
             INSERT INTO
               users
@@ -90,6 +91,5 @@ class UserDatabase:
               (:username, :password, :projects);
             ''',
             username=username,
-            password=password,
+            password=bcrypt.hashpw(password, bcrypt.gensalt()),
             projects=','.join(projects))
-        return self.get_user_by_id(user_id)

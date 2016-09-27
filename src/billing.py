@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_login import login_required, LoginManager, login_user, logout_user, current_user
 from dateutil.parser import parse
 from collaboratory import Collaboratory
-from user_management import User, UserDatabase
+from user_management import UserDatabase
 
 app = Flask(__name__)
 
@@ -20,13 +20,24 @@ login_manager.login_view = '/login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return users.get_test_user(user_id)
+    if user_id == 7:
+        return users.get_test_user(7)
+    else:
+        return users.get_user_by_id(user_id)
+
+
+def get_relevant_projects():
+    if current_user.username == "admin":
+        return database.get_projects()
+    else:
+        return current_user.projects
 
 
 @app.route('/')
 @login_required
 def root():
-    return render_template('template.html', projects=database.get_projects())
+    return render_template('template.html',
+                           projects=get_relevant_projects())
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -35,11 +46,18 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
     elif request.method == "POST":
-        user = users.get_test_user(7)
-        if request.form.get('username') == user.username and request.form.get('password') == user.password:
+
+        if request.form.get('username') == "admin":
+            user = users.get_test_user(7)
+        else:
+            user = users.get_user_by_username(request.form.get('username'))
+
+        if user is not None and user.authenticate(request.form.get('username'),
+                                                  request.form.get('password')):
             login_user(user)
             flash("LOGIN SUCCESSFUL")
-            print "login successful"
+            print current_user.username
+            print current_user.projects
             return redirect(url_for('root'))
         else:
             flash("LOGIN FAILED", 'error')
@@ -69,7 +87,7 @@ def calculate_cost_by_user():
 
     volume_gigabyte_hours = database.get_volume_gigabyte_hours_by_user(start_date, end_date, project_id, user_id)
 
-    users = database.get_users_by_project(project_id)
+    project_users = database.get_users_by_project(project_id)
 
     return render_template('search_by_user.html',
                            start_date=start_date,
@@ -77,9 +95,9 @@ def calculate_cost_by_user():
                            instance_core_hours=instance_core_hours,
                            volume_gb_hours=volume_gigabyte_hours,
                            project_id=project_id,
-                           users=users,
+                           users=project_users,
                            current_user_id=user_id,
-                           projects=database.get_projects())
+                           projects=get_relevant_projects())
 
 
 # Might wanna do javascript in order to allow for a dynamic path variable
@@ -107,7 +125,7 @@ def calculate_cost_by_project():
                            image_gb_hours=image_gigabyte_hours,
                            project_id=project_id,
                            users=project_users,
-                           projects=database.get_projects())
+                           projects=get_relevant_projects())
 
 
 if __name__ == '__main__':

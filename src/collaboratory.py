@@ -285,33 +285,34 @@ class Collaboratory:
         return self.projects
 
     def refresh_projects(self):
-        self.projects = self.database.query(
-            '''
-            SELECT
-              DISTINCT project_id
+        self.projects = map(lambda row: row.project_id,
+                            self.database.query(
+                                '''
+                                SELECT
+                                  DISTINCT project_id
 
-            FROM
-              (
-                SELECT
-                  DISTINCT project_id
+                                FROM
+                                  (
+                                    SELECT
+                                      DISTINCT project_id
 
-                  FROM
-                    nova.instances
+                                      FROM
+                                        nova.instances
 
-                UNION
+                                    UNION
 
-                SELECT
-                  DISTINCT project_id
+                                    SELECT
+                                      DISTINCT project_id
 
-                  FROM
-                    cinder.volumes
+                                      FROM
+                                        cinder.volumes
 
-                UNION
+                                    UNION
 
-                SELECT
-                  DISTINCT owner AS project_id
+                                    SELECT
+                                      DISTINCT owner AS project_id
 
-                FROM
-                  glance.images
-              ) as project_ids;
-            ''')
+                                    FROM
+                                      glance.images
+                                  ) as project_ids;
+                                '''))
