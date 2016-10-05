@@ -126,7 +126,3 @@ def calculate_cost_by_project():
                            project_id=project_id,
                            users=project_users,
                            projects=get_relevant_projects())
-
-
-if __name__ == '__main__':
-    app.run()

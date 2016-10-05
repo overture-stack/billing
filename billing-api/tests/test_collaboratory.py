@@ -1,5 +1,5 @@
 from unittest import TestCase
-from src.collaboratory import Collaboratory
+from ..billing import Collaboratory
 
 
 class TestCollaboratory(TestCase):

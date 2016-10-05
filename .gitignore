@@ -190,3 +190,4 @@ ENV/
 .vscode
 
 
+*.db
