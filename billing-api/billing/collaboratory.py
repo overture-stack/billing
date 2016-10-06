@@ -12,7 +12,7 @@ class Collaboratory:
 
     @classmethod
     def default_init(cls):
-        return cls('mysql://root:test@142.1.177.124:3306')
+        return cls('mysql://root:test@localhost:3306')
 
     @classmethod
     def from_file(cls, file_name):

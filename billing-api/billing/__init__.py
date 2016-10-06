@@ -3,12 +3,17 @@ from flask_login import login_required, LoginManager, login_user, logout_user, c
 from dateutil.parser import parse
 from collaboratory import Collaboratory
 from user_management import UserDatabase
+from auth import sessions
+from config import default
 
 app = Flask(__name__)
+app.config.from_object(default)
 
-app.secret_key = "random, secret, super duper secret key"
+app.secret_key = app.config['SECRET_KEY']
 
-database = Collaboratory.default_init()
+# TODO: Remove, this was for proof of concept
+token = sessions.get_new_token(auth_url=app.config['AUTH_URI'], username='admin', password='admin')
+database = Collaboratory(app.config['MYSQL_URI'])
 
 users = UserDatabase()
 users.init_db()
@@ -27,7 +32,7 @@ def load_user(user_id):
 
 
 def get_relevant_projects():
-    if current_user.username == "admin":
+    if current_user.username == 'admin':
         return database.get_projects()
     else:
         return current_user.projects
@@ -42,12 +47,12 @@ def root():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    print "attempting login"
-    if request.method == "GET":
-        return render_template("login.html")
-    elif request.method == "POST":
+    print 'attempting login'
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method == 'POST':
 
-        if request.form.get('username') == "admin":
+        if request.form.get('username') == 'admin':
             user = users.get_test_user(7)
         else:
             user = users.get_user_by_username(request.form.get('username'))
@@ -55,13 +60,13 @@ def login():
         if user is not None and user.authenticate(request.form.get('username'),
                                                   request.form.get('password')):
             login_user(user)
-            flash("LOGIN SUCCESSFUL")
+            flash('LOGIN SUCCESSFUL')
             print current_user.username
             print current_user.projects
             return redirect(url_for('root'))
         else:
-            flash("LOGIN FAILED", 'error')
-            return render_template("login.html",
+            flash('LOGIN FAILED', 'error')
+            return render_template('login.html',
                                    username=request.form.get('username'))
 
 
@@ -71,7 +76,7 @@ def logout():
     user = current_user
     user.authenticated = False
     logout_user()
-    flash("LOGGED OUT")
+    flash('LOGGED OUT')
     return redirect('login')
 
 
