@@ -29,7 +29,7 @@ def authenticate(func):
             retval.data = json.dumps(retjson)
             return retval
         else:
-            raise AuthenticationError("Authentication required: Token not provided")
+            raise AuthenticationError('Authentication required: Token not provided')
     return inner
 
 
@@ -41,7 +41,7 @@ def api_error_handler(e):
 @app.route('/')
 @authenticate
 def root(client):
-    return Response('{"MY_DATA":"SOMETHING"}', 200)
+    return Response('{"MY_DATA"":"SOMETHING"}', 200)
 
 
 @app.route('/login', methods=['POST'])

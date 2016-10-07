@@ -13,6 +13,6 @@ class APIError(Exception):
 
 class AuthenticationError(APIError):
     def __init__(self, message):
-        super(AuthenticationError, self).__init__(401, "Authentication Error", message)
+        super(AuthenticationError, self).__init__(401, 'Authentication Error', message)
 
 
