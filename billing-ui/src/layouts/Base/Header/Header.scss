@@ -1,0 +1,19 @@
+@import "variables";
+
+.Header {
+  border-bottom: 1px solid #ebebeb;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
+  .logo {
+    width: 240px;
+    margin: 20px $page-gutter;
+  }
+
+  .logout {
+    margin: 20px $page-gutter;
+    cursor: pointer;
+  }
+}
