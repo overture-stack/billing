@@ -12,6 +12,17 @@ const Option = Select.Option;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 
+const dummySeries = [{
+          name: 'John',
+          data: [5, 3, 4, 7, 2]
+      }, {
+          name: 'Jane',
+          data: [2, 2, 3, 2, 1]
+      }, {
+          name: 'Joe',
+          data: [3, 4, 4, 2, 5]
+      }];
+
 
 import './Report.scss';
 
@@ -21,6 +32,12 @@ const TIME_PERIODS = {
   MONTHLY: 'MONTHLY',
   YEARLY: 'YEARLY',
 };
+
+function fetchSeries() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(dummySeries), 1000);
+  });
+}
 
 export default @observer
 class extends Component {
@@ -36,9 +53,18 @@ class extends Component {
       name: 'project 3'
     }
   ];
+  @computed get projectSelectOptions() {
+    return this.projects.map(x => (
+      <Option key={x.name} value={x.name}>
+        {x.name}
+      </Option>
+    ));
+  }
 
   @observable selectedProjects = [];
   @observable timePeriod = TIME_PERIODS.DAILY;
+
+  @observable chartSettings = CHART_SETTINGS;
 
   handleProjectsSelect(e) {
     console.log(e);
@@ -48,13 +74,13 @@ class extends Component {
     console.log(e);
   }
 
-  @computed get projectSelectOptions() {
-    return this.projects.map(x => (
-      <Option key={x.name} value={x.name}>
-        {x.name}
-      </Option>
-    ));
+  async componentDidMount() {
+    const series = await fetchSeries();
+    const chart = this.refs.chart.getChart();
+    series.forEach( serie => chart.addSeries(serie), false)
+    chart.redraw(); 
   }
+
 
   render () {
     return (
@@ -114,7 +140,7 @@ class extends Component {
         <h2 className="section-heading">Summary</h2>
 
         <div>
-          <ReactHighcharts config={CHART_SETTINGS} ref="chart" isPureConfig={true}></ReactHighcharts>
+          <ReactHighcharts config={this.chartSettings} ref="chart" isPureConfig={true}></ReactHighcharts>
         </div>
 
         <h2 className="section-heading">Details</h2>
