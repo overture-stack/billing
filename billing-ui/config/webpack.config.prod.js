@@ -26,6 +26,11 @@ module.exports = {
     publicPath: publicPath
   },
   resolve: {
+    root: __dirname,
+    modulesDirectories: [
+      "node_modules",
+      "src"
+    ],
     extensions: ['', '.js', '.json'],
   },
   resolveLoader: {
