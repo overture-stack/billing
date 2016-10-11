@@ -6,11 +6,16 @@ import ReactHighcharts from 'react-highcharts';
 
 import CHART_SETTINGS from './CHART_SETTINGS';
 
-import { DatePicker, Select, Radio, Button } from 'antd';
+import { DatePicker, Radio } from 'antd';
 const RangePicker = DatePicker.RangePicker;
-const Option = Select.Option;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
+
+import Select from 'react-select';
+import 'react-select/dist/react-select.css';
+
+import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 
 const dummySeries = require('./dummySeries');
 
@@ -32,17 +37,7 @@ function fetchSeries() {
 export default @observer
 class extends Component {
 
-  @observable projects = [
-    {
-      name: 'project 1',
-    },
-    {
-      name: 'project 2'
-    },
-    {
-      name: 'project 3'
-    }
-  ];
+  @observable projects = [];
   @computed get projectSelectOptions() {
     return this.projects.map(x => (
       <Option key={x.name} value={x.name}>
@@ -56,45 +51,41 @@ class extends Component {
 
   @observable chartSettings = CHART_SETTINGS;
 
-  handleProjectsSelect(e) {
-    console.log(e);
-  }
-
-  handleProjectDeselect(e) {
-    console.log(e);
+  handleProjectsChange = (projects) => {
+    this.selectedProjects = projects;
   }
 
   async componentDidMount() {
+    this.fetchChart();
+  }
+
+  fetchChart = async () => {
     const series = await fetchSeries();
     const chart = this.refs.chart.getChart();
     series.forEach( serie => chart.addSeries(serie), false)
     chart.redraw(); 
   }
 
-
   render () {
     return (
       <div className="Report">
         <h1 className="page-heading">Billing Report</h1>
 
-        <div className="form-controls">
+        <label>
+          Projects
+        </label>
+        <div className="form-controls flex-row">
           <div className="project-select">
-            <div className="project-select__selector">
-              <label>
-                Projects
-              </label>
-              <Select
-                multiple
-                style={{ width: '100%' }}
-                placeholder="Select Projects"
-                onSelect={this.handleProjectsSelect}
-                onDeselect={this.handleProjectsDeselect}
-              >
-                {this.projectSelectOptions}
-              </Select>
-            </div>
-            <Button className="project-select__select-all" type="ghost" size="small">Select all</Button>
+            <Select
+              multi
+              placeholder="Showing all projects. Click to filter."
+              options={this.projects.slice()}
+              value={this.selectedProjects.slice()}
+              onChange={this.handleProjectsChange}
+            >
+            </Select>
           </div>
+
 
           <div className="range-select">
             <RangePicker/>
@@ -135,6 +126,9 @@ class extends Component {
 
         <h2 className="section-heading">Details</h2>
         
+        <BootstrapTable data={dummySeries}>
+          <TableHeaderColumn dataField="name" isKey={true}>Name</TableHeaderColumn>
+        </BootstrapTable>
       </div>
     );
   }

@@ -5,6 +5,7 @@ const user = observable({
   roles: [],
   isLoggedIn: false,
   isLoggingIn: false,
+  token: '',
   
   login: action(async function (username, password) {
     this.isLoggedIn = true;
