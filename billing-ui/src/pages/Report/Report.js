@@ -17,7 +17,8 @@ import 'react-select/dist/react-select.css';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 
-const dummySeries = require('./dummySeries');
+import {fetchReport} from '~/services/reports'; 
+import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 import './Report.scss';
 
@@ -27,12 +28,6 @@ const TIME_PERIODS = {
   MONTHLY: 'MONTHLY',
   YEARLY: 'YEARLY',
 };
-
-function fetchSeries() {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => resolve(dummySeries), 1000);
-  });
-}
 
 export default @observer
 class extends Component {
@@ -56,11 +51,12 @@ class extends Component {
   }
 
   async componentDidMount() {
-    this.fetchChart();
+    this.report = await fetchReport();
+    this.updateChart(this.report);
   }
 
-  fetchChart = async () => {
-    const series = await fetchSeries();
+  updateChart = (report) => {
+    const series = getSeriesFromReportEntries(report.entries);
     const chart = this.refs.chart.getChart();
     series.forEach( serie => chart.addSeries(serie), false)
     chart.redraw(); 
@@ -126,8 +122,11 @@ class extends Component {
 
         <h2 className="section-heading">Details</h2>
         
-        <BootstrapTable data={dummySeries}>
-          <TableHeaderColumn dataField="name" isKey={true}>Name</TableHeaderColumn>
+        <BootstrapTable data={this.report ? this.report.entries : []} keyField="key">
+          <TableHeaderColumn dataField="projectId">Project</TableHeaderColumn>
+          <TableHeaderColumn dataField="cpu">CPU</TableHeaderColumn>
+          <TableHeaderColumn dataField="volume">Volume</TableHeaderColumn>
+          <TableHeaderColumn dataField="image">Image</TableHeaderColumn>
         </BootstrapTable>
       </div>
     );

@@ -1,1 +1,1 @@
-export * from './performRelease';
+export * from './fetchReport';

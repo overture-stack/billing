@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   fromDate: '2013-01-15',
   toDate: '2015-07-15',
   bucket: 'monthly',

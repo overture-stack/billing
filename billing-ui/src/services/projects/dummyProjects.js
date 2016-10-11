@@ -1,4 +1,4 @@
-export default [
+module.exports = [
   {
     id: 'project_1',
     name: 'Project 1'
