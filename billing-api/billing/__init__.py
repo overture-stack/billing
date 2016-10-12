@@ -134,10 +134,10 @@ def calculate_cost_by_user(client):
             record_dict['toDate'] = bucket_range['end_date']
             report.append(record_dict)
 
-    return {"toDate": original_end_date.isoformat(),
-            "fromDate": original_start_date.isoformat(),
-            "bucket": bucket_size,
-            "entries": report}
+    return {'toDate': original_end_date.isoformat(),
+            'fromDate': original_start_date.isoformat(),
+            'bucket': bucket_size,
+            'entries': report}
 
 
 
