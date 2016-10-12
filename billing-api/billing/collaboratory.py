@@ -3,11 +3,12 @@ import records
 
 class Collaboratory:
 
-    def __init__(self, database_url):
+    def __init__(self, database_url, logger):
 
-        print 'Acquiring database'
+        self.logger = logger
+        logger.info('Acquiring database')
         self.database = records.Database(database_url)
-        print 'Successfully connected to database'
+        logger.info('Successfully connected to database')
         self.projects = self.get_projects()
 
     @classmethod

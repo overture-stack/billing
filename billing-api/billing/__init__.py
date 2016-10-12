@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response
 from dateutil.parser import parse
 from dateutil.relativedelta import *
 from datetime import datetime
@@ -15,7 +15,7 @@ app.config.from_object(default)
 
 app.secret_key = app.config['SECRET_KEY']
 
-database = Collaboratory(app.config['MYSQL_URI'])
+database = Collaboratory(app.config['MYSQL_URI'], app.logger)
 
 
 def parse_decimal(obj):
@@ -28,7 +28,7 @@ def parse_decimal(obj):
 def authenticate(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        print 'Authorizing'
+        app.logger.info('Authorizing')
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             token = auth_header.split()[1]
@@ -79,8 +79,6 @@ def calculate_cost_by_user(client):
         project_list = projects.split(',')
     else:
         project_list = map(lambda tenant: tenant.to_dict()['id'], client.tenants.list())
-
-    print project_list
 
     if bucket_size == 'daily':
         def same_bucket(start, end):
@@ -135,7 +133,6 @@ def calculate_cost_by_user(client):
             record_dict['fromDate'] = bucket_range['start_date']
             record_dict['toDate'] = bucket_range['end_date']
             report.append(record_dict)
-            print record_dict
 
     return report
 
