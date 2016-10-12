@@ -137,10 +137,7 @@ def calculate_cost_by_user(client):
             report.append(record_dict)
             print record_dict
 
-    return {"fromDate": original_start_date,
-            "toDate": original_end_date,
-            "bucket": bucket_size,
-            "entries": report}
+    return report
 
 
 
