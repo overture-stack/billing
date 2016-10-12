@@ -68,10 +68,12 @@ def get_projects(client):
 @app.route('/reports', methods=['GET'])
 @authenticate
 def calculate_cost_by_user(client):
-    start_date = parse(request.args.get('fromDate'), ignoretz=True)
-    end_date = parse(request.args.get('toDate'), ignoretz=True)
+    original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
+    original_end_date = parse(request.args.get('toDate'), ignoretz=True)
     projects = request.args.get('projects')
     bucket_size = request.args.get('bucket')
+    start_date = original_start_date
+    end_date = original_end_date
 
     if projects is not None:
         project_list = projects.split(',')
@@ -135,7 +137,10 @@ def calculate_cost_by_user(client):
             report.append(record_dict)
             print record_dict
 
-    return report
+    return {"fromDate": original_start_date,
+            "toDate": original_end_date,
+            "bucket": bucket_size,
+            "entries": report}
 
 
 
