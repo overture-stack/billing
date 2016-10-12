@@ -1,41 +1,52 @@
+import {Highcharts} from 'react-highcharts';
+
 export default {
         chart: {
             type: 'area'
         },
-        title: {
-            text: 'Historic and Estimated Worldwide Population Growth by Region'
-        },
-        subtitle: {
-            text: 'Source: Wikipedia.org'
-        },
+        // title: {
+        //     text: ''
+        // },
+        // subtitle: {
+        //     text: ''
+        // },
         xAxis: {
-            categories: ['1750', '1800', '1850', '1900', '1950', '1999', '2050'],
-            tickmarkPlacement: 'on',
+            type: 'datetime',
+            // tickmarkPlacement: 'on',
             title: {
                 enabled: false
-            }
+            },
+            dateTimeLabelFormats: {
+                hour: '%l:%M %p'
+            },
+            labels: {
+              formatter: function() {
+                console.log(this.value)
+                return Highcharts.dateFormat('%a %d %b', this.value);
+              }
+            },
         },
         yAxis: {
             title: {
-                text: 'Billions'
+                text: 'Usage'
             },
-            labels: {
-                formatter: function () {
-                    return this.value / 1000;
-                }
-            }
+            // labels: {
+            //     formatter: function () {
+            //         return this.value / 1000;
+            //     }
+            // }
         },
         tooltip: {
             split: true,
-            valueSuffix: ' millions'
+            // valueSuffix: ' millions'
         },
         plotOptions: {
             area: {
                 stacking: 'normal',
                 lineColor: '#666666',
-                lineWidth: 1,
+                lineWidth: 0,
                 marker: {
-                    lineWidth: 1,
+                    lineWidth: 0,
                     lineColor: '#666666'
                 }
             }
