@@ -3,11 +3,12 @@ import records
 
 class Collaboratory:
 
-    def __init__(self, database_url):
+    def __init__(self, database_url, logger):
 
-        print "Acquiring database"
+        self.logger = logger
+        logger.info('Acquiring database')
         self.database = records.Database(database_url)
-        print "Successfully connected to database"
+        logger.info('Successfully connected to database')
         self.projects = self.get_projects()
 
     @classmethod
@@ -19,143 +20,105 @@ class Collaboratory:
         return cls(file_name)
 
     def close(self):
-        if hasattr(self, "database"):
+        if hasattr(self, 'database'):
             self.database.close()
 
-    def get_instance_core_hours_by_user(self, start_date, end_date, project_id, user_id):
-        default = 0
+    def get_usage_statistics(self, start_date, end_date, projects):
         results = self.database.query(
             '''
             SELECT
-                SUM(
-                    CEIL(
+              instances.user_id as user,
+              instances.project_id as projectId,
+              instances.core_hours as cpu,
+              volumes.gigabyte_hours as volume
+            FROM
+
+                (
+                  SELECT
+                    user_id,
+                    project_id,
+                    SUM(
+                      CEIL(
                         TIMESTAMPDIFF(
-                            SECOND,
+                          SECOND,
                             GREATEST(
-                                :start_date,
-                                created_at
+                              :start_date,
+                              created_at
                             ),
                             LEAST(
-                                :end_date,
+                              :end_date,
                                 COALESCE(
-                                    deleted_at,
-                                    :end_date
+                                  deleted_at,
+                                  :end_date
                                 )
                             )
                         ) / 3600
-                    ) * vcpus
-                ) AS core_hours
+                      ) * vcpus
+                    ) AS core_hours
 
-            FROM
-                nova.instances
+                  FROM
+                    nova.instances
 
-            WHERE
-                vm_state   != 'error'          AND
+                  WHERE
+                    vm_state   != 'error'          AND
+                    (
+                      deleted_at >  :start_date  OR
+                      deleted_at IS NULL
+                    )                              AND
+                    created_at <  :end_date        AND
+                    project_id IN :projects
+                  GROUP BY
+                    user_id,
+                    project_id
+                ) AS instances
+              LEFT OUTER JOIN
                 (
-                    deleted_at >  :start_date  OR
-                    deleted_at IS NULL
-                )                              AND
-                created_at <  :end_date        AND
-                user_id    =  :user_id         AND
-                project_id =  :project_id;
-            ''',
-            end_date=end_date,
-            start_date=start_date,
-            user_id=user_id,
-            project_id=project_id)
-        if results[0]['core_hours'] is None:
-            return default
-        else:
-            return results[0]['core_hours']
-
-    def get_instance_core_hours_by_project(self, start_date, end_date, project_id):
-        default = 0
-        results = self.database.query(
-            '''
-            SELECT
-                SUM(
-                    CEIL(
+                  SELECT
+                    user_id,
+                    project_id,
+                    SUM(
+                      CEIL(
                         TIMESTAMPDIFF(
-                            SECOND,
+                          SECOND,
                             GREATEST(
-                                :start_date,
-                                created_at
+                              :start_date,
+                              created_at
                             ),
                             LEAST(
-                                :end_date,
+                              :end_date,
                                 COALESCE(
-                                    deleted_at,
-                                    :end_date
+                                  deleted_at,
+                                  :end_date
                                 )
                             )
                         ) / 3600
-                    ) * vcpus
-                ) AS core_hours
+                      ) * size
+                    ) AS gigabyte_hours
 
-            FROM
-                nova.instances
+                  FROM
+                    cinder.volumes
 
-            WHERE
-                vm_state   != 'error'          AND
-                (
-                    deleted_at >  :start_date  OR
-                    deleted_at IS NULL
-                )                              AND
-                created_at <  :end_date        AND
-                project_id =  :project_id;
+                  WHERE
+                    (
+                      deleted_at >  :start_date  OR
+                      deleted_at IS NULL
+                    )                              AND
+                    created_at <  :end_date        AND
+                    project_id IN :projects
+                  GROUP BY
+                    user_id,
+                    project_id
+                ) AS volumes
+
+            ON
+              instances.user_id    = volumes.user_id     AND
+              instances.project_id = volumes.project_id;
             ''',
-            end_date=end_date,
             start_date=start_date,
-            project_id=project_id)
-        if results[0]['core_hours'] is None:
-            return default
-        else:
-            return results[0]['core_hours']
-
-    def get_volume_gigabyte_hours_by_user(self, start_date, end_date, project_id, user_id):
-        default = 0
-        results = self.database.query(
-            '''
-            SELECT
-                SUM(
-                    CEIL(
-                        TIMESTAMPDIFF(
-                            SECOND,
-                            GREATEST(
-                                :start_date,
-                                created_at
-                            ),
-                            LEAST(
-                                :end_date,
-                                COALESCE(
-                                    deleted_at,
-                                    :end_date
-                                )
-                            )
-                        ) / 3600
-                    ) * size
-                ) AS gigabyte_hours
-
-            FROM
-                cinder.volumes
-
-            WHERE
-                (
-                    deleted_at >  :start_date  OR
-                    deleted_at IS NULL
-                )                              AND
-                created_at <  :end_date        AND
-                user_id    =  :user_id         AND
-                project_id =  :project_id;
-            ''',
             end_date=end_date,
-            start_date=start_date,
-            user_id=user_id,
-            project_id=project_id)
-        if results[0]['gigabyte_hours'] is None:
-            return default
-        else:
-            return results[0]['gigabyte_hours']
+            projects=projects)
+
+        return results
 
     def get_volume_gigabyte_hours_by_project(self, start_date, end_date, project_id):
         default = 0
@@ -280,7 +243,7 @@ class Collaboratory:
     # Eventually wanna use keystone for this
     # Save this stuff! Don't wanna run this all the time
     def get_projects(self):
-        if not hasattr(self, "projects"):
+        if not hasattr(self, 'projects'):
             self.refresh_projects()
         return self.projects
 

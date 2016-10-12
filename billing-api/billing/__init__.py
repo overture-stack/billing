@@ -1,133 +1,140 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
-from flask_login import login_required, LoginManager, login_user, logout_user, current_user
+from flask import Flask, request, Response
 from dateutil.parser import parse
+from dateutil.relativedelta import *
+from datetime import datetime
 from collaboratory import Collaboratory
-from user_management import UserDatabase
 from auth import sessions
 from config import default
+import json
+import decimal
+from error import APIError, AuthenticationError
+from functools import wraps
 
 app = Flask(__name__)
 app.config.from_object(default)
 
 app.secret_key = app.config['SECRET_KEY']
 
-# TODO: Remove, this was for proof of concept
-token = sessions.get_new_token(auth_url=app.config['AUTH_URI'], username='admin', password='admin')
-database = Collaboratory(app.config['MYSQL_URI'])
-
-users = UserDatabase()
-users.init_db()
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = '/login'
+database = Collaboratory(app.config['MYSQL_URI'], app.logger)
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    if user_id == 7:
-        return users.get_test_user(7)
+def parse_decimal(obj):
+    if isinstance(obj, decimal.Decimal):
+        return int(obj)
     else:
-        return users.get_user_by_id(user_id)
+        return obj
 
 
-def get_relevant_projects():
-    if current_user.username == 'admin':
-        return database.get_projects()
-    else:
-        return current_user.projects
+def authenticate(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        app.logger.info('Authorizing')
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            token = auth_header.split()[1]
+            c = sessions.validate_token(app.config['AUTH_URI'], token)
+            retval = func(c, *args, **kwargs)
+            response = Response(json.dumps(retval, default=parse_decimal), status=200, content_type='application/json')
+            response.headers['Authorization'] = sessions.renew_token(app.config['AUTH_URI'], token)
+            return response
+        else:
+            raise AuthenticationError('Authentication required: Token not provided')
+    return inner
 
 
-@app.route('/')
-@login_required
-def root():
-    return render_template('template.html',
-                           projects=get_relevant_projects())
+@app.errorhandler(APIError)
+def api_error_handler(e):
+    return Response(e.response_body, status=e.code, content_type='application/json')
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
-    print 'attempting login'
-    if request.method == 'GET':
-        return render_template('login.html')
-    elif request.method == 'POST':
+    token = sessions.get_new_token(
+        auth_url=app.config['AUTH_URI'],
+        username=request.json['username'],
+        password=request.json['password'])
+    response = Response(status=200, content_type='application/json')
+    response.headers['Authorization'] = token
+    return response
 
-        if request.form.get('username') == 'admin':
-            user = users.get_test_user(7)
+
+@app.route('/projects', methods=['GET'])
+@authenticate
+def get_projects(client):
+    tenants = map(lambda tenant: {'id': tenant.to_dict()['id'], 'name': tenant.to_dict()['name']}, client.tenants.list())
+    return tenants
+
+
+@app.route('/reports', methods=['GET'])
+@authenticate
+def calculate_cost_by_user(client):
+    original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
+    original_end_date = parse(request.args.get('toDate'), ignoretz=True)
+    projects = request.args.get('projects')
+    bucket_size = request.args.get('bucket')
+    start_date = original_start_date
+    end_date = original_end_date
+
+    if projects is not None:
+        project_list = projects.split(',')
+    else:
+        project_list = map(lambda tenant: tenant.to_dict()['id'], client.tenants.list())
+
+    if bucket_size == 'daily':
+        def same_bucket(start, end):
+            return start.year == end.year and start.month == end.month and start.day == end.day
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(days=+1)
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
+    elif bucket_size == 'weekly':
+        def same_bucket(start, end):
+            start_iso = start.isocalendar()
+            end_iso = end.isocalendar()
+            return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(days=+1, weekday=SU(+1))
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
+    elif bucket_size == 'monthly':
+        def same_bucket(start, end):
+            return start.year == end.year and start.month == end.month
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(months=+1)
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
+    elif bucket_size == 'yearly':
+        def same_bucket(start, end):
+            return start.year == end.year
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(years=+1)
+            return datetime(year=date_to_change.year, month=1, day=1)
+
+    date_ranges = []
+    while not same_bucket(start_date, end_date):
+        current_start_date = start_date
+        start_date = next_bucket(start_date)
+        if start_date < end_date:
+            date_ranges.append({'start_date': current_start_date.isoformat(), 'end_date': start_date.isoformat()})
         else:
-            user = users.get_user_by_username(request.form.get('username'))
+            date_ranges.append({'start_date': current_start_date.isoformat(), 'end_date': end_date.isoformat()})
 
-        if user is not None and user.authenticate(request.form.get('username'),
-                                                  request.form.get('password')):
-            login_user(user)
-            flash('LOGIN SUCCESSFUL')
-            print current_user.username
-            print current_user.projects
-            return redirect(url_for('root'))
-        else:
-            flash('LOGIN FAILED', 'error')
-            return render_template('login.html',
-                                   username=request.form.get('username'))
+    if start_date < end_date:
+        date_ranges.append({'start_date': start_date.isoformat(), 'end_date': end_date.isoformat()})
 
+    report = []
+    for bucket_range in date_ranges:
+        records = database.get_usage_statistics(bucket_range['start_date'],
+                                                bucket_range['end_date'],
+                                                project_list)
+        for record in records.all():
+            record_dict = record.as_dict()
+            record_dict['fromDate'] = bucket_range['start_date']
+            record_dict['toDate'] = bucket_range['end_date']
+            report.append(record_dict)
 
-@app.route('/logout')
-@login_required
-def logout():
-    user = current_user
-    user.authenticated = False
-    logout_user()
-    flash('LOGGED OUT')
-    return redirect('login')
+    return report
 
 
-@app.route('/by_user', methods=['GET'])
-@login_required
-def calculate_cost_by_user():
-    start_date = parse(request.args.get('start_date'), ignoretz=True)
-    end_date = parse(request.args.get('end_date'), ignoretz=True)
-    project_id = request.args.get('project_id')
-    user_id = request.args.get('user_id')
 
-    instance_core_hours = database.get_instance_core_hours_by_user(start_date, end_date, project_id, user_id)
-
-    volume_gigabyte_hours = database.get_volume_gigabyte_hours_by_user(start_date, end_date, project_id, user_id)
-
-    project_users = database.get_users_by_project(project_id)
-
-    return render_template('search_by_user.html',
-                           start_date=start_date,
-                           end_date=end_date,
-                           instance_core_hours=instance_core_hours,
-                           volume_gb_hours=volume_gigabyte_hours,
-                           project_id=project_id,
-                           users=project_users,
-                           current_user_id=user_id,
-                           projects=get_relevant_projects())
-
-
-# Might wanna do javascript in order to allow for a dynamic path variable
-# Need to add auth so that a user can't manually enter project details and access projects they shouldn't
-@app.route('/by_project', methods=['GET'])
-@login_required
-def calculate_cost_by_project():
-    start_date = parse(request.args.get('start_date'), ignoretz=True)
-    end_date = parse(request.args.get('end_date'), ignoretz=True)
-    project_id = request.args.get('project_id')
-
-    instance_core_hours = database.get_instance_core_hours_by_project(start_date, end_date, project_id)
-
-    volume_gigabyte_hours = database.get_volume_gigabyte_hours_by_project(start_date, end_date, project_id)
-
-    image_gigabyte_hours = database.get_image_storage_gigabyte_hours_by_project(start_date, end_date, project_id)
-
-    project_users = database.get_users_by_project(project_id)
-
-    return render_template('search_by_project.html',
-                           start_date=start_date,
-                           end_date=end_date,
-                           instance_core_hours=instance_core_hours,
-                           volume_gb_hours=volume_gigabyte_hours,
-                           image_gb_hours=image_gigabyte_hours,
-                           project_id=project_id,
-                           users=project_users,
-                           projects=get_relevant_projects())
