@@ -21,10 +21,6 @@ RUN mkdir -p /srv
 ADD billing-api /srv/billing-api
 ADD billing-ui /srv/billing-ui
 
-# NGINX
-RUN rm -f /etc/nginx/sites-enabled/default
-ADD nginx/billing.conf /etc/nginx/sites-enabled/billing.conf
-
 # UI
 WORKDIR /srv/billing-ui
 RUN source ~/.nvm/nvm.sh && npm install && npm run build
@@ -33,6 +29,10 @@ RUN source ~/.nvm/nvm.sh && npm install && npm run build
 WORKDIR /srv/billing-api
 RUN virtualenv -p python2.7 env
 RUN source env/bin/activate && pip install -r requirements.txt && pip install gunicorn
+
+# NGINX
+RUN rm -f /etc/nginx/sites-enabled/default
+ADD nginx/billing.conf /etc/nginx/sites-enabled/billing.conf
 
 # RUN FLASK API
 CMD ["/srv/billing-api/run.sh"]
