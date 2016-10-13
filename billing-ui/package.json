@@ -69,6 +69,7 @@
     "react-router": "2.7.0",
     "react-select": "1.0.0-rc.2",
     "react-transition-group-plus": "0.3.3",
+    "webpack-dev-server": "1.15",
     "whatwg-fetch": "1.0.0"
   },
   "scripts": {
