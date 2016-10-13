@@ -16,3 +16,8 @@ class AuthenticationError(APIError):
         super(AuthenticationError, self).__init__(401, 'Authentication Error', message)
 
 
+class BadRequestError(APIError):
+    def __init__(self, message):
+        super(BadRequestError, self).__init__(400, "Bad Request", message)
+
+
