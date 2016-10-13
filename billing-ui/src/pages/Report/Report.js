@@ -88,9 +88,6 @@ class extends Component {
     return (
       <div className="Report">
         <h1 className="page-heading">Billing Report</h1>
-        <pre>
-          {JSON.stringify(this.filters, null, '  ')}
-        </pre>
         <label>
           Projects
         </label>
