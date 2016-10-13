@@ -77,7 +77,7 @@ def calculate_cost_by_user(client):
         if 'fromDate' in request.args:
             original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
         else:
-            original_start_date = datetime(year=datetime.today().year, month=1, day=1)
+            original_start_date = datetime(year=datetime.today().year, month=datetime.today().month, day=1)
         if 'toDate' in request.args:
             original_end_date = parse(request.args.get('toDate'), ignoretz=True)
         else:
@@ -93,14 +93,7 @@ def calculate_cost_by_user(client):
     else:
         project_list = map(lambda tenant: tenant.to_dict()['id'], client.tenants.list())
 
-    if bucket_size == 'daily':
-        def same_bucket(start, end):
-            return start.year == end.year and start.month == end.month and start.day == end.day
-
-        def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(days=+1)
-            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
-    elif bucket_size == 'weekly':
+    if bucket_size == 'weekly':
         def same_bucket(start, end):
             start_iso = start.isocalendar()
             end_iso = end.isocalendar()
@@ -116,15 +109,22 @@ def calculate_cost_by_user(client):
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(years=+1)
             return datetime(year=date_to_change.year, month=1, day=1)
-    else:
-        bucket_size = 'monthly'
-
+    elif bucket_size == 'monthly':
         def same_bucket(start, end):
             return start.year == end.year and start.month == end.month
 
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(months=+1)
             return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
+    else:
+        bucket_size = 'daily'
+
+        def same_bucket(start, end):
+            return start.year == end.year and start.month == end.month and start.day == end.day
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(days=+1)
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
 
     date_ranges = []
     while not same_bucket(start_date, end_date):
@@ -149,8 +149,8 @@ def calculate_cost_by_user(client):
             record_dict['toDate'] = bucket_range['end_date']
             report.append(record_dict)
 
-    return {'toDate': original_end_date.isoformat(),
-            'fromDate': original_start_date.isoformat(),
+    return {'fromDate': original_start_date.isoformat(),
+            'toDate': original_end_date.isoformat(),
             'bucket': bucket_size,
             'entries': report}
 
