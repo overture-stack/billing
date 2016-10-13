@@ -7,7 +7,7 @@ from auth import sessions
 from config import default
 import json
 import decimal
-from error import APIError, AuthenticationError
+from error import APIError, AuthenticationError, BadRequestError
 from functools import wraps
 
 app = Flask(__name__)
@@ -49,6 +49,8 @@ def api_error_handler(e):
 
 @app.route('/login', methods=['POST'])
 def login():
+    if 'username' not in request.json or 'password' not in request.json:
+        raise BadRequestError('Please provide username and password in the body of your request')
     token = sessions.get_new_token(
         auth_url=app.config['AUTH_URI'],
         username=request.json['username'],
@@ -68,10 +70,21 @@ def get_projects(client):
 @app.route('/reports', methods=['GET'])
 @authenticate
 def calculate_cost_by_user(client):
-    original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
-    original_end_date = parse(request.args.get('toDate'), ignoretz=True)
     projects = request.args.get('projects')
     bucket_size = request.args.get('bucket')
+
+    try:
+        if 'fromDate' in request.args:
+            original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
+        else:
+            original_start_date = datetime(year=datetime.today().year, month=1, day=1)
+        if 'toDate' in request.args:
+            original_end_date = parse(request.args.get('toDate'), ignoretz=True)
+        else:
+            original_end_date = datetime.today()
+    except ValueError:
+        raise BadRequestError('Please define fromDate and toDate in the format YYYY-MM-DD')
+
     start_date = original_start_date
     end_date = original_end_date
 
@@ -96,13 +109,6 @@ def calculate_cost_by_user(client):
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(days=+1, weekday=SU(+1))
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
-    elif bucket_size == 'monthly':
-        def same_bucket(start, end):
-            return start.year == end.year and start.month == end.month
-
-        def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(months=+1)
-            return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
     elif bucket_size == 'yearly':
         def same_bucket(start, end):
             return start.year == end.year
@@ -110,6 +116,15 @@ def calculate_cost_by_user(client):
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(years=+1)
             return datetime(year=date_to_change.year, month=1, day=1)
+    else:
+        bucket_size = 'monthly'
+
+        def same_bucket(start, end):
+            return start.year == end.year and start.month == end.month
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(months=+1)
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
 
     date_ranges = []
     while not same_bucket(start_date, end_date):
