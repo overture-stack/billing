@@ -80,12 +80,10 @@ class extends Component {
     chart.redraw();
   }
 
-  projectsToSelectOptions = (projects) => {
-    return projects.map(x => ({
-      value: x,
-      label: x.name
-    }));
-  }
+  projectsToSelectOptions = projects => projects.map(x => ({
+    value: x,
+    label: x.name
+  }))
 
   render () {
     return (
