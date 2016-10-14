@@ -36,6 +36,9 @@ const TIME_PERIODS = {
 export default @observer
 class extends Component {
 
+  @observable report = {
+    entries: []
+  };
   @observable projects = [];
   @observable chartSettings = CHART_SETTINGS;
   @observable filters = {
@@ -61,12 +64,14 @@ class extends Component {
   }
 
   updateChart = async () => {
-      this.report = await fetchReport({
+      const report = await fetchReport({
         projects: this.filters.projects.slice(),
         bucketSize: this.filters.bucketSize.toLowerCase(),
         fromDate: this.filters.fromDate.toISOString(),
         toDate: this.filters.toDate.toISOString(),
       });
+
+      this.report = report;
 
       console.log(this.filters.projects.slice());
       this.redrawChart();
@@ -150,7 +155,7 @@ class extends Component {
         
         <div className="usage-table">
           <BootstrapTable
-            data={this.report ? this.report.entries : []}
+            data={this.report.entries}
             pagination
             ignoreSinglePage
             keyField="key"
