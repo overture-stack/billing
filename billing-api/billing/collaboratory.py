@@ -9,7 +9,6 @@ class Collaboratory:
         logger.info('Acquiring database')
         self.database = records.Database(database_url)
         logger.info('Successfully connected to database')
-        self.projects = self.get_projects()
 
     @classmethod
     def default_init(cls):
@@ -120,51 +119,7 @@ class Collaboratory:
 
         return results
 
-    def get_volume_gigabyte_hours_by_project(self, start_date, end_date, project_id):
-        default = 0
-        results = self.database.query(
-            '''
-            SELECT
-                SUM(
-                    CEIL(
-                        TIMESTAMPDIFF(
-                            SECOND,
-                            GREATEST(
-                                :start_date,
-                                created_at
-                            ),
-                            LEAST(
-                                :end_date,
-                                COALESCE(
-                                    deleted_at,
-                                    :end_date
-                                )
-                            )
-                        ) / 3600
-                    ) * size
-                ) AS gigabyte_hours
-
-            FROM
-                cinder.volumes
-
-            WHERE
-                (
-                    deleted_at >  :start_date  OR
-                    deleted_at IS NULL
-                )                              AND
-                created_at <  :end_date        AND
-                project_id =  :project_id;
-            ''',
-            end_date=end_date,
-            start_date=start_date,
-            project_id=project_id)
-        if results[0]['gigabyte_hours'] is None:
-            return default
-        else:
-            return results[0]['gigabyte_hours']
-
-    def get_image_storage_gigabyte_hours_by_project(self, start_date, end_date, project_id):
-        default = 0
+    def get_image_storage_gigabyte_hours_by_project(self, start_date, end_date, projects):
         results = self.database.query(
             '''
             SELECT
@@ -187,7 +142,8 @@ class Collaboratory:
                             ) / 3600
                         ) * size
                     ) / POWER(2, 30)
-                ) AS gigabyte_hours
+                ) AS image,
+                owner AS projectId
 
             FROM
                 glance.images
@@ -198,84 +154,42 @@ class Collaboratory:
                     deleted_at IS NULL
                 )                              AND
                 created_at <  :end_date        AND
-                owner =  :project_id;
+                owner IN :projects
+            GROUP BY owner;
             ''',
             end_date=end_date,
             start_date=start_date,
-            project_id=project_id)
-        if results[0]['gigabyte_hours'] is None:
-            return default
-        else:
-            return results[0]['gigabyte_hours']
+            projects=projects)
+        return results
 
-    # Eventually wanna use keystone for this
-    def get_users_by_project(self, project_id):
-        return self.database.query(
+    def get_user_roles(self, user_id):
+        results = self.database.query(
             '''
             SELECT
-              DISTINCT user_id
-
+              assignment.project_id,
+              role.name
             FROM
               (
                 SELECT
-                  DISTINCT user_id
+                  target_id AS project_id,
+                  role_id
+                FROM
+                  keystone.assignment
+                WHERE
+                  actor_id = :user_id
+              ) AS assignment
+              LEFT JOIN
+                keystone.role AS role
+              ON
+                role.id = assignment.role_id;
+            ''', user_id=user_id)
 
-                  FROM
-                    nova.instances
+        result_list = results.all(as_dict=True)
+        role_map = {}
+        for result in result_list:
+            if result['project_id'] in role_map:
+                role_map[result['project_id']].append(result['name'].lower())
+            else:
+                role_map[result['project_id']] = [result['name'].lower()]
+        return role_map
 
-                  WHERE
-                    project_id = :project_id
-
-                UNION
-
-                SELECT
-                  DISTINCT user_id
-
-                  FROM
-                    cinder.volumes
-
-                  WHERE
-                    project_id = :project_id
-              ) as user_ids
-            ''',
-            project_id=project_id)
-
-    # Eventually wanna use keystone for this
-    # Save this stuff! Don't wanna run this all the time
-    def get_projects(self):
-        if not hasattr(self, 'projects'):
-            self.refresh_projects()
-        return self.projects
-
-    def refresh_projects(self):
-        self.projects = map(lambda row: row.project_id,
-                            self.database.query(
-                                '''
-                                SELECT
-                                  DISTINCT project_id
-
-                                FROM
-                                  (
-                                    SELECT
-                                      DISTINCT project_id
-
-                                      FROM
-                                        nova.instances
-
-                                    UNION
-
-                                    SELECT
-                                      DISTINCT project_id
-
-                                      FROM
-                                        cinder.volumes
-
-                                    UNION
-
-                                    SELECT
-                                      DISTINCT owner AS project_id
-
-                                    FROM
-                                      glance.images
-                                  ) as project_ids;
-                                '''))

@@ -33,9 +33,10 @@ def authenticate(func):
             auth_header = request.headers['Authorization']
             token = auth_header.split()[1]
             c = sessions.validate_token(app.config['AUTH_URI'], token)
-            retval = func(c, *args, **kwargs)
+            new_token = sessions.renew_token(app.config['AUTH_URI'], token)
+            retval = func(c, new_token['user_id'], *args, **kwargs)
             response = Response(json.dumps(retval, default=parse_decimal), status=200, content_type='application/json')
-            response.headers['Authorization'] = sessions.renew_token(app.config['AUTH_URI'], token)
+            response.headers['Authorization'] = new_token['token']
             return response
         else:
             raise AuthenticationError('Authentication required: Token not provided')
@@ -56,20 +57,25 @@ def login():
         username=request.json['username'],
         password=request.json['password'])
     response = Response(status=200, content_type='application/json')
-    response.headers['Authorization'] = token
+    response.headers['Authorization'] = token['token']
     return response
 
 
 @app.route('/projects', methods=['GET'])
 @authenticate
-def get_projects(client):
-    tenants = map(lambda tenant: {'id': tenant.to_dict()['id'], 'name': tenant.to_dict()['name']}, client.tenants.list())
+def get_projects(client, user_id):
+    role_map = database.get_user_roles(user_id)
+    tenants = map(lambda tenant: {'id': tenant.to_dict()['id'],
+                                  'name': tenant.to_dict()['name'],
+                                  'roles': role_map[tenant.to_dict()['id']]},
+                  sessions.list_projects(client))
+
     return tenants
 
 
 @app.route('/reports', methods=['GET'])
 @authenticate
-def calculate_cost_by_user(client):
+def calculate_cost_by_user(client, user_id):
     projects = request.args.get('projects')
     bucket_size = request.args.get('bucket')
 
@@ -91,7 +97,7 @@ def calculate_cost_by_user(client):
     if projects is not None:
         project_list = projects.split(',')
     else:
-        project_list = map(lambda tenant: tenant.to_dict()['id'], client.tenants.list())
+        project_list = map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client))
 
     if bucket_size == 'weekly':
         def same_bucket(start, end):
@@ -148,6 +154,16 @@ def calculate_cost_by_user(client):
             record_dict['fromDate'] = bucket_range['start_date']
             record_dict['toDate'] = bucket_range['end_date']
             report.append(record_dict)
+
+        images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
+                                                                      bucket_range['end_date'],
+                                                                      project_list)
+        for image in images.all():
+            image_dict = image.as_dict()
+            image_dict['fromDate'] = bucket_range['start_date']
+            image_dict['toDate'] = bucket_range['end_date']
+            image_dict['user'] = None
+            report.append(image_dict)
 
     return {'fromDate': original_start_date.isoformat(),
             'toDate': original_end_date.isoformat(),

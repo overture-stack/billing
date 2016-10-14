@@ -2,6 +2,8 @@ import requests
 import json
 from keystoneclient.v2_0 import client
 from keystoneclient.exceptions import Unauthorized
+from keystoneauth1 import session
+from keystoneauth1.identity import V2Token
 from ..error import AuthenticationError, APIError
 
 
@@ -14,16 +16,7 @@ def get_new_token(auth_url=None, username=None, password=None):
             }
         }
     }
-
-    response = requests.post(auth_url+'/tokens', json=request_json)
-    response_json = json.loads(response.content)
-    if response.status_code == 401:
-        raise AuthenticationError('Invalid user/password')
-    elif response.status_code == 200:
-        token = response_json['access']['token']['id']
-        return token
-    else:
-        raise APIError(response.status_code, response_json['error']['title'], response_json['error']['message'])
+    return token_request(auth_url, request_json)
 
 
 def renew_token(auth_url=None, token=None):
@@ -34,13 +27,17 @@ def renew_token(auth_url=None, token=None):
             }
         }
     }
+    return token_request(auth_url, request_json)
 
+
+def token_request(auth_url=None, request_json=None):
     response = requests.post(auth_url + '/tokens', json=request_json)
     response_json = json.loads(response.content)
     if response.status_code == 401:
         raise AuthenticationError('Token expired. Please login again.')
     elif response.status_code == 200:
-        token = response_json['access']['token']['id']
+        token = {'token': response_json['access']['token']['id'],
+                 'user_id': response_json['access']['user']['id']}
         return token
     else:
         raise APIError(response.status_code, response_json['error']['title'], response_json['error']['message'])
@@ -56,7 +53,7 @@ def validate_token(auth_url=None, token=None):
         raise AuthenticationError('Authentication required: Invalid token')
 
 
-def list_projects(auth_url=None, token=None):
-    c = client.Client(auth_url=auth_url, token=token)
-    return c.tenants.list()
+def list_projects(client):
+    return client.tenants.list()
+
 
