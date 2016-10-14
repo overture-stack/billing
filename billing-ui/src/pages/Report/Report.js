@@ -34,11 +34,17 @@ const TIME_PERIODS = {
   YEARLY: 'YEARLY',
 };
 
-const AGGREGATION_OPTIONS = {
-  NONE: '',
+const AGGREGATION_FIELDS = {
   PROJECT: 'projectId',
   USER: 'user',
+  PERIOD: 'fromDate',
 };
+
+const defaultAggregationFields = [
+  AGGREGATION_FIELDS.PROJECT,
+  AGGREGATION_FIELDS.USER,
+  AGGREGATION_FIELDS.PERIOD
+];
 
 export default @observer
 class extends Component {
@@ -56,12 +62,9 @@ class extends Component {
   };
   @observable isLoading = true;
 
-  @observable aggregationField = '';
+  @observable aggregationFields = defaultAggregationFields;
   @computed get entriesToDisplay() {
-    return (this.aggregationField !== AGGREGATION_OPTIONS.NONE
-      ? aggregateEntries(this.report.entries, x => _(x).pick(['fromDate', this.aggregationField]).values().value())
-      : this.report.entries)
-        .map(x => ({...x, key: JSON.stringify(x)}));
+    return aggregateEntries(this.report.entries, x => _(x).pick(this.aggregationFields.slice()).values().value().join(',') );
   }
 
   handleProjectsChange = (option) => {
@@ -178,19 +181,19 @@ class extends Component {
             <div>
               <RadioGroup>
                 <RadioButton
-                  checked={this.aggregationField === AGGREGATION_OPTIONS.NONE}
-                  onClick={() => this.aggregationField = AGGREGATION_OPTIONS.NONE}
-                  value={AGGREGATION_OPTIONS.NONE}
+                  checked={ _.isEqual(this.aggregationFields.slice(), defaultAggregationFields.slice()) }
+                  onClick={() => this.aggregationFields = defaultAggregationFields}
+                  value={defaultAggregationFields}
                 >Total</RadioButton>
                 <RadioButton
-                  checked={this.aggregationField === AGGREGATION_OPTIONS.PROJECT}
-                  onClick={() => this.aggregationField = AGGREGATION_OPTIONS.PROJECT}
-                  value={AGGREGATION_OPTIONS.PROJECT}
+                  checked={ !this.aggregationFields.includes(AGGREGATION_FIELDS.USER) }
+                  onClick={() => this.aggregationFields = _.without(defaultAggregationFields, AGGREGATION_FIELDS.USER)}
+                  value={AGGREGATION_FIELDS.PROJECT}
                 >Projects</RadioButton>
                 <RadioButton
-                  checked={this.aggregationField === AGGREGATION_OPTIONS.USER}
-                  onClick={() => this.aggregationField = AGGREGATION_OPTIONS.USER}
-                  value={AGGREGATION_OPTIONS.USER}
+                  checked={ !this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT) }
+                  onClick={() => this.aggregationFields = _.without(defaultAggregationFields, AGGREGATION_FIELDS.PROJECT)}
+                  value={AGGREGATION_FIELDS.USER}
                 >Users</RadioButton>
               </RadioGroup>
             </div>
@@ -213,11 +216,11 @@ class extends Component {
             <TableHeaderColumn
               dataField="projectId"
               dataFormat={id => _.find(this.projects, {id}).name}
-              hidden={this.aggregationField === AGGREGATION_OPTIONS.USER}
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
             >Project</TableHeaderColumn>
             <TableHeaderColumn
               dataField="user"
-              hidden={this.aggregationField === AGGREGATION_OPTIONS.PROJECT}
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
             >User</TableHeaderColumn>
             <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''}>CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn dataField="volume" dataFormat={x => x || ''}>Volume (hrs)</TableHeaderColumn>
