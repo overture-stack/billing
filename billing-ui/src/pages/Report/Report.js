@@ -53,7 +53,6 @@ class extends Component {
   }
 
   handleRangeFilterChange = (dates) => {
-    console.log('handleRangeFilterChange', dates);
     this.filters.fromDate = dates[0];
     this.filters.toDate = dates[1];
   }
@@ -70,10 +69,7 @@ class extends Component {
         fromDate: this.filters.fromDate.toISOString(),
         toDate: this.filters.toDate.toISOString(),
       });
-
       this.report = report;
-
-      console.log(this.filters.projects.slice());
       this.redrawChart();
   }
 
