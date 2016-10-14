@@ -16,11 +16,11 @@ const postLoginRoute = '/';
 
 observe(user, change => {
   if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
-    console.log('user just logged in. redirecting to /releases');
+    console.log('user just logged in. redirecting to ', postLoginRoute);
     browserHistory.push(postLoginRoute)
   }
   if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
-    console.log('user logged out. redirecting to /');
+    console.log('user logged out. redirecting to /login');
     browserHistory.push('/login')
   }
 })
