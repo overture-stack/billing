@@ -1,15 +1,15 @@
 import _ from 'lodash';
 
-export function aggregateEntries(entries, fieldToGroupBy) {
+export function aggregateEntries(entries, groupByIteratee) {
   return _(entries)
-    .groupBy(fieldToGroupBy)
+    .groupBy(groupByIteratee)
     .values()
-    .map(items => items.reduce((acc = {cpu: 0, volume: 0, image: 0}, entry) => ({
+    .map(items => items.reduce((acc, entry) => ({
       ...acc,
       ...entry,
-      cpu: acc.cpu + (entry.cpu || 0),
-      volume: acc.volume + (entry.volume || 0),
-      image: acc.image + (entry.image || 0),
+      cpu: (acc.cpu || 0) + (entry.cpu || 0),
+      volume: (acc.volume || 0) + (entry.volume || 0),
+      image: (acc.image || 0) + (entry.image || 0),
     })))
     .value();
 }

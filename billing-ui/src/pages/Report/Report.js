@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import {observable, autorun} from 'mobx';
+import {observable, autorun, computed} from 'mobx';
 import {observer} from 'mobx-react';
 import _ from 'lodash';
+import {aggregateEntries} from './aggregateEntries';
 
 import moment from 'moment';
 
@@ -33,6 +34,12 @@ const TIME_PERIODS = {
   YEARLY: 'YEARLY',
 };
 
+const AGGREGATION_OPTIONS = {
+  NONE: '',
+  PROJECT: 'projectId',
+  USER: 'user',
+};
+
 export default @observer
 class extends Component {
 
@@ -47,6 +54,15 @@ class extends Component {
     toDate: moment(),
     bucketSize: TIME_PERIODS.MONTHLY,
   };
+  @observable isLoading = true;
+
+  @observable aggregationField = '';
+  @computed get entriesToDisplay() {
+    return (this.aggregationField !== AGGREGATION_OPTIONS.NONE
+      ? aggregateEntries(this.report.entries, x => _(x).pick(['fromDate', this.aggregationField]).values().value())
+      : this.report.entries)
+        .map(x => ({...x, key: JSON.stringify(x)}));
+  }
 
   handleProjectsChange = (option) => {
     this.filters.projects = option.map(x => x.value);
@@ -63,21 +79,31 @@ class extends Component {
   }
 
   updateChart = async () => {
-      const report = await fetchReport({
-        projects: this.filters.projects.slice(),
-        bucketSize: this.filters.bucketSize.toLowerCase(),
-        fromDate: this.filters.fromDate.toISOString(),
-        toDate: this.filters.toDate.toISOString(),
-      });
-      this.report = report;
-      this.redrawChart();
+    this.isLoading = true;
+    const report = await fetchReport({
+      projects: this.filters.projects.slice(),
+      bucketSize: this.filters.bucketSize.toLowerCase(),
+      fromDate: this.filters.fromDate.toISOString(),
+      toDate: this.filters.toDate.toISOString(),
+    });
+    this.report = report;
+    this.redrawChart();
+    this.isLoading = false;
   }
 
   redrawChart = () => {
     const newSeries = getSeriesFromReportEntries(this.report.entries).slice();
     const chart = this.refs.chart.getChart();
     chart.series.forEach(serie => serie.setData(newSeries.find(newSerie => newSerie.name === serie.name).data, false, false));
-    chart.redraw();
+    chart.update({
+      colors: [
+        '#3498DB',
+        '#E74C3C',
+        '#2C3E50',
+      ]
+    });
+
+    window.chart = chart;
   }
 
   projectsToSelectOptions = projects => projects.map(x => ({
@@ -141,15 +167,37 @@ class extends Component {
 
         <h2 className="section-heading">Summary</h2>
 
-        <div>
+        <div className={`chart-container ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
           <ReactHighcharts config={this.chartSettings} ref="chart" isPureConfig={true}></ReactHighcharts>
         </div>
 
         <h2 className="section-heading">Details</h2>
         
-        <div className="usage-table">
+        <div className={`usage-table ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
+          <div>
+            <label>Aggregate on</label>
+            <div>
+              <RadioGroup>
+                <RadioButton
+                  checked={this.aggregationField === AGGREGATION_OPTIONS.NONE}
+                  onClick={() => this.aggregationField = AGGREGATION_OPTIONS.NONE}
+                  value={AGGREGATION_OPTIONS.NONE}
+                >Periods Only</RadioButton>
+                <RadioButton
+                  checked={this.aggregationField === AGGREGATION_OPTIONS.PROJECT}
+                  onClick={() => this.aggregationField = AGGREGATION_OPTIONS.PROJECT}
+                  value={AGGREGATION_OPTIONS.PROJECT}
+                >Projects</RadioButton>
+                <RadioButton
+                  checked={this.aggregationField === AGGREGATION_OPTIONS.USER}
+                  onClick={() => this.aggregationField = AGGREGATION_OPTIONS.USER}
+                  value={AGGREGATION_OPTIONS.USER}
+                >Users</RadioButton>
+              </RadioGroup>
+            </div>
+          </div>
           <BootstrapTable
-            data={this.report.entries}
+            data={this.entriesToDisplay}
             pagination
             ignoreSinglePage
             keyField="key"
@@ -168,9 +216,9 @@ class extends Component {
               dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
             >Period</TableHeaderColumn>
             <TableHeaderColumn dataField="user">User</TableHeaderColumn>
-            <TableHeaderColumn dataField="cpu">CPU (hrs)</TableHeaderColumn>
-            <TableHeaderColumn dataField="volume">Volume (hrs)</TableHeaderColumn>
-            <TableHeaderColumn dataField="image">Image (hrs)</TableHeaderColumn>
+            <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''}>CPU (hrs)</TableHeaderColumn>
+            <TableHeaderColumn dataField="volume" dataFormat={x => x || ''}>Volume (hrs)</TableHeaderColumn>
+            <TableHeaderColumn dataField="image" dataFormat={x => x || ''}>Image (hrs)</TableHeaderColumn>
             <TableHeaderColumn dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}>
               Total (hrs)
             </TableHeaderColumn>
