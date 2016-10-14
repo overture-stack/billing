@@ -5,15 +5,11 @@ export default {
         chart: {
             type: 'area'
         },
-        // title: {
-        //     text: ''
-        // },
-        // subtitle: {
-        //     text: ''
-        // },
+        title: {
+            text: ''
+        },
         xAxis: {
             type: 'datetime',
-            // tickmarkPlacement: 'on',
             title: {
                 enabled: false
             },
@@ -31,11 +27,6 @@ export default {
             title: {
                 text: 'Usage'
             },
-            // labels: {
-            //     formatter: function () {
-            //         return this.value / 1000;
-            //     }
-            // }
         },
         tooltip: {
             split: true,
