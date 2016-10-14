@@ -1697,6 +1697,10 @@ emojis-list@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/emojis-list/-/emojis-list-2.1.0.tgz#4daa4d9db00f9819880c79fa457ae5b09a1fd389"
 
+encode-uri-query:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/encode-uri-query/-/encode-uri-query-1.0.1.tgz#e9c70d3e1aab71b039e55b38a166013508803ba8"
+
 encodeurl@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/encodeurl/-/encodeurl-1.0.1.tgz#79e3d58655346909fe6f0f45a5de68103b294d20"
@@ -2445,6 +2449,10 @@ header-case@^1.0.0:
 highcharts@^4.2.3:
   version v4.2.7
   resolved "https://registry.yarnpkg.com/highcharts/-/highcharts-4.2.7.tgz#45cbed8e99c9c042e95f9c51076726496f686862"
+
+highcharts@5:
+  version v5.0.0
+  resolved "https://registry.yarnpkg.com/highcharts/-/highcharts-5.0.0.tgz#fcce444ee4301ea1bd0acd36b34b3103b7c26915"
 
 history@^2.1.2:
   version "2.1.2"

@@ -50,13 +50,15 @@
     "style-loader": "0.13.1",
     "url-loader": "0.5.7",
     "webpack": "1.13.1",
-    "webpack-dev-server": "1.14.1",
+    "webpack-dev-server": "1.15",
     "whatwg-fetch": "1.0.0"
   },
   "dependencies": {
     "antd": "2.0.1",
     "bootstrap": "3.3.7",
+    "encode-uri-query": "^1.0.1",
     "gsap-promise": "2.0.0",
+    "highcharts": "5",
     "mobx": "2.4.4",
     "mobx-react": "3.5.5",
     "moment": "2.14.1",
@@ -69,7 +71,6 @@
     "react-router": "2.7.0",
     "react-select": "1.0.0-rc.2",
     "react-transition-group-plus": "0.3.3",
-    "webpack-dev-server": "1.15",
     "whatwg-fetch": "1.0.0"
   },
   "scripts": {
