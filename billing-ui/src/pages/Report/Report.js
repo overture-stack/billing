@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {observable, computed, autorun, reaction} from 'mobx';
+import {observable, autorun} from 'mobx';
 import {observer} from 'mobx-react';
 import _ from 'lodash';
 
