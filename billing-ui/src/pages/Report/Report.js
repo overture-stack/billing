@@ -172,7 +172,7 @@ class extends Component {
             <TableHeaderColumn dataField="cpu">CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn dataField="volume">Volume (hrs)</TableHeaderColumn>
             <TableHeaderColumn dataField="image">Image (hrs)</TableHeaderColumn>
-            <TableHeaderColumn dataFormat={(cell, row) => console.log(row.cpu, row.volume, row.image) || _.sum([row.cpu + row.volume + row.image])}>
+            <TableHeaderColumn dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}>
               Total (hrs)
             </TableHeaderColumn>
           </BootstrapTable>
