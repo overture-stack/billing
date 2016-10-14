@@ -17,6 +17,8 @@ app.secret_key = app.config['SECRET_KEY']
 
 database = Collaboratory(app.config['MYSQL_URI'], app.logger)
 
+app.valid_bucket_sizes = app.config['VALID_BUCKET_SIZES']
+
 
 def parse_decimal(obj):
     if isinstance(obj, decimal.Decimal):
@@ -31,7 +33,10 @@ def authenticate(func):
         app.logger.info('Authorizing')
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
-            token = auth_header.split()[1]
+            try:
+                token = auth_header.split()[1]
+            except IndexError:
+                raise AuthenticationError('Cannot parse authorization token')
             c = sessions.validate_token(app.config['AUTH_URI'], token)
             new_token = sessions.renew_token(app.config['AUTH_URI'], token)
             retval = func(c, new_token['user_id'], *args, **kwargs)
@@ -75,7 +80,7 @@ def get_projects(client, user_id):
 
 @app.route('/reports', methods=['GET'])
 @authenticate
-def calculate_cost_by_user(client, user_id):
+def generate_report_data(client, user_id):
     projects = request.args.get('projects')
     bucket_size = request.args.get('bucket')
 
@@ -99,38 +104,9 @@ def calculate_cost_by_user(client, user_id):
     else:
         project_list = map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client))
 
-    if bucket_size == 'weekly':
-        def same_bucket(start, end):
-            start_iso = start.isocalendar()
-            end_iso = end.isocalendar()
-            return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
-
-        def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(days=+1, weekday=SU(+1))
-            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
-    elif bucket_size == 'yearly':
-        def same_bucket(start, end):
-            return start.year == end.year
-
-        def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(years=+1)
-            return datetime(year=date_to_change.year, month=1, day=1)
-    elif bucket_size == 'monthly':
-        def same_bucket(start, end):
-            return start.year == end.year and start.month == end.month
-
-        def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(months=+1)
-            return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
-    else:
+    if bucket_size not in app.valid_bucket_sizes:
         bucket_size = 'daily'
-
-        def same_bucket(start, end):
-            return start.year == end.year and start.month == end.month and start.day == end.day
-
-        def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(days=+1)
-            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
+    same_bucket, next_bucket = get_bucket_functions(bucket_size)
 
     date_ranges = []
     while not same_bucket(start_date, end_date):
@@ -171,4 +147,39 @@ def calculate_cost_by_user(client, user_id):
             'entries': report}
 
 
+def get_bucket_functions(bucket_size):
+    if bucket_size == 'weekly':
+        def same_bucket(start, end):
+            start_iso = start.isocalendar()
+            end_iso = end.isocalendar()
+            return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
 
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(days=+1, weekday=SU(+1))
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
+    elif bucket_size == 'yearly':
+        def same_bucket(start, end):
+            return start.year == end.year
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(years=+1)
+            return datetime(year=date_to_change.year, month=1, day=1)
+    elif bucket_size == 'monthly':
+        def same_bucket(start, end):
+            return start.year == end.year and start.month == end.month
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(months=+1)
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
+    else:
+        # Daily bucket size
+        # Default bucket size, if not defined
+
+        def same_bucket(start, end):
+            return start.year == end.year and start.month == end.month and start.day == end.day
+
+        def next_bucket(date_to_change):
+            date_to_change = date_to_change + relativedelta(days=+1)
+            return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
+
+    return same_bucket, next_bucket
