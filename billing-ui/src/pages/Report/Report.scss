@@ -36,7 +36,19 @@
     }
   }
 
+  .is-loading {
+    opacity: 0.6;
+    animation: pulse-opacity 1s infinite alternate;    
+  }
+
   .usage-table {
     margin-bottom: 30px;
+
+@keyframes pulse-opacity {
+  0% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.65;
   }
 }
