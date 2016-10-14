@@ -1,4 +1,5 @@
 import {Highcharts} from 'react-highcharts';
+import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 export default {
         chart: {
