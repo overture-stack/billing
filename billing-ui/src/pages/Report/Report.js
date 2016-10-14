@@ -208,14 +208,18 @@ class extends Component {
             }}
             >
             <TableHeaderColumn
-              dataField="projectId"
-              dataFormat={id => _.find(this.projects, {id}).name}
-            >Project</TableHeaderColumn>
-            <TableHeaderColumn
               dataField="fromDate"
               dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
             >Period</TableHeaderColumn>
-            <TableHeaderColumn dataField="user">User</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="projectId"
+              dataFormat={id => _.find(this.projects, {id}).name}
+              hidden={this.aggregationField === AGGREGATION_OPTIONS.USER}
+            >Project</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="user"
+              hidden={this.aggregationField === AGGREGATION_OPTIONS.PROJECT}
+            >User</TableHeaderColumn>
             <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''}>CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn dataField="volume" dataFormat={x => x || ''}>Volume (hrs)</TableHeaderColumn>
             <TableHeaderColumn dataField="image" dataFormat={x => x || ''}>Image (hrs)</TableHeaderColumn>
