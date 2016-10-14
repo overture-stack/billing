@@ -162,7 +162,7 @@ class extends Component {
             >
             <TableHeaderColumn
               dataField="projectId"
-              dataFormat={id => _.find(this.projects, {id})}
+              dataFormat={id => _.find(this.projects, {id}).name}
             >Project</TableHeaderColumn>
             <TableHeaderColumn
               dataField="fromDate"
