@@ -16,15 +16,5 @@ export async function fetchReport ({projects, bucketSize, fromDate, toDate}) {
 
   const data = await response.json();
 
-  return Promise.resolve(Object.assign(
-    {},
-    data,
-    {
-      entries: data.entries.map((x => Object.assign(
-        {}, x, {
-          key: _.uniqueId()
-        }
-      )))
-    }
-    ));
+  return data;
 }
