@@ -175,14 +175,13 @@ class extends Component {
         
         <div className={`usage-table ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
           <div>
-            <label>Aggregate on</label>
             <div>
               <RadioGroup>
                 <RadioButton
                   checked={this.aggregationField === AGGREGATION_OPTIONS.NONE}
                   onClick={() => this.aggregationField = AGGREGATION_OPTIONS.NONE}
                   value={AGGREGATION_OPTIONS.NONE}
-                >Periods Only</RadioButton>
+                >Total</RadioButton>
                 <RadioButton
                   checked={this.aggregationField === AGGREGATION_OPTIONS.PROJECT}
                   onClick={() => this.aggregationField = AGGREGATION_OPTIONS.PROJECT}
