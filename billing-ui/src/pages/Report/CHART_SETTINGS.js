@@ -29,8 +29,7 @@ export default {
     },
   },
   tooltip: {
-    split: true,
-    // valueSuffix: ' millions'
+    split: false,
   },
   plotOptions: {
     area: {
