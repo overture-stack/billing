@@ -51,5 +51,5 @@ export default {
                 }
             }
         },
-        series: []
+        series: getSeriesFromReportEntries([])
     };
