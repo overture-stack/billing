@@ -8,8 +8,6 @@ export async function fetchReport ({projects, bucketSize, fromDate, toDate}) {
     fromDate,
     toDate,
   }, projects.length ? { projects: projects.map(p => p.id).join(',') } : {}), (value, key) => `${key}=${encodeUriSegment(value)}`).join('&');
-  
-  console.log(query)
 
   const response = await fetch(`/api/reports?${query}`, {
     method: 'GET',
