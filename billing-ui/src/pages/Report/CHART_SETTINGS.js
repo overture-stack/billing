@@ -2,11 +2,6 @@ import {Highcharts} from 'react-highcharts';
 import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 export default {
-  colors: [
-    '#3498DB',
-    '#E74C3C',
-    '#2C3E50',
-  ],
   chart: {
     type: 'area'
   },
