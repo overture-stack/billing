@@ -2,8 +2,6 @@ import requests
 import json
 from keystoneclient.v2_0 import client
 from keystoneclient.exceptions import Unauthorized
-from keystoneauth1 import session
-from keystoneauth1.identity import V2Token
 from ..error import AuthenticationError, APIError
 
 
