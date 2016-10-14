@@ -3,7 +3,6 @@ import {observable, computed, autorun, reaction} from 'mobx';
 import {observer} from 'mobx-react';
 
 import moment from 'moment';
-import ReactHighcharts from 'react-highcharts';
 
 import CHART_SETTINGS from './CHART_SETTINGS';
 
@@ -21,6 +20,8 @@ import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 import {fetchReport} from '~/services/reports'; 
 import {fetchProjects} from '~/services/projects'; 
 import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
+
+const ReactHighcharts = require('react-highcharts').withHighcharts(require('highcharts'));
 
 import './Report.scss';
 
