@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {observable, computed, autorun, reaction} from 'mobx';
 import {observer} from 'mobx-react';
+import _ from 'lodash';
 
 import moment from 'moment';
 
@@ -32,8 +33,6 @@ const TIME_PERIODS = {
   YEARLY: 'YEARLY',
 };
 
-const DATE_FORMAT = 'YYYY-MM-DD';
-
 export default @observer
 class extends Component {
 
@@ -41,8 +40,8 @@ class extends Component {
   @observable chartSettings = CHART_SETTINGS;
   @observable filters = {
     projects: [],
-    fromDate: moment(),
-    toDate: moment().subtract(1, 'y'),
+    fromDate: moment().subtract(1, 'y'),
+    toDate: moment(),
     bucketSize: TIME_PERIODS.MONTHLY,
   };
 
@@ -50,8 +49,8 @@ class extends Component {
     this.filters.projects = option.map(x => x.value);
   }
 
-  handleRangeFilterChange = (dates, dateStrings) => {
-    console.log('handleRangeFilterChange', dates, dateStrings);
+  handleRangeFilterChange = (dates) => {
+    console.log('handleRangeFilterChange', dates);
     this.filters.fromDate = dates[0];
     this.filters.toDate = dates[1];
   }
@@ -64,18 +63,20 @@ class extends Component {
   updateChart = async () => {
       this.report = await fetchReport({
         projects: this.filters.projects.slice(),
-        bucketSize: this.filters.bucketSize,
-        fromDate: this.filters.fromDate.format(DATE_FORMAT),
-        toDate: this.filters.toDate.format(DATE_FORMAT),
+        bucketSize: this.filters.bucketSize.toLowerCase(),
+        fromDate: this.filters.fromDate.toISOString(),
+        toDate: this.filters.toDate.toISOString(),
       });
+
+      console.log(this.filters.projects.slice());
       this.redrawChart();
   }
 
   redrawChart = () => {
-    const series = getSeriesFromReportEntries(this.report.entries);
+    const newSeries = getSeriesFromReportEntries(this.report.entries).slice();
     const chart = this.refs.chart.getChart();
-    chart.series.forEach(serie => serie.remove());
-    series.forEach(serie => chart.addSeries(serie), false)
+    chart.series.forEach(serie => serie.setData(newSeries.find(newSerie => newSerie.name === serie.name).data, false, false));
+    chart.redraw();
   }
 
   projectsToSelectOptions = (projects) => {
@@ -105,7 +106,11 @@ class extends Component {
           </div>
 
           <div className="range-select">
-            <RangePicker format="YYYY-MM-DD" onChange={this.handleRangeFilterChange}/>
+            <RangePicker
+              format="YYYY-MM-DD"
+              onChange={this.handleRangeFilterChange}
+              defaultValue={[this.filters.fromDate, this.filters.toDate]}
+            />
           </div>
 
           <div className="interval-select">
@@ -143,29 +148,35 @@ class extends Component {
 
         <h2 className="section-heading">Details</h2>
         
-        <BootstrapTable
-          data={this.report ? this.report.entries : []}
-          pagination
-          ignoreSinglePage
-          keyField="key"
-          options={{
-            hideSizePerPage: true,
-            sizePerPage: 10,
-            sizePerPageList: [10, 50, 100]
-          }}
-          >
-          <TableHeaderColumn dataField="projectId">Project</TableHeaderColumn>
-          <TableHeaderColumn
-            dataField="fromDate"
-            dataFormat={(cell, entry) => `${entry.fromDate} - ${entry.toDate}`}
-          >Period</TableHeaderColumn>
-          <TableHeaderColumn dataField="cpu">CPU (hrs)</TableHeaderColumn>
-          <TableHeaderColumn dataField="volume">Volume (hrs)</TableHeaderColumn>
-          <TableHeaderColumn dataField="image">Image (hrs)</TableHeaderColumn>
-          <TableHeaderColumn dataFormat={(cell, row) => (row.cpu + row.volume + row.image)}>
-            Total (hrs)
-          </TableHeaderColumn>
-        </BootstrapTable>
+        <div className="usage-table">
+          <BootstrapTable
+            data={this.report ? this.report.entries : []}
+            pagination
+            ignoreSinglePage
+            keyField="key"
+            options={{
+              hideSizePerPage: true,
+              sizePerPage: 10,
+              sizePerPageList: [10, 50, 100]
+            }}
+            >
+            <TableHeaderColumn
+              dataField="projectId"
+              dataFormat={id => _.find(this.projects, {id})}
+            >Project</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="fromDate"
+              dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
+            >Period</TableHeaderColumn>
+            <TableHeaderColumn dataField="user">User</TableHeaderColumn>
+            <TableHeaderColumn dataField="cpu">CPU (hrs)</TableHeaderColumn>
+            <TableHeaderColumn dataField="volume">Volume (hrs)</TableHeaderColumn>
+            <TableHeaderColumn dataField="image">Image (hrs)</TableHeaderColumn>
+            <TableHeaderColumn dataFormat={(cell, row) => console.log(row.cpu, row.volume, row.image) || _.sum([row.cpu + row.volume + row.image])}>
+              Total (hrs)
+            </TableHeaderColumn>
+          </BootstrapTable>
+        </div>
       </div>
     );
   }

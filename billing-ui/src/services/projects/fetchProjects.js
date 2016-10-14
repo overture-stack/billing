@@ -1,6 +1,10 @@
 import {fetchHeaders} from '~/utils';
-const dummyData = require('./dummyProjects');
 
 export async function fetchProjects () {
-  return Promise.resolve(dummyData);
+  const response = await fetch('/api/projects', {
+    method: 'GET',
+    headers: fetchHeaders.get(),
+  });
+  const responseData = await response.json();
+  return Promise.resolve(responseData);
 }
