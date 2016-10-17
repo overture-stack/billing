@@ -27,10 +27,11 @@ npm install
 
 ## Develop
 
+Go to the `billing-ui/` directory and run: 
 ```
 npm start
 ```
- Then go to http://localhost:3500
+ The site will be served out of http://localhost:3500
 
 ## Build
 
