@@ -5,7 +5,7 @@ function resolveApp(relativePath) {
 }
 
 module.exports = {
-  appBuild: resolveApp('target/classes/app'),
+  appBuild: resolveApp('build/'),
   appHtml: resolveApp('index.html'),
   appFavicon: resolveApp('favicon.ico'),
   appPackageJson: resolveApp('package.json'),

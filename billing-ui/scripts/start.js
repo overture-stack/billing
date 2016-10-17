@@ -157,6 +157,13 @@ function runDevServer(port) {
     watchOptions: {
       ignored: /node_modules/
     },
+    proxy: {
+      '/api/*': {
+        target: 'http://localhost:5000',
+        secure: false,
+        pathRewrite: {'^/api' : ''},
+      },
+    },
   }).listen(port, (err, result) => {
     if (err) {
       return console.log(err);

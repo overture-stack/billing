@@ -1,10 +1,26 @@
 import React, { Component } from 'react';
+import {findDOMNode} from 'react-dom';
 import {observable} from 'mobx';
 import {observer} from 'mobx-react';
-
+import animate from 'gsap-promise';
 import user from '~/user';
 
 import './Login.scss';
+
+const animationStates = {
+  beforeEnter: {
+    opacity: 0,
+    y: -10
+  },
+  idle: {
+    opacity: 1,
+    y: 0,
+  },
+  afterLeave: {
+    opacity: 0,
+    y: -10
+  }
+};
 
 export default @observer
 class extends Component {
@@ -23,11 +39,56 @@ class extends Component {
     }
   }
 
+  async componentWillAppear(callback) {
+    this.animateIn({delay: 1})
+      .then(callback);
+  }
+
+  componentWillEnter(callback) {
+    this.animateIn().then(callback);
+  }
+
+  componentWillLeave(callback) {
+    this.animateOut().then(callback);
+  }
+
+  animateIn({delay} = {delay: 0}) {
+    const elements = [
+      this.refs.logo,
+      this.refs.usernameInput,
+      this.refs.passwordInput,
+      this.refs.loginButton,
+    ];
+    return animate.staggerFromTo(
+      elements,
+      0.25,
+      animationStates.beforeEnter,
+      Object.assign({}, animationStates.idle, { delay, clearProps: 'all' }),
+      0.1
+    );
+  }
+
+  animateOut() {
+    const elements = [
+      this.refs.logo,
+      this.refs.usernameInput,
+      this.refs.passwordInput,
+      this.refs.loginButton,
+    ];
+    return animate.staggerTo(
+      elements,
+      0.25,
+      Object.assign(animationStates.afterLeave),
+      0.1
+    );
+  }
+
   render () {
     return (
-      <div className="Login">
+      <div className="Login" ref="container">
         <div className="login-inner">
           <img
+            ref="logo"
             alt="Cancer Genome COLLABORATORY"
             className="logo"
             src={require('~/assets/images/logo-full.png')}
@@ -46,6 +107,7 @@ class extends Component {
           >
             <div className="form-group">
               <input
+                ref="usernameInput"
                 id="username"
                 autoFocus={true}
                 className="form-control"
@@ -56,6 +118,7 @@ class extends Component {
             </div>
             <div className="form-group">
               <input
+                ref="passwordInput"
                 id="password"
                 type="password"
                 className="form-control"
@@ -65,7 +128,7 @@ class extends Component {
               />
             </div>
             <div className="form-group">
-                <button type="submit" className="dcc form-control btn btn-primary">
+                <button ref="loginButton" type="submit" className="dcc form-control btn btn-primary">
                   Login
                 </button>
             </div>
