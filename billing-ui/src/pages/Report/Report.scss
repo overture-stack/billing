@@ -15,27 +15,46 @@
   }
 
   .form-controls {
-    & > div {
-      margin-top: 1em;
-    }
-
-    display: flex;
-    flex-direction: column;
-    // align-items: flex-start;
+    align-items: flex-start;
 
     .project-select {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
-
-      &__selector {
-        flex-grow: 1;
+      min-width: 22em;
+      max-width: 24em;
+      .Select-control {
+        border-radius: 6px;
       }
-
-      &__select-all {
-        margin-left: 1em;
+      .Select-input, .Select-control {
+        height: 28px;
       }
-
+      .Select-placeholder {
+        line-height: 28px;
+      }
     }
+
+    & > * + * {
+      margin-left: 1em; 
+    }
+  }
+
+  .is-loading {
+    opacity: 0.6;
+    animation: pulse-opacity 1s infinite alternate;    
+  }
+
+  .usage-table {
+    margin-bottom: 30px;
+
+    .react-bs-table {
+      margin: 1em 0 0;
+    }
+  }
+}
+
+@keyframes pulse-opacity {
+  0% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.65;
   }
 }

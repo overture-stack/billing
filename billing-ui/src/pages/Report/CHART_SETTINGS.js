@@ -1,49 +1,46 @@
+import {Highcharts} from 'react-highcharts';
+import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
+
 export default {
-      chart: {
-          type: 'column'
-      },
-      title: {
-          text: 'Stacked column chart'
-      },
-      xAxis: {
-          categories: ['Apples', 'Oranges', 'Pears', 'Grapes', 'Bananas']
-      },
-      yAxis: {
-          min: 0,
-          title: {
-              text: 'Total fruit consumption'
-          },
-          stackLabels: {
-              enabled: true,
-              style: {
-                  fontWeight: 'bold',
-                  color: 'gray'
-              }
-          }
-      },
-      legend: {
-          align: 'right',
-          x: -30,
-          verticalAlign: 'top',
-          y: 25,
-          floating: true,
-          backgroundColor: 'white',
-          borderColor: '#CCC',
-          borderWidth: 1,
-          shadow: false,
-      },
-      tooltip: {
-          headerFormat: '<b>{point.x}</b><br/>',
-          pointFormat: '{series.name}: {point.y}<br/>Total: {point.stackTotal}'
-      },
-      plotOptions: {
-          column: {
-              stacking: 'normal',
-              dataLabels: {
-                  enabled: true,
-                  color: 'white'
-              }
-          }
-      },
-      series: []
-  };
+  chart: {
+    type: 'area'
+  },
+  title: {
+    text: ''
+  },
+  xAxis: {
+    type: 'datetime',
+    title: {
+      enabled: false
+    },
+    dateTimeLabelFormats: {
+      hour: '%l:%M %p'
+    },
+    labels: {
+      formatter: function () {
+        console.log(this.value)
+        return Highcharts.dateFormat('%a %d %b', this.value);
+      }
+    },
+  },
+  yAxis: {
+    title: {
+      text: 'Usage'
+    },
+  },
+  tooltip: {
+    split: false,
+  },
+  plotOptions: {
+    area: {
+      stacking: 'normal',
+      lineColor: '#666666',
+      lineWidth: 0,
+      marker: {
+        lineWidth: 0,
+        lineColor: '#666666'
+      }
+    }
+  },
+  series: getSeriesFromReportEntries([])
+};

@@ -11,6 +11,7 @@ npm install
 ```
 npm start
 ```
+ Then go to http://localhost:3500
 
 ## Build
 
