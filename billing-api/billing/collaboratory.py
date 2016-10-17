@@ -24,7 +24,7 @@ class Collaboratory:
         if hasattr(self, 'database'):
             self.database.close()
 
-    def get_usage_statistics(self, start_date, end_date, projects):
+    def get_usage_statistics(self, start_date, end_date, billing_projects, user_projects, user_id):
         results = self.database.query(
             '''
             SELECT
@@ -61,13 +61,19 @@ class Collaboratory:
                     nova.instances
 
                   WHERE
-                    vm_state   != 'error'          AND
+                    vm_state   != 'error'           AND
                     (
                       deleted_at >  :start_date  OR
                       deleted_at IS NULL
-                    )                              AND
-                    created_at <  :end_date        AND
-                    project_id IN :projects
+                    )                               AND
+                    created_at <  :end_date         AND
+                    (
+                      project_id IN :billing_projects OR
+                      (
+                        user_id    =  :user_id      AND
+                        project_id IN :user_projects
+                      )
+                    )
                   GROUP BY
                     user_id,
                     project_id
@@ -105,7 +111,13 @@ class Collaboratory:
                       deleted_at IS NULL
                     )                              AND
                     created_at <  :end_date        AND
-                    project_id IN :projects
+                    (
+                      project_id IN :billing_projects OR
+                      (
+                        user_id    =  :user_id      AND
+                        project_id IN :user_projects
+                      )
+                    )
                   GROUP BY
                     user_id,
                     project_id
@@ -117,9 +129,11 @@ class Collaboratory:
             ''',
             start_date=start_date,
             end_date=end_date,
-            projects=projects)
+            billing_projects=billing_projects,
+            user_projects=user_projects,
+            user_id=user_id)
 
-        return results
+        return results.all(as_dict=True)
 
     def get_image_storage_gigabyte_hours_by_project(self, start_date, end_date, projects):
         results = self.database.query(
@@ -162,7 +176,7 @@ class Collaboratory:
             end_date=end_date,
             start_date=start_date,
             projects=projects)
-        return results
+        return results.all(as_dict=True)
 
     def get_user_roles(self, user_id):
         results = self.database.query(
