@@ -8,7 +8,7 @@ export function getSeriesFromReportEntries(entries) {
     .map(metric => ({
       name: metric,
       data: aggregatedEntries.map(entry => ({
-        x: moment(entry.fromDate, moment.ISO_8601).unix(),
+        x: moment(entry.fromDate, moment.ISO_8601).valueOf(),
         y: entry[metric] || 0,
       }))
     }))
