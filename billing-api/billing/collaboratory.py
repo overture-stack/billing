@@ -9,6 +9,8 @@ class Collaboratory:
         logger.info('Acquiring database')
         self.database = records.Database(database_url)
         logger.info('Successfully connected to database')
+        self.user_map = {}
+        self.refresh_user_id_map()
 
     @classmethod
     def default_init(cls):
@@ -193,3 +195,23 @@ class Collaboratory:
                 role_map[result['project_id']] = [result['name'].lower()]
         return role_map
 
+    def refresh_user_id_map(self):
+        results = self.database.query(
+            '''
+            SELECT
+              id,
+              name
+
+            FROM
+              keystone.user
+            '''
+        )
+        for result in results.all(as_dict=True):
+            self.user_map[result['id']] = result['name']
+        return self.user_map
+
+    def get_username(self, user_id):
+        if user_id in self.user_map:
+            return self.user_map[user_id]
+        else:
+            return 'Username not found'

@@ -61,6 +61,7 @@ def login():
         auth_url=app.config['AUTH_URI'],
         username=request.json['username'],
         password=request.json['password'])
+    database.refresh_user_id_map()
     response = Response(status=200, content_type='application/json')
     response.headers['Authorization'] = token['token']
     return response
@@ -129,6 +130,7 @@ def generate_report_data(client, user_id):
             record_dict = record.as_dict()
             record_dict['fromDate'] = bucket_range['start_date']
             record_dict['toDate'] = bucket_range['end_date']
+            record_dict['username'] = database.user_map[record_dict['user']]
             report.append(record_dict)
 
         images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
