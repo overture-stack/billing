@@ -56,9 +56,9 @@ class extends Component {
   @observable chartSettings = CHART_SETTINGS;
   @observable filters = {
     projects: [],
-    fromDate: moment().subtract(1, 'y'),
+    fromDate: moment().subtract('months', 1),
     toDate: moment(),
-    bucketSize: TIME_PERIODS.MONTHLY,
+    bucketSize: TIME_PERIODS.DAILY,
   };
   @observable isLoading = true;
 
@@ -219,7 +219,7 @@ class extends Component {
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
             >Project</TableHeaderColumn>
             <TableHeaderColumn
-              dataField="user"
+              dataField="username"
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
             >User</TableHeaderColumn>
             <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''}>CPU (hrs)</TableHeaderColumn>
