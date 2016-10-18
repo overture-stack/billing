@@ -156,15 +156,14 @@ def generate_report_data(client, user_id):
             record['username'] = database.user_map[record['user']]
             report.append(record)
 
-        if billing_projects:
-            images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
-                                                                          bucket_range['end_date'],
-                                                                          billing_projects)
-            for image in images:
-                image['fromDate'] = bucket_range['start_date']
-                image['toDate'] = bucket_range['end_date']
-                image['user'] = None
-                report.append(image)
+        images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
+                                                                      bucket_range['end_date'],
+                                                                      billing_projects)
+        for image in images:
+            image['fromDate'] = bucket_range['start_date']
+            image['toDate'] = bucket_range['end_date']
+            image['user'] = None
+            report.append(image)
 
     return {'fromDate': original_start_date.isoformat(),
             'toDate': original_end_date.isoformat(),
