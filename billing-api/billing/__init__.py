@@ -61,6 +61,7 @@ def login():
         auth_url=app.config['AUTH_URI'],
         username=request.json['username'],
         password=request.json['password'])
+    database.refresh_user_id_map()
     response = Response(status=200, content_type='application/json')
     response.headers['Authorization'] = token['token']
     return response
@@ -82,6 +83,7 @@ def get_projects(client, user_id):
 @authenticate
 def generate_report_data(client, user_id):
     projects = request.args.get('projects')
+    user = request.args.get('user')
     bucket_size = request.args.get('bucket')
 
     try:
@@ -104,6 +106,27 @@ def generate_report_data(client, user_id):
     else:
         project_list = map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client))
 
+    role_map = database.get_user_roles(user_id)
+
+    # Init lists to empty strings so that sql doesn't kill me
+    billing_projects = ['']  # The projects we want to grab all info for
+    user_projects = ['']     # The projects we want to only grab info for one user for
+    for project in project_list:
+        if project in role_map:
+            if 'billing' in role_map[project]:
+                billing_projects.append(project)
+            else:
+                user_projects.append(project)
+
+    if user is not None and user == user_id:
+        user_projects = user_projects + billing_projects
+        billing_projects = ['']
+    elif user is not None:
+        user_projects = billing_projects
+        billing_projects = ['']
+    else:
+        user = user_id
+
     if bucket_size not in app.valid_bucket_sizes:
         bucket_size = 'daily'
     same_bucket, next_bucket = get_bucket_functions(bucket_size)
@@ -124,22 +147,24 @@ def generate_report_data(client, user_id):
     for bucket_range in date_ranges:
         records = database.get_usage_statistics(bucket_range['start_date'],
                                                 bucket_range['end_date'],
-                                                project_list)
-        for record in records.all():
-            record_dict = record.as_dict()
-            record_dict['fromDate'] = bucket_range['start_date']
-            record_dict['toDate'] = bucket_range['end_date']
-            report.append(record_dict)
+                                                billing_projects,
+                                                user_projects,
+                                                user)
+        for record in records:
+            record['fromDate'] = bucket_range['start_date']
+            record['toDate'] = bucket_range['end_date']
+            record['username'] = database.user_map[record['user']]
+            report.append(record)
 
-        images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
-                                                                      bucket_range['end_date'],
-                                                                      project_list)
-        for image in images.all():
-            image_dict = image.as_dict()
-            image_dict['fromDate'] = bucket_range['start_date']
-            image_dict['toDate'] = bucket_range['end_date']
-            image_dict['user'] = None
-            report.append(image_dict)
+        if billing_projects:
+            images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
+                                                                          bucket_range['end_date'],
+                                                                          billing_projects)
+            for image in images:
+                image['fromDate'] = bucket_range['start_date']
+                image['toDate'] = bucket_range['end_date']
+                image['user'] = None
+                report.append(image)
 
     return {'fromDate': original_start_date.isoformat(),
             'toDate': original_end_date.isoformat(),
