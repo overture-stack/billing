@@ -5,6 +5,9 @@ export default {
   chart: {
     type: 'area'
   },
+  credits: {
+      enabled: false
+  },
   title: {
     text: ''
   },
