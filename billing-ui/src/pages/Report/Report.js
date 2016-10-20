@@ -82,7 +82,6 @@ class extends Component {
   }
 
   updateChart = async () => {
-  // updateChart() {
     this.isLoading = true;
     const report = await fetchReport({
       projects: this.filters.projects.slice(),
