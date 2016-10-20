@@ -8,7 +8,7 @@ import moment from 'moment';
 
 import CHART_SETTINGS from './CHART_SETTINGS';
 
-import { DatePicker, Radio } from 'antd';
+import { Button, DatePicker, Radio } from 'antd';
 const RangePicker = DatePicker.RangePicker;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -60,7 +60,7 @@ class extends Component {
     toDate: moment(),
     bucketSize: TIME_PERIODS.DAILY,
   };
-  @observable isLoading = true;
+  @observable isLoading = false;
 
   @observable aggregationFields = defaultAggregationFields;
   @computed get entriesToDisplay() {
@@ -78,10 +78,11 @@ class extends Component {
 
   async componentDidMount() {
     this.projects = await fetchProjects();
-    autorun(this.updateChart);
+    // autorun(this.updateChart);
   }
 
   updateChart = async () => {
+  // updateChart() {
     this.isLoading = true;
     const report = await fetchReport({
       projects: this.filters.projects.slice(),
@@ -166,6 +167,14 @@ class extends Component {
             </RadioGroup>
           </div>
 
+          <div>
+            <Button
+              type='primary'
+              loading={this.isLoading}
+              onClick={() => this.updateChart()}
+             >Generate Report</Button>
+          </div>
+
         </div>
 
         <h2 className="section-heading">Summary</h2>
@@ -200,7 +209,11 @@ class extends Component {
           </div>
           <BootstrapTable
             data={this.entriesToDisplay}
-            pagination
+            striped={true}
+            condensed={true}
+            search={true}
+            exportCSV={true}
+            pagination={true}
             ignoreSinglePage
             keyField="key"
             options={{
@@ -214,18 +227,37 @@ class extends Component {
               dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
             >Period</TableHeaderColumn>
             <TableHeaderColumn
+              dataField="toDate"
+              hidden={true}
+              export={true}
+            >Period</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="projectId"
+              hidden={true}
+              dataSort={true}
+              export={true}
+            >Project ID</TableHeaderColumn>
+            <TableHeaderColumn
               dataField="projectId"
               dataFormat={id => _.find(this.projects, {id}).name}
-              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
+              csvFormat={(id) => _.find(this.projects, {id}).name}
+              csvHeader="projectName"
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)} dataSort={true}
             >Project</TableHeaderColumn>
             <TableHeaderColumn
               dataField="username"
-              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)} dataSort={true}
             >User</TableHeaderColumn>
-            <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''}>CPU (hrs)</TableHeaderColumn>
-            <TableHeaderColumn dataField="volume" dataFormat={x => x || ''}>Volume (hrs)</TableHeaderColumn>
-            <TableHeaderColumn dataField="image" dataFormat={x => x || ''}>Image (hrs)</TableHeaderColumn>
-            <TableHeaderColumn dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}>
+            <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''} dataAlign="right" dataSort={true}>
+              CPU (hrs)
+            </TableHeaderColumn>
+            <TableHeaderColumn dataField="volume" dataFormat={x => x || ''} dataAlign="right" dataSort={true}>
+              Volume (hrs)
+            </TableHeaderColumn>
+            <TableHeaderColumn dataField="image" dataFormat={x => x || ''} dataAlign="right" dataSort={true}>
+              Image (hrs)
+            </TableHeaderColumn>
+            <TableHeaderColumn dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])} dataAlign="right" dataSort={true}>
               Total (hrs)
             </TableHeaderColumn>
           </BootstrapTable>
