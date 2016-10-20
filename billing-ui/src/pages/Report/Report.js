@@ -234,31 +234,45 @@ class extends Component {
               dataField="projectId"
               hidden={true}
               dataSort={true}
-              export={true}
+              export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
             >Project ID</TableHeaderColumn>
             <TableHeaderColumn
               dataField="projectId"
+              filterFormatted={true}
               dataFormat={id => _.find(this.projects, {id}).name}
               csvFormat={(id) => _.find(this.projects, {id}).name}
               csvHeader="projectName"
-              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)} dataSort={true}
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
+              dataSort={true}
             >Project</TableHeaderColumn>
             <TableHeaderColumn
               dataField="username"
-              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)} dataSort={true}
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
+              dataSort={true}
             >User</TableHeaderColumn>
-            <TableHeaderColumn dataField="cpu" dataFormat={x => x || ''} dataAlign="right" dataSort={true}>
-              CPU (hrs)
-            </TableHeaderColumn>
-            <TableHeaderColumn dataField="volume" dataFormat={x => x || ''} dataAlign="right" dataSort={true}>
-              Volume (hrs)
-            </TableHeaderColumn>
-            <TableHeaderColumn dataField="image" dataFormat={x => x || ''} dataAlign="right" dataSort={true}>
-              Image (hrs)
-            </TableHeaderColumn>
-            <TableHeaderColumn dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])} dataAlign="right" dataSort={true}>
-              Total (hrs)
-            </TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="cpu"
+              dataFormat={x => x || ''}
+              dataAlign="right"
+              dataSort={true}
+            >CPU (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="volume"
+              dataFormat={x => x || ''}
+              dataAlign="right"
+              dataSort={true}
+            >Volume (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="image"
+              dataFormat={x => x || ''}
+              dataAlign="right"
+              dataSort={true}
+            >Image (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}
+              dataAlign="right"
+              dataSort={true}
+            >Total (hrs)</TableHeaderColumn>
           </BootstrapTable>
         </div>
       </div>
