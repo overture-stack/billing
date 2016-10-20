@@ -195,7 +195,13 @@ class Collaboratory:
                   actor_id = :user_id
               ) AS assignment
               LEFT JOIN
-                keystone.role AS role
+              (
+                SELECT
+                  id,
+                  name
+                FROM
+                  keystone.role
+              ) AS role
               ON
                 role.id = assignment.role_id;
             ''', user_id=user_id)
