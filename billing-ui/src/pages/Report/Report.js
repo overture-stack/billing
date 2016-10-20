@@ -170,7 +170,7 @@ class extends Component {
             <Button
               type='primary'
               loading={this.isLoading}
-              onClick={this.updateChart()}
+              onClick={this.updateChart}
              >Generate Report</Button>
           </div>
 
