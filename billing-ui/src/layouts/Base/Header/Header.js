@@ -57,7 +57,7 @@ export default class extends Component {
           ref="logout"
           className="logout"
           onClick={() => user.logout()}
-        >Logout</span>
+        >Logout {user.username}</span>
       </header>
     );
   }
