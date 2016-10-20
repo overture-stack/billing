@@ -78,7 +78,6 @@ class extends Component {
 
   async componentDidMount() {
     this.projects = await fetchProjects();
-    // autorun(this.updateChart);
   }
 
   updateChart = async () => {
@@ -171,7 +170,7 @@ class extends Component {
             <Button
               type='primary'
               loading={this.isLoading}
-              onClick={() => this.updateChart()}
+              onClick={this.updateChart()}
              >Generate Report</Button>
           </div>
 
