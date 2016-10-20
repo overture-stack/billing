@@ -78,6 +78,7 @@ class extends Component {
 
   async componentDidMount() {
     this.projects = await fetchProjects();
+    this.updateChart()
   }
 
   updateChart = async () => {
