@@ -153,7 +153,7 @@ def generate_report_data(client, user_id):
         for record in records:
             record['fromDate'] = bucket_range['start_date']
             record['toDate'] = bucket_range['end_date']
-            record['username'] = database.user_map[record['user']]
+            record['username'] = database.get_username(record['user'])
             report.append(record)
 
         images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
