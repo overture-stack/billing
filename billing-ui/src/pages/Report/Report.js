@@ -97,6 +97,12 @@ class extends Component {
   redrawChart = () => {
     const newSeries = getSeriesFromReportEntries(this.report.entries).slice();
     const chart = this.refs.chart.getChart();
+    const subtitle = new Date(this.report.fromDate).toDateString().concat(
+        ' - ',
+        new Date(this.report.toDate).toDateString());
+    chart.setTitle(
+        { text: "Collaboratory Usage Summary" },
+        { text: subtitle });
     chart.series.forEach(serie => serie.setData(newSeries.find(newSerie => newSerie.name === serie.name).data, false, false));
     chart.update({
       colors: [
