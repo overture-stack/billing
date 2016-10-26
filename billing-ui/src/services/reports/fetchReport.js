@@ -1,6 +1,7 @@
 import {fetchHeaders} from '~/utils';
 import _ from 'lodash';
 import encodeUriSegment from 'encode-uri-query';
+import user from '~/user';
 
 export async function fetchReport ({projects, bucketSize, fromDate, toDate}) {
   const query = _.map(Object.assign({
@@ -15,6 +16,8 @@ export async function fetchReport ({projects, bucketSize, fromDate, toDate}) {
   });
 
   const data = await response.json();
+  user.token = response.headers.get('authorization');
+  if (response.status === 401) user.logout();
 
   return data;
 }

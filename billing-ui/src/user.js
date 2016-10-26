@@ -1,4 +1,4 @@
-import {observable, action} from 'mobx';
+import {observable, action, autorun} from 'mobx';
 import {fetchHeaders} from '~/utils';
 
 const user = observable({
@@ -21,6 +21,7 @@ const user = observable({
       this.isLoggingIn = false;
       this.username = username;
       this.token = response.headers.get('authorization');
+      window.sessionStorage.setItem('username', user.username);
       this.isLoggedIn = true;
     } else if (response.status === 401) {
       throw new Error('Incorrect username or password');
@@ -34,11 +35,16 @@ const user = observable({
 
   logout: action(async function () {
     console.log('logout');
+    user.token = '';
     this.isLoggedIn = false;
     return await Promise.resolve();
   })
 });
 
+user.token = window.sessionStorage.getItem('token');
+user.username = window.sessionStorage.getItem('username');
+user.isLoggedIn = !!user.token;
+autorun(() => window.sessionStorage.setItem('token', user.token));
 window.user = user;
 
 export default user;
