@@ -33,6 +33,10 @@ class extends Component {
     this.animateIn().then(callback);
   }
 
+  componentWillAppear(callback) {
+    this.animateIn().then(callback);
+  }
+
   componentWillLeave(callback) {
     this.animateOut().then(callback);
   }
