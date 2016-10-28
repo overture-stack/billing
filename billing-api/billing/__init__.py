@@ -18,11 +18,19 @@ app.secret_key = app.config['SECRET_KEY']
 database = Collaboratory(app.config['MYSQL_URI'], app.logger)
 
 app.valid_bucket_sizes = app.config['VALID_BUCKET_SIZES']
+app.pricing_periods = app.config['PRICING_PERIODS']
+
+# Init pricing periods from strings to datetime
+for period in app.pricing_periods:
+    period['period_start'] = parse(period['period_start'])
+    period['period_end'] = parse(period['period_end'])
 
 
 def parse_decimal(obj):
     if isinstance(obj, decimal.Decimal):
         return int(obj)
+    elif obj is None:
+        return 0
     else:
         return obj
 
@@ -127,23 +135,10 @@ def generate_report_data(client, user_id):
     else:
         user = user_id
 
-    if bucket_size not in app.valid_bucket_sizes:
-        bucket_size = 'daily'
-    same_bucket, next_bucket = get_bucket_functions(bucket_size)
+    date_ranges, bucket_size, same_bucket, next_bucket = divide_time_range(start_date, end_date, bucket_size)
 
-    date_ranges = []
-    while not same_bucket(start_date, end_date):
-        current_start_date = start_date
-        start_date = next_bucket(start_date)
-        if start_date < end_date:
-            date_ranges.append({'start_date': current_start_date.isoformat(), 'end_date': start_date.isoformat()})
-        else:
-            date_ranges.append({'start_date': current_start_date.isoformat(), 'end_date': end_date.isoformat()})
-
-    if start_date < end_date:
-        date_ranges.append({'start_date': start_date.isoformat(), 'end_date': end_date.isoformat()})
-
-    report = []
+    # Generate list of responses
+    responses = []
     for bucket_range in date_ranges:
         records = database.get_usage_statistics(bucket_range['start_date'],
                                                 bucket_range['end_date'],
@@ -153,8 +148,10 @@ def generate_report_data(client, user_id):
         for record in records:
             record['fromDate'] = bucket_range['start_date']
             record['toDate'] = bucket_range['end_date']
+            record['cpuPrice'] = bucket_range['cpu_price']
+            record['volumePrice'] = bucket_range['volume_price']
             record['username'] = database.get_username(record['user'])
-            report.append(record)
+            responses.append(record)
 
         images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
                                                                       bucket_range['end_date'],
@@ -162,13 +159,88 @@ def generate_report_data(client, user_id):
         for image in images:
             image['fromDate'] = bucket_range['start_date']
             image['toDate'] = bucket_range['end_date']
+            image['imagePrice'] = bucket_range['image_price']
             image['user'] = None
-            report.append(image)
+            responses.append(image)
+
+    def sort_results_into_buckets(report, item):
+        for report_item in report:
+            if (report_item['user'] == item['user'] and
+                    report_item['projectId'] == item['projectId'] and
+                    same_bucket(parse(report_item['fromDate']), parse(item['fromDate']))):
+                report_item['fromDate'] = min(report_item['fromDate'], item['fromDate'])
+                report_item['toDate'] = max(report_item['toDate'], item['toDate'])
+                if report_item['user'] is not None:
+                    if item['cpu'] is not None:
+                        report_item['cpu'] += item['cpu']
+                        report_item['cpuCost'] += parse_decimal(item['cpu']) * item['cpuPrice']
+                    if item['volume'] is not None:
+                        report_item['volume'] += item['volume']
+                        report_item['volumeCost'] += parse_decimal(item['volume']) * item['volumePrice']
+                else:
+                    report_item['image'] += item['image']
+                    report_item['imageCost'] += parse_decimal(item['image']) * item['imagePrice']
+                return report
+
+        new_item = {
+            'fromDate': item['fromDate'],
+            'toDate': item['toDate'],
+            'user': item['user'],
+            'projectId': item['projectId']
+        }
+        if new_item['user'] is not None:
+            new_item['username'] = item['username']
+            if item['cpu'] is not None:
+                new_item['cpu'] = parse_decimal(item['cpu'])
+                new_item['cpuCost'] = parse_decimal(item['cpu']) * item['cpuPrice']
+            if item['volume'] is not None:
+                new_item['volume'] = parse_decimal(item['volume'])
+                new_item['volumeCost'] = parse_decimal(item['volume']) * item['volumePrice']
+        else:
+            new_item['image'] = item['image']
+            new_item['imageCost'] = parse_decimal(item['image']) * item['imagePrice']
+        report.append(new_item)
+        return report
+    report = reduce(sort_results_into_buckets, responses, list())
 
     return {'fromDate': original_start_date.isoformat(),
             'toDate': original_end_date.isoformat(),
             'bucket': bucket_size,
             'entries': report}
+
+
+def divide_time_range(start_date, end_date, bucket_size):
+    if bucket_size not in app.valid_bucket_sizes:
+        bucket_size = 'daily'
+    same_bucket, next_bucket = get_bucket_functions(bucket_size)
+
+    pricing_periods = iter(app.pricing_periods)
+    next_period = next(pricing_periods, None)
+    period = next_period
+
+    date_ranges = []
+    while not start_date == end_date:
+        next_bucket_date = next_bucket(start_date)
+
+        if start_date >= period['period_end'] and next_period is not None:
+            next_period = next(pricing_periods, None)
+            if next_period is not None:
+                period = next_period
+
+        period_end_date = min(next_bucket_date, period['period_end'], end_date)
+
+        bucket = dict()
+        bucket['start_date'] = start_date.isoformat()
+        bucket['end_date'] = period_end_date.isoformat()
+        bucket['cpu_price'] = period['cpu_price']
+        bucket['volume_price'] = period['volume_price']
+        bucket['image_price'] = period['image_price']
+
+        date_ranges.append(bucket)
+
+        start_date = period_end_date
+
+    return date_ranges, bucket_size, same_bucket, next_bucket
 
 
 def get_bucket_functions(bucket_size):
@@ -179,7 +251,7 @@ def get_bucket_functions(bucket_size):
             return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
 
         def next_bucket(date_to_change):
-            date_to_change = date_to_change + relativedelta(days=+1, weekday=SU(+1))
+            date_to_change = date_to_change + relativedelta(days=+1, weekday=MO(+1))
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
     elif bucket_size == 'yearly':
         def same_bucket(start, end):
