@@ -6,13 +6,13 @@ VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing optio
 PRICING_PERIODS = [
     {
         'period_start': '2016-01-01',
-        'period_end': '2016-10-15',
+        'period_end': '2016-10-22',
         'cpu_price': 0.01,
         'volume_price': 0.001,
         'image_price': 0.001
     },
     {
-        'period_start': '2016-10-15',
+        'period_start': '2016-10-22',
         'period_end': '2016-12-01',
         'cpu_price': 0.02,
         'volume_price': 0.002,

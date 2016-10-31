@@ -3,7 +3,8 @@ import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 export default {
   chart: {
-    type: 'area'
+    type: 'area',
+    alignTicks: true
   },
   credits: {
       enabled: false
@@ -21,14 +22,14 @@ export default {
     },
     labels: {
       formatter: function () {
-        console.log(this.value)
+        console.log(this.value);
         return Highcharts.dateFormat('%a %d %b', this.value);
       }
     },
   },
   yAxis: {
     title: {
-      text: 'Usage'
+      text: 'Cost ($)'
     },
   },
   tooltip: {

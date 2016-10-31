@@ -234,4 +234,4 @@ class Collaboratory:
         if user_id in self.user_map:
             return self.user_map[user_id]
         else:
-            return 'Username not found'
+            return 'Unkown User <' + user_id + '>'

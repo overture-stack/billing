@@ -52,6 +52,7 @@ class extends Component {
   @observable report = {
     entries: []
   };
+  @observable shouldShowCost = true;
   @observable projects = [];
   @observable chartSettings = CHART_SETTINGS;
   @observable filters = {
@@ -78,7 +79,8 @@ class extends Component {
 
   async componentDidMount() {
     this.projects = await fetchProjects();
-    this.updateChart()
+    this.updateChart();
+    autorun(this.redrawChart);
   }
 
   updateChart = async () => {
@@ -90,19 +92,20 @@ class extends Component {
       toDate: this.filters.toDate.toISOString(),
     });
     this.report = report;
-    this.redrawChart();
     this.isLoading = false;
   }
 
   redrawChart = () => {
-    const newSeries = getSeriesFromReportEntries(this.report.entries).slice();
+    const newSeries = getSeriesFromReportEntries(this.report.entries, {shouldShowCost:this.shouldShowCost}).slice();
+    console.log(newSeries);
     const chart = this.refs.chart.getChart();
     const subtitle = new Date(this.report.fromDate).toDateString().concat(
         ' - ',
         new Date(this.report.toDate).toDateString());
     chart.setTitle(
-        { text: "Collaboratory Usage Summary" },
+        { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
         { text: subtitle });
+    chart.yAxis[0].update({title: {text: `${this.shouldShowCost ? 'Cost ($)' : 'Usage (hrs)'}`}})
     chart.series.forEach(serie => serie.setData(newSeries.find(newSerie => newSerie.name === serie.name).data, false, false));
     chart.update({
       colors: [
@@ -111,6 +114,7 @@ class extends Component {
         '#2C3E50',
       ]
     });
+    chart.reflow();
 
     window.chart = chart;
   }
@@ -183,6 +187,20 @@ class extends Component {
         </div>
 
         <h2 className="section-heading">Summary</h2>
+        <div>
+          <RadioGroup>
+            <RadioButton
+              checked={this.shouldShowCost}
+              onClick={() => this.shouldShowCost = true}
+              value={true}
+            >Cost</RadioButton>
+            <RadioButton
+              checked={!this.shouldShowCost}
+              onClick={() => this.shouldShowCost = false}
+              value={false}
+            >Usage</RadioButton>
+          </RadioGroup>
+        </div>
 
         <div className={`chart-container ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
           <ReactHighcharts config={this.chartSettings} ref="chart" isPureConfig={true}></ReactHighcharts>
@@ -218,18 +236,20 @@ class extends Component {
             condensed={true}
             search={true}
             exportCSV={true}
+            hover={true}
             pagination={true}
             ignoreSinglePage
             keyField="key"
             options={{
               hideSizePerPage: true,
-              sizePerPage: 10,
+              sizePerPage: 25,
               sizePerPageList: [10, 50, 100]
             }}
             >
             <TableHeaderColumn
               dataField="fromDate"
               dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
+              dataSort={true}
             >Period</TableHeaderColumn>
             <TableHeaderColumn
               dataField="toDate"
@@ -261,24 +281,55 @@ class extends Component {
               dataFormat={x => x || ''}
               dataAlign="right"
               dataSort={true}
+              hidden={this.shouldShowCost}
             >CPU (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="cpuCost"
+              dataFormat={x => x ? `$${x}` : ''}
+              dataAlign="right"
+              dataSort={true}
+              hidden={!this.shouldShowCost}
+            >CPU Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume"
               dataFormat={x => x || ''}
               dataAlign="right"
               dataSort={true}
+              hidden={this.shouldShowCost}
             >Volume (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="volumeCost"
+              dataFormat={x => x ? `$${x}` : ''}
+              dataAlign="right"
+              dataSort={true}
+              hidden={!this.shouldShowCost}
+            >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="image"
               dataFormat={x => x || ''}
               dataAlign="right"
               dataSort={true}
+              hidden={this.shouldShowCost}
             >Image (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataField="imageCost"
+              dataFormat={x => x ? `$${x}` : ''}
+              dataAlign="right"
+              dataSort={true}
+              hidden={!this.shouldShowCost}
+            >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}
               dataAlign="right"
               dataSort={true}
+              hidden={this.shouldShowCost}
             >Total (hrs)</TableHeaderColumn>
+            <TableHeaderColumn
+              dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost])}`}
+              dataAlign="right"
+              dataSort={true}
+              hidden={!this.shouldShowCost}
+            >Total Cost</TableHeaderColumn>
           </BootstrapTable>
         </div>
       </div>

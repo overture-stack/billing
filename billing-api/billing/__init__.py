@@ -173,13 +173,13 @@ def generate_report_data(client, user_id, database):
                 if report_item['user'] is not None:
                     if item['cpu'] is not None:
                         report_item['cpu'] += item['cpu']
-                        report_item['cpuCost'] += parse_decimal(item['cpu']) * item['cpuPrice']
+                        report_item['cpuCost'] += round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
                     if item['volume'] is not None:
                         report_item['volume'] += item['volume']
-                        report_item['volumeCost'] += parse_decimal(item['volume']) * item['volumePrice']
+                        report_item['volumeCost'] += round(parse_decimal(item['volume']) * item['volumePrice'], 4)
                 else:
                     report_item['image'] += item['image']
-                    report_item['imageCost'] += parse_decimal(item['image']) * item['imagePrice']
+                    report_item['imageCost'] += round(parse_decimal(item['image']) * item['imagePrice'], 4)
                 return report
 
         new_item = {
@@ -192,13 +192,13 @@ def generate_report_data(client, user_id, database):
             new_item['username'] = item['username']
             if item['cpu'] is not None:
                 new_item['cpu'] = parse_decimal(item['cpu'])
-                new_item['cpuCost'] = parse_decimal(item['cpu']) * item['cpuPrice']
+                new_item['cpuCost'] = round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
             if item['volume'] is not None:
                 new_item['volume'] = parse_decimal(item['volume'])
-                new_item['volumeCost'] = parse_decimal(item['volume']) * item['volumePrice']
+                new_item['volumeCost'] = round(parse_decimal(item['volume']) * item['volumePrice'], 4)
         else:
             new_item['image'] = item['image']
-            new_item['imageCost'] = parse_decimal(item['image']) * item['imagePrice']
+            new_item['imageCost'] = round(parse_decimal(item['image']) * item['imagePrice'], 4)
         report.append(new_item)
         return report
     report = reduce(sort_results_into_buckets, responses, list())
