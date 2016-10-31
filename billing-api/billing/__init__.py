@@ -15,8 +15,6 @@ app.config.from_object(default)
 
 app.secret_key = app.config['SECRET_KEY']
 
-database = Collaboratory(app.config['MYSQL_URI'], app.logger)
-
 app.valid_bucket_sizes = app.config['VALID_BUCKET_SIZES']
 app.pricing_periods = app.config['PRICING_PERIODS']
 
@@ -47,7 +45,8 @@ def authenticate(func):
                 raise AuthenticationError('Cannot parse authorization token')
             c = sessions.validate_token(app.config['AUTH_URI'], token)
             new_token = sessions.renew_token(app.config['AUTH_URI'], token)
-            retval = func(c, new_token['user_id'], *args, **kwargs)
+            database = Collaboratory(app.config['MYSQL_URI'], app.logger)
+            retval = func(c, new_token['user_id'], database, *args, **kwargs)
             response = Response(json.dumps(retval, default=parse_decimal), status=200, content_type='application/json')
             response.headers['Authorization'] = new_token['token']
             return response
@@ -63,6 +62,7 @@ def api_error_handler(e):
 
 @app.route('/login', methods=['POST'])
 def login():
+    database = Collaboratory(app.config['MYSQL_URI'], app.logger)
     if 'username' not in request.json or 'password' not in request.json:
         raise BadRequestError('Please provide username and password in the body of your request')
     token = sessions.get_new_token(
@@ -77,7 +77,7 @@ def login():
 
 @app.route('/projects', methods=['GET'])
 @authenticate
-def get_projects(client, user_id):
+def get_projects(client, user_id, database):
     role_map = database.get_user_roles(user_id)
     tenants = map(lambda tenant: {'id': tenant.to_dict()['id'],
                                   'name': tenant.to_dict()['name'],
@@ -89,7 +89,7 @@ def get_projects(client, user_id):
 
 @app.route('/reports', methods=['GET'])
 @authenticate
-def generate_report_data(client, user_id):
+def generate_report_data(client, user_id, database):
     projects = request.args.get('projects')
     user = request.args.get('user')
     bucket_size = request.args.get('bucket')
