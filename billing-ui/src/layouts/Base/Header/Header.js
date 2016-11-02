@@ -45,19 +45,41 @@ export default class extends Component {
 
   render() {
     return (
-      <header className="Header" ref="container">
-        <img
-          ref="logo"
-          className="logo"
-          src={require('~/assets/images/logo-full.png')}
-          alt="Cancer Genome COLLABORATORY"
-        />
+      <header>
+        <div
+          ref="topbar"
+          className="topbar">
+            <div
+              className="link-container">
+              <a
+                  ref="website-link"
+                  className="links"
+                  href="http://www.cancercollaboratory.org"
+                  target="_blank"
+              >Collaboratory Website</a>
+              <span className="links"> | </span>
+              <a
+                  ref="console-link"
+                  className="links"
+                  href="https://console.cancercollaboratory.org/horizon/auth/login/?next=/"
+                  target="_blank"
+              >Collaboratory Console</a>
+            </div>
+        </div>
+        <div  className="Header" ref="container">
+          <img
+            ref="logo"
+            className="logo"
+            src={require('~/assets/images/logo.svg')}
+            alt="Cancer Genome COLLABORATORY"
+          />
 
-        <span
-          ref="logout"
-          className="logout"
-          onClick={() => user.logout()}
-        >Logout {user.username}</span>
+          <span
+            ref="logout"
+            className="logout"
+            onClick={() => user.logout()}
+          >Logout {user.username}</span>
+        </div>
       </header>
     );
   }

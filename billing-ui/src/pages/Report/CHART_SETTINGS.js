@@ -22,7 +22,6 @@ export default {
     },
     labels: {
       formatter: function () {
-        console.log(this.value);
         return Highcharts.dateFormat('%a %d %b', this.value);
       }
     },
@@ -34,6 +33,7 @@ export default {
   },
   tooltip: {
     split: false,
+    valueDecimals: 2,
   },
   plotOptions: {
     area: {

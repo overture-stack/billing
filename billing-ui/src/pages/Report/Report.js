@@ -68,6 +68,10 @@ class extends Component {
     return aggregateEntries(this.report.entries, x => _(x).pick(this.aggregationFields.slice()).values().value().join(',') );
   }
 
+  @computed get reportSummary() {
+    return aggregateEntries(this.report.entries, "" );
+  }
+
   handleProjectsChange = (option) => {
     this.filters.projects = option.map(x => x.value);
   }
@@ -99,9 +103,9 @@ class extends Component {
     const newSeries = getSeriesFromReportEntries(this.report.entries, {shouldShowCost:this.shouldShowCost}).slice();
     console.log(newSeries);
     const chart = this.refs.chart.getChart();
-    const subtitle = new Date(this.report.fromDate).toDateString().concat(
+    const subtitle = new Date(this.report.fromDate || "").toDateString().concat(
         ' - ',
-        new Date(this.report.toDate).toDateString());
+        new Date(this.report.toDate || "").toDateString());
     chart.setTitle(
         { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
         { text: subtitle });
@@ -187,7 +191,7 @@ class extends Component {
         </div>
 
         <h2 className="section-heading">Summary</h2>
-        <div>
+        <div className="summary">
           <RadioGroup>
             <RadioButton
               checked={this.shouldShowCost}
@@ -200,6 +204,62 @@ class extends Component {
               value={false}
             >Usage</RadioButton>
           </RadioGroup>
+          <div
+            className="summary-table">
+            <BootstrapTable
+               data={this.reportSummary}
+               striped={true}
+               keyField="key"
+               width="200px"
+            >
+              <TableHeaderColumn
+                dataField="cpu"
+                hidden={this.shouldShowCost}
+                dataFormat={x => x ? x.toLocaleString() : ''}
+                dataAlign="right"
+              >CPU (hrs)</TableHeaderColumn>
+              <TableHeaderColumn
+                dataField="volume"
+                hidden={this.shouldShowCost}
+                dataFormat={x => x ? x.toLocaleString() : ''}
+                dataAlign="right"
+              >Volume (hrs)</TableHeaderColumn>
+              <TableHeaderColumn
+                dataField="image"
+                hidden={this.shouldShowCost}
+                dataFormat={x => x ? x.toLocaleString() : ''}
+                dataAlign="right"
+              >Image (hrs)</TableHeaderColumn>
+              <TableHeaderColumn
+                dataField="cpuCost"
+                dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+                hidden={!this.shouldShowCost}
+                dataAlign="right"
+              >CPU Cost</TableHeaderColumn>
+              <TableHeaderColumn
+                dataField="volumeCost"
+                dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+                hidden={!this.shouldShowCost}
+                dataAlign="right"
+              >Volume Cost</TableHeaderColumn>
+              <TableHeaderColumn
+                dataField="imageCost"
+                dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+                hidden={!this.shouldShowCost}
+                dataAlign="right"
+              >Image Cost</TableHeaderColumn>
+              <TableHeaderColumn
+                dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}
+                dataAlign="right"
+                hidden={this.shouldShowCost}
+              >Total (hrs)</TableHeaderColumn>
+              <TableHeaderColumn
+                dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2)}`}
+                dataAlign="right"
+                hidden={!this.shouldShowCost}
+              >Total Cost</TableHeaderColumn>
+            </BootstrapTable>
+          </div>
         </div>
 
         <div className={`chart-container ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
@@ -273,59 +333,60 @@ class extends Component {
             >Project</TableHeaderColumn>
             <TableHeaderColumn
               dataField="username"
+              dataFormat={(cell, row) => cell ? cell : `(Project) ${_.find(this.projects, {'id':row.projectId}).name}`}
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
               dataSort={true}
             >User</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpu"
-              dataFormat={x => x || ''}
+              dataFormat={x => x ? x.toLocaleString() : ''}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpuCost"
-              dataFormat={x => x ? `$${x}` : ''}
+              dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
             >CPU Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume"
-              dataFormat={x => x || ''}
+              dataFormat={x => x ? x.toLocaleString() : ''}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >Volume (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volumeCost"
-              dataFormat={x => x ? `$${x}` : ''}
+              dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
             >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="image"
-              dataFormat={x => x || ''}
+              dataFormat={x => x ? x.toLocaleString() : ''}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >Image (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="imageCost"
-              dataFormat={x => x ? `$${x}` : ''}
+              dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
             >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
-              dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}
+              dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image]).toLocaleString()}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >Total (hrs)</TableHeaderColumn>
             <TableHeaderColumn
-              dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost])}`}
+              dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2).toLocaleString()}`}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}

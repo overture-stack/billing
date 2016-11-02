@@ -151,7 +151,9 @@ def generate_report_data(client, user_id, database):
             record['cpuPrice'] = bucket_range['cpu_price']
             record['volumePrice'] = bucket_range['volume_price']
             record['username'] = database.get_username(record['user'])
-            responses.append(record)
+            # TODO: append all records
+            if record['username'] != 'Unknown User':
+                responses.append(record)
 
         images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
                                                                       bucket_range['end_date'],
