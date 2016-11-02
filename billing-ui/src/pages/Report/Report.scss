@@ -9,6 +9,17 @@
     color: #333;
   }
 
+  .summary {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    .summary-table {
+      max-width: 400px;
+    }
+  }
+
   .section-heading {
     font-size: 22px;
     margin: 1em 0;

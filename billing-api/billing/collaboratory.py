@@ -1,6 +1,7 @@
 import records
 
 
+# TODO: Make this not use Records, as Records caches responses
 class Collaboratory:
 
     def __init__(self, database_url, logger):
@@ -234,4 +235,5 @@ class Collaboratory:
         if user_id in self.user_map:
             return self.user_map[user_id]
         else:
-            return 'Unkown User <' + user_id + '>'
+            # return 'Unkown User <' + user_id + '>'
+            return 'Unknown User'
