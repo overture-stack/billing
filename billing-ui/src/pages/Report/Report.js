@@ -103,9 +103,10 @@ class extends Component {
     const newSeries = getSeriesFromReportEntries(this.report.entries, {shouldShowCost:this.shouldShowCost}).slice();
     console.log(newSeries);
     const chart = this.refs.chart.getChart();
-    const subtitle = new Date(this.report.fromDate || "").toDateString().concat(
+    console.log(this.report.fromDate);
+    const subtitle = new Date(this.report.fromDate || this.filters.fromDate.toISOString()).toDateString().concat(
         ' - ',
-        new Date(this.report.toDate || "").toDateString());
+        new Date(this.report.toDate || this.filters.toDate.toISOString()).toDateString());
     chart.setTitle(
         { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
         { text: subtitle });
