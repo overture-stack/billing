@@ -151,9 +151,7 @@ def generate_report_data(client, user_id, database):
             record['cpuPrice'] = bucket_range['cpu_price']
             record['volumePrice'] = bucket_range['volume_price']
             record['username'] = database.get_username(record['user'])
-            # TODO: append all records
-            if record['username'] != 'Unknown User':
-                responses.append(record)
+            responses.append(record)
 
         images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
                                                                       bucket_range['end_date'],
@@ -219,6 +217,10 @@ def divide_time_range(start_date, end_date, bucket_size):
     pricing_periods = iter(app.pricing_periods)
     next_period = next(pricing_periods, None)
     period = next_period
+    while start_date >= period['period_end'] and next_period is not None:
+        next_period = next(pricing_periods, None)
+        if next_period is not None:
+            period = next_period
 
     date_ranges = []
     while not start_date == end_date:
@@ -229,7 +231,10 @@ def divide_time_range(start_date, end_date, bucket_size):
             if next_period is not None:
                 period = next_period
 
-        period_end_date = min(next_bucket_date, period['period_end'], end_date)
+        if start_date < period['period_end']:
+            period_end_date = min(next_bucket_date, period['period_end'], end_date)
+        else:
+            period_end_date = min(next_bucket_date, end_date)
 
         bucket = dict()
         bucket['start_date'] = start_date.isoformat()
