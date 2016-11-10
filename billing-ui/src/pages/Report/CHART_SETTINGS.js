@@ -60,7 +60,7 @@ export default {
         lineWidth: 0,
         lineColor: '#666666'
       }
-    }
+    },
   },
   series: getSeriesFromReportEntries([])
 };

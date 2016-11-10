@@ -20,17 +20,17 @@ MYSQL_URI = 'mysql://root:test@142.1.177.124:3306'  # Mysql URI
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
 PRICING_PERIODS = [
     {
-        'period_start': '2016-01-01',
-        'period_end': '2016-10-22',
-        'cpu_price': 0.01,
-        'volume_price': 0.001,
-        'image_price': 0.001
+        'period_start': '2013-01-01',
+        'period_end': '2016-11-03',
+        'cpu_price': 0.04,
+        'volume_price': 0.02,
+        'image_price': 0.04
     },
     {
-        'period_start': '2016-10-22',
-        'period_end': '2016-12-01',
-        'cpu_price': 0.02,
-        'volume_price': 0.002,
-        'image_price': 0.002
+        'period_start': '2016-11-03',
+        'period_end': '2016-12-22',
+        'cpu_price': 0.06,
+        'volume_price': 0.03,
+        'image_price': 0.03
     }
 ]

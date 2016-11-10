@@ -58,17 +58,17 @@ class Collaboratory:
                       CEIL(
                         TIMESTAMPDIFF(
                           SECOND,
-                            GREATEST(
-                              :start_date,
-                              created_at
-                            ),
-                            LEAST(
-                              :end_date,
-                                COALESCE(
-                                  deleted_at,
-                                  :end_date
-                                )
+                          GREATEST(
+                            :start_date,
+                            created_at
+                          ),
+                          LEAST(
+                            :end_date,
+                            COALESCE(
+                              deleted_at,
+                              :end_date
                             )
+                          )
                         ) / 3600
                       ) * vcpus
                     ) AS core_hours
@@ -103,17 +103,17 @@ class Collaboratory:
                       CEIL(
                         TIMESTAMPDIFF(
                           SECOND,
-                            GREATEST(
-                              :start_date,
-                              created_at
-                            ),
-                            LEAST(
-                              :end_date,
-                                COALESCE(
-                                  deleted_at,
-                                  :end_date
-                                )
+                          GREATEST(
+                            :start_date,
+                            created_at
+                          ),
+                          LEAST(
+                            :end_date,
+                            COALESCE(
+                              deleted_at,
+                              :end_date
                             )
+                          )
                         ) / 3600
                       ) * size
                     ) AS gigabyte_hours
@@ -155,38 +155,38 @@ class Collaboratory:
         results = self.database.query(
             '''
             SELECT
-                CEIL(
-                    SUM(
-                        CEIL(
-                            TIMESTAMPDIFF(
-                                SECOND,
-                                GREATEST(
-                                    :start_date,
-                                    created_at
-                                ),
-                                LEAST(
-                                    :end_date,
-                                    COALESCE(
-                                        deleted_at,
-                                        :end_date
-                                    )
-                                )
-                            ) / 3600
-                        ) * size
-                    ) / POWER(2, 30)
-                ) AS image,
-                owner AS projectId
+              CEIL(
+                SUM(
+                  CEIL(
+                    TIMESTAMPDIFF(
+                      SECOND,
+                      GREATEST(
+                        :start_date,
+                        created_at
+                      ),
+                      LEAST(
+                        :end_date,
+                        COALESCE(
+                          deleted_at,
+                          :end_date
+                        )
+                      )
+                    ) / 3600
+                  ) * size
+                ) / POWER(2, 30)
+              ) AS image,
+              owner AS projectId
 
             FROM
-                glance.images
+              glance.images
 
             WHERE
-                (
-                    deleted_at >  :start_date  OR
-                    deleted_at IS NULL
-                )                              AND
-                created_at <  :end_date        AND
-                owner IN :projects
+              (
+                deleted_at >  :start_date  OR
+                deleted_at IS NULL
+              )                              AND
+              created_at <  :end_date        AND
+              owner IN :projects
             GROUP BY owner;
             ''',
             end_date=end_date,
@@ -250,5 +250,4 @@ class Collaboratory:
         if user_id in self.user_map:
             return self.user_map[user_id]
         else:
-            # return 'Unkown User <' + user_id + '>'
-            return 'Unknown User'
+            return 'Unknown User <' + user_id + '>'
