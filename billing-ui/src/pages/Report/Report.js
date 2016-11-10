@@ -73,8 +73,8 @@ class extends Component {
   @observable chartSettings = CHART_SETTINGS;
   @observable filters = {
     projects: [],
-    fromDate: moment().subtract('months', 1),
-    toDate: moment(),
+    fromDate: moment().utc().subtract('months', 1).startOf('day'),
+    toDate: moment().utc().startOf('day'),
     bucketSize: TIME_PERIODS.DAILY,
   };
   @observable isLoading = false;
