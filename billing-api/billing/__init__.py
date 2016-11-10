@@ -1,8 +1,23 @@
+# Copyright (c) 2016 The Ontario Institute for Cancer Research. All rights reserved.
+#
+# This program and the accompanying materials are made available under the terms of the GNU Public License v3.0.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+# SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask import Flask, request, Response
 from dateutil.parser import parse
 from dateutil.relativedelta import *
 from datetime import datetime
-from collaboratory import Collaboratory
+from usage_queries import Collaboratory
 from auth import sessions
 from config import default
 import json
@@ -151,9 +166,7 @@ def generate_report_data(client, user_id, database):
             record['cpuPrice'] = bucket_range['cpu_price']
             record['volumePrice'] = bucket_range['volume_price']
             record['username'] = database.get_username(record['user'])
-            # TODO: append all records
-            if record['username'] != 'Unknown User':
-                responses.append(record)
+            responses.append(record)
 
         images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
                                                                       bucket_range['end_date'],
@@ -205,8 +218,8 @@ def generate_report_data(client, user_id, database):
         return report
     report = reduce(sort_results_into_buckets, responses, list())
 
-    return {'fromDate': original_start_date.isoformat(),
-            'toDate': original_end_date.isoformat(),
+    return {'fromDate': original_start_date.isoformat(' '),
+            'toDate': original_end_date.isoformat(' '),
             'bucket': bucket_size,
             'entries': report}
 
@@ -219,6 +232,10 @@ def divide_time_range(start_date, end_date, bucket_size):
     pricing_periods = iter(app.pricing_periods)
     next_period = next(pricing_periods, None)
     period = next_period
+    while start_date >= period['period_end'] and next_period is not None:
+        next_period = next(pricing_periods, None)
+        if next_period is not None:
+            period = next_period
 
     date_ranges = []
     while not start_date == end_date:
@@ -229,11 +246,14 @@ def divide_time_range(start_date, end_date, bucket_size):
             if next_period is not None:
                 period = next_period
 
-        period_end_date = min(next_bucket_date, period['period_end'], end_date)
+        if start_date < period['period_end']:
+            period_end_date = min(next_bucket_date, period['period_end'], end_date)
+        else:
+            period_end_date = min(next_bucket_date, end_date)
 
         bucket = dict()
-        bucket['start_date'] = start_date.isoformat()
-        bucket['end_date'] = period_end_date.isoformat()
+        bucket['start_date'] = start_date.isoformat(' ')
+        bucket['end_date'] = period_end_date.isoformat(' ')
         bucket['cpu_price'] = period['cpu_price']
         bucket['volume_price'] = period['volume_price']
         bucket['image_price'] = period['image_price']

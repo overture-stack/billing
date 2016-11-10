@@ -1,3 +1,18 @@
+# Copyright (c) 2016 The Ontario Institute for Cancer Research. All rights reserved.
+#
+# This program and the accompanying materials are made available under the terms of the GNU Public License v3.0.
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+# SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import records
 
 
@@ -43,17 +58,17 @@ class Collaboratory:
                       CEIL(
                         TIMESTAMPDIFF(
                           SECOND,
-                            GREATEST(
-                              :start_date,
-                              created_at
-                            ),
-                            LEAST(
-                              :end_date,
-                                COALESCE(
-                                  deleted_at,
-                                  :end_date
-                                )
+                          GREATEST(
+                            :start_date,
+                            created_at
+                          ),
+                          LEAST(
+                            :end_date,
+                            COALESCE(
+                              deleted_at,
+                              :end_date
                             )
+                          )
                         ) / 3600
                       ) * vcpus
                     ) AS core_hours
@@ -88,17 +103,17 @@ class Collaboratory:
                       CEIL(
                         TIMESTAMPDIFF(
                           SECOND,
-                            GREATEST(
-                              :start_date,
-                              created_at
-                            ),
-                            LEAST(
-                              :end_date,
-                                COALESCE(
-                                  deleted_at,
-                                  :end_date
-                                )
+                          GREATEST(
+                            :start_date,
+                            created_at
+                          ),
+                          LEAST(
+                            :end_date,
+                            COALESCE(
+                              deleted_at,
+                              :end_date
                             )
+                          )
                         ) / 3600
                       ) * size
                     ) AS gigabyte_hours
@@ -140,38 +155,38 @@ class Collaboratory:
         results = self.database.query(
             '''
             SELECT
-                CEIL(
-                    SUM(
-                        CEIL(
-                            TIMESTAMPDIFF(
-                                SECOND,
-                                GREATEST(
-                                    :start_date,
-                                    created_at
-                                ),
-                                LEAST(
-                                    :end_date,
-                                    COALESCE(
-                                        deleted_at,
-                                        :end_date
-                                    )
-                                )
-                            ) / 3600
-                        ) * size
-                    ) / POWER(2, 30)
-                ) AS image,
-                owner AS projectId
+              CEIL(
+                SUM(
+                  CEIL(
+                    TIMESTAMPDIFF(
+                      SECOND,
+                      GREATEST(
+                        :start_date,
+                        created_at
+                      ),
+                      LEAST(
+                        :end_date,
+                        COALESCE(
+                          deleted_at,
+                          :end_date
+                        )
+                      )
+                    ) / 3600
+                  ) * size
+                ) / POWER(2, 30)
+              ) AS image,
+              owner AS projectId
 
             FROM
-                glance.images
+              glance.images
 
             WHERE
-                (
-                    deleted_at >  :start_date  OR
-                    deleted_at IS NULL
-                )                              AND
-                created_at <  :end_date        AND
-                owner IN :projects
+              (
+                deleted_at >  :start_date  OR
+                deleted_at IS NULL
+              )                              AND
+              created_at <  :end_date        AND
+              owner IN :projects
             GROUP BY owner;
             ''',
             end_date=end_date,
@@ -235,5 +250,4 @@ class Collaboratory:
         if user_id in self.user_map:
             return self.user_map[user_id]
         else:
-            # return 'Unkown User <' + user_id + '>'
-            return 'Unknown User'
+            return 'Unknown User <' + user_id + '>'

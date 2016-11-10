@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the terms of the GNU Public
+ * License v3.0. You should have received a copy of the GNU General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+ * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 import React, { Component } from 'react';
 import {observable, autorun, computed} from 'mobx';
 import {observer} from 'mobx-react';
@@ -57,8 +73,8 @@ class extends Component {
   @observable chartSettings = CHART_SETTINGS;
   @observable filters = {
     projects: [],
-    fromDate: moment().subtract('months', 1),
-    toDate: moment(),
+    fromDate: moment().utc().subtract('months', 1).startOf('day'),
+    toDate: moment().utc().startOf('day'),
     bucketSize: TIME_PERIODS.DAILY,
   };
   @observable isLoading = false;
@@ -101,9 +117,7 @@ class extends Component {
 
   redrawChart = () => {
     const newSeries = getSeriesFromReportEntries(this.report.entries, {shouldShowCost:this.shouldShowCost}).slice();
-    console.log(newSeries);
     const chart = this.refs.chart.getChart();
-    console.log(this.report.fromDate);
     const subtitle = new Date(this.report.fromDate || this.filters.fromDate.toISOString()).toDateString().concat(
         ' - ',
         new Date(this.report.toDate || this.filters.toDate.toISOString()).toDateString());
@@ -250,12 +264,12 @@ class extends Component {
                 dataAlign="right"
               >Image Cost</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}
+                dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image]).toLocaleString()}
                 dataAlign="right"
                 hidden={this.shouldShowCost}
               >Total (hrs)</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2)}`}
+                dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2).toLocaleString()}`}
                 dataAlign="right"
                 hidden={!this.shouldShowCost}
               >Total Cost</TableHeaderColumn>
@@ -336,6 +350,7 @@ class extends Component {
               dataField="username"
               dataFormat={(cell, row) => cell ? cell : `(Project) ${_.find(this.projects, {'id':row.projectId}).name}`}
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
+              width="320px"
               dataSort={true}
             >User</TableHeaderColumn>
             <TableHeaderColumn
