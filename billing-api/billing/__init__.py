@@ -17,7 +17,7 @@ from flask import Flask, request, Response
 from dateutil.parser import parse
 from dateutil.relativedelta import *
 from datetime import datetime
-from collaboratory import Collaboratory
+from usage_queries import Collaboratory
 from auth import sessions
 from config import default
 import json
