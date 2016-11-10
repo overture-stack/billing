@@ -264,12 +264,12 @@ class extends Component {
                 dataAlign="right"
               >Image Cost</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image])}
+                dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image]).toLocaleString()}
                 dataAlign="right"
                 hidden={this.shouldShowCost}
               >Total (hrs)</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2)}`}
+                dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2).toLocaleString()}`}
                 dataAlign="right"
                 hidden={!this.shouldShowCost}
               >Total Cost</TableHeaderColumn>
