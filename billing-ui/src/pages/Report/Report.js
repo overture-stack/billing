@@ -350,6 +350,7 @@ class extends Component {
               dataField="username"
               dataFormat={(cell, row) => cell ? cell : `(Project) ${_.find(this.projects, {'id':row.projectId}).name}`}
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
+              width="320px"
               dataSort={true}
             >User</TableHeaderColumn>
             <TableHeaderColumn
