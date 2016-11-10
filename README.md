@@ -1,5 +1,7 @@
 # Billing for Cancer Collaboratory
 
+[![](https://images.microbadger.com/badges/image/collaboratory/billing.svg)](https://microbadger.com/images/collaboratory/billing "Get your own image badge on microbadger.com")
+
 ## Modules
 * [billing-api](billing-api/README.md)
 * [billing-ui](billing-ui/README.md)
