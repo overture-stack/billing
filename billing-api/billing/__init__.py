@@ -218,8 +218,8 @@ def generate_report_data(client, user_id, database):
         return report
     report = reduce(sort_results_into_buckets, responses, list())
 
-    return {'fromDate': original_start_date.isoformat(),
-            'toDate': original_end_date.isoformat(),
+    return {'fromDate': original_start_date.isoformat(' '),
+            'toDate': original_end_date.isoformat(' '),
             'bucket': bucket_size,
             'entries': report}
 
@@ -252,8 +252,8 @@ def divide_time_range(start_date, end_date, bucket_size):
             period_end_date = min(next_bucket_date, end_date)
 
         bucket = dict()
-        bucket['start_date'] = start_date.isoformat()
-        bucket['end_date'] = period_end_date.isoformat()
+        bucket['start_date'] = start_date.isoformat(' ')
+        bucket['end_date'] = period_end_date.isoformat(' ')
         bucket['cpu_price'] = period['cpu_price']
         bucket['volume_price'] = period['volume_price']
         bucket['image_price'] = period['image_price']
