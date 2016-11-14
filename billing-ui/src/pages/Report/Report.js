@@ -358,6 +358,7 @@ class extends Component {
               dataFormat={x => x ? x.toLocaleString() : ''}
               dataAlign="right"
               dataSort={true}
+              sortFunc={(a, b, order) => ((a.cpu === '') ? 0 : a.cpu) - ((b.cpu === '') ? 0 : b.cpu)}
               hidden={this.shouldShowCost}
             >CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn
