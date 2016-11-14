@@ -13,17 +13,19 @@
 # OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import Flask, request, Response
+import decimal
+import json
+from datetime import datetime
+from functools import wraps
+
 from dateutil.parser import parse
 from dateutil.relativedelta import *
-from datetime import datetime
-from usage_queries import Collaboratory
+from flask import Flask, request, Response
+
 from auth import sessions
 from config import default
-import json
-import decimal
 from error import APIError, AuthenticationError, BadRequestError
-from functools import wraps
+from usage_queries import Collaboratory
 
 app = Flask(__name__)
 app.config.from_object(default)

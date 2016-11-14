@@ -19,22 +19,15 @@ import records
 # TODO: Make this not use Records, as Records caches responses
 class Collaboratory:
 
-    def __init__(self, database_url, logger):
+    def __init__(self, database_url, logger, initialized=True):
 
         self.logger = logger
         logger.info('Acquiring database')
         self.database = records.Database(database_url)
         logger.info('Successfully connected to database')
         self.user_map = {}
-        self.refresh_user_id_map()
-
-    @classmethod
-    def default_init(cls):
-        return cls('mysql://root:test@localhost:3306')
-
-    @classmethod
-    def from_file(cls, file_name):
-        return cls(file_name)
+        if initialized:
+            self.refresh_user_id_map()
 
     def close(self):
         if hasattr(self, 'database'):
