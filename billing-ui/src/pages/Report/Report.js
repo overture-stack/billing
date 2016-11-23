@@ -92,9 +92,12 @@ class extends Component {
     this.filters.projects = option.map(x => x.value);
   }
 
-  handleRangeFilterChange = (dates) => {
-    this.filters.fromDate = dates[0];
-    this.filters.toDate = dates[1];
+  handleFromDateFilterChange = (date) => {
+    this.filters.fromDate = date;
+  }
+
+  handleToDateFilterChange = (date) => {
+    this.filters.toDate = date;
   }
 
   async componentDidMount() {
@@ -147,65 +150,90 @@ class extends Component {
     return (
       <div className="Report">
         <h1 className="page-heading">Billing Report</h1>
-        <label>
-          Projects
-        </label>
-        <div className="form-controls flex-row">
-          <div className="project-select">
-            <Select
-              multi
-              placeholder="Showing all projects. Click to filter."
-              options={this.projectsToSelectOptions(this.projects.slice())}
-              value={this.projectsToSelectOptions(this.filters.projects.slice())}
-              onChange={this.handleProjectsChange}
-            >
-            </Select>
+        <div className="form-controls">
+          <div className="form-item">
+            <label>
+              Projects
+            </label>
+            <div className="project-select">
+              <Select
+                multi
+                placeholder="Showing all projects. Click to filter."
+                options={this.projectsToSelectOptions(this.projects.slice())}
+                value={this.projectsToSelectOptions(this.filters.projects.slice())}
+                onChange={this.handleProjectsChange}
+              >
+              </Select>
+            </div>
           </div>
 
-          <div className="range-select">
-            <RangePicker
-              format="YYYY-MM-DD"
-              onChange={this.handleRangeFilterChange}
-              defaultValue={[this.filters.fromDate, this.filters.toDate]}
-            />
+          <div className="form-item">
+            <label>
+              From
+            </label>
+            <div className="range-select">
+              <DatePicker
+                format="YYYY-MM-DD"
+                onChange={this.handleFromDateChange}
+                defaultValue={this.filters.fromDate}
+              />
+            </div>
+          </div>
+          <div className="form-item">
+            <label>
+              To
+            </label>
+            <div className="range-select">
+              <DatePicker
+                format="YYYY-MM-DD"
+                onChange={this.handleToDateChange}
+                defaultValue={this.filters.toDate}
+              />
+            </div>
           </div>
 
-          <div className="interval-select">
-            <RadioGroup>
-              <RadioButton
-                checked={this.filters.bucketSize === TIME_PERIODS.DAILY}
-                onClick={() => this.filters.bucketSize = TIME_PERIODS.DAILY}
-                value={TIME_PERIODS.DAILY}
-              >Daily</RadioButton>
-              <RadioButton
-                checked={this.filters.bucketSize === TIME_PERIODS.WEEKLY}
-                onClick={() => this.filters.bucketSize = TIME_PERIODS.WEEKLY}
-                value={TIME_PERIODS.WEEKLY}
-              >Weekly</RadioButton>
-              <RadioButton
-                checked={this.filters.bucketSize === TIME_PERIODS.MONTHLY}
-                onClick={() => this.filters.bucketSize = TIME_PERIODS.MONTHLY}
-                value={TIME_PERIODS.MONTHLY}
-              >Monthly</RadioButton>
-              <RadioButton
-                checked={this.filters.bucketSize === TIME_PERIODS.YEARLY}
-                onClick={() => this.filters.bucketSize = TIME_PERIODS.YEARLY}
-                value={TIME_PERIODS.YEARLY}
-              >Yearly</RadioButton>
-            </RadioGroup>
+          <div className="form-item">
+            <label>
+              Bucket(?)
+            </label>
+            <div className="interval-select">
+              <RadioGroup>
+                <RadioButton
+                  checked={this.filters.bucketSize === TIME_PERIODS.DAILY}
+                  onClick={() => this.filters.bucketSize = TIME_PERIODS.DAILY}
+                  value={TIME_PERIODS.DAILY}
+                >Daily</RadioButton>
+                <RadioButton
+                  checked={this.filters.bucketSize === TIME_PERIODS.WEEKLY}
+                  onClick={() => this.filters.bucketSize = TIME_PERIODS.WEEKLY}
+                  value={TIME_PERIODS.WEEKLY}
+                >Weekly</RadioButton>
+                <RadioButton
+                  checked={this.filters.bucketSize === TIME_PERIODS.MONTHLY}
+                  onClick={() => this.filters.bucketSize = TIME_PERIODS.MONTHLY}
+                  value={TIME_PERIODS.MONTHLY}
+                >Monthly</RadioButton>
+                <RadioButton
+                  checked={this.filters.bucketSize === TIME_PERIODS.YEARLY}
+                  onClick={() => this.filters.bucketSize = TIME_PERIODS.YEARLY}
+                  value={TIME_PERIODS.YEARLY}
+                >Yearly</RadioButton>
+              </RadioGroup>
+            </div>
           </div>
 
-          <div>
-            <Button
-              type='primary'
-              loading={this.isLoading}
-              onClick={this.updateChart}
-             >Generate Report</Button>
+          <div className="form-item">
+            <div>
+              <Button
+                type='primary'
+                loading={this.isLoading}
+                onClick={this.updateChart}
+               >Generate Report</Button>
+            </div>
           </div>
 
         </div>
-
-        <h2 className="section-heading">Summary</h2>
+          <h2 className="section-heading">Summary</h2>
         <div className="summary">
           <RadioGroup>
             <RadioButton
@@ -288,18 +316,24 @@ class extends Component {
             <div>
               <RadioGroup>
                 <RadioButton
-                  checked={ _.isEqual(this.aggregationFields.slice(), defaultAggregationFields.slice()) }
-                  onClick={() => this.aggregationFields = defaultAggregationFields}
-                  value={defaultAggregationFields}
-                >Total</RadioButton>
+                  checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD) }
+                  onClick={() => this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)
+                      ? this.aggregationFields.splice(this.aggregationFields.indexOf(AGGREGATION_FIELDS.PERIOD), 1)
+                      : this.aggregationFields.push(AGGREGATION_FIELDS.PERIOD)}
+                  value={AGGREGATION_FIELDS.PERIOD}
+                >Period</RadioButton>
                 <RadioButton
-                  checked={ !this.aggregationFields.includes(AGGREGATION_FIELDS.USER) }
-                  onClick={() => this.aggregationFields = _.without(defaultAggregationFields, AGGREGATION_FIELDS.USER)}
+                  checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT) }
+                  onClick={() => this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)
+                      ? this.aggregationFields.splice(this.aggregationFields.indexOf(AGGREGATION_FIELDS.PROJECT), 1)
+                      : this.aggregationFields.push(AGGREGATION_FIELDS.PROJECT)}
                   value={AGGREGATION_FIELDS.PROJECT}
                 >Projects</RadioButton>
                 <RadioButton
-                  checked={ !this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT) }
-                  onClick={() => this.aggregationFields = _.without(defaultAggregationFields, AGGREGATION_FIELDS.PROJECT)}
+                  checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.USER) }
+                  onClick={() => this.aggregationFields.includes(AGGREGATION_FIELDS.USER)
+                      ? this.aggregationFields.splice(this.aggregationFields.indexOf(AGGREGATION_FIELDS.USER), 1)
+                      : this.aggregationFields.push(AGGREGATION_FIELDS.USER)}
                   value={AGGREGATION_FIELDS.USER}
                 >Users</RadioButton>
               </RadioGroup>
@@ -324,6 +358,7 @@ class extends Component {
             <TableHeaderColumn
               dataField="fromDate"
               dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
+              hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
               dataSort={true}
             >Period</TableHeaderColumn>
             <TableHeaderColumn

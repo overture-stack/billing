@@ -181,17 +181,26 @@ def generate_report_data(client, user_id, database):
             responses.append(image)
 
     def sort_results_into_buckets(report, item):
+        # Don't include rows with no useful information
+        if (
+                ('cpu' not in item or item['cpu'] is None) and
+                ('volume' not in item or item['volume'] is None) and
+                ('image' not in item or item['image'] is None)
+        ):
+            return report
+
+        # Try to match a row to a previous row so that they can be put together
         for report_item in report:
             if (report_item['user'] == item['user'] and
                     report_item['projectId'] == item['projectId'] and
                     same_bucket(parse(report_item['fromDate']), parse(item['fromDate']))):
                 report_item['fromDate'] = min(report_item['fromDate'], item['fromDate'])
                 report_item['toDate'] = max(report_item['toDate'], item['toDate'])
-                if report_item['user'] is not None:
-                    if item['cpu'] is not None:
+                if 'user' in report_item and report_item['user'] is not None:
+                    if 'cpu' in item and item['cpu'] is not None:
                         report_item['cpu'] += item['cpu']
                         report_item['cpuCost'] += round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
-                    if item['volume'] is not None:
+                    if 'volume' in item and item['volume'] is not None:
                         report_item['volume'] += item['volume']
                         report_item['volumeCost'] += round(parse_decimal(item['volume']) * item['volumePrice'], 4)
                 else:
@@ -199,18 +208,19 @@ def generate_report_data(client, user_id, database):
                     report_item['imageCost'] += round(parse_decimal(item['image']) * item['imagePrice'], 4)
                 return report
 
+        # If it couldn't find a match to merge the item on to, create a new one
         new_item = {
             'fromDate': item['fromDate'],
             'toDate': item['toDate'],
             'user': item['user'],
             'projectId': item['projectId']
         }
-        if new_item['user'] is not None:
+        if 'user' in new_item and new_item['user'] is not None:
             new_item['username'] = item['username']
-            if item['cpu'] is not None:
+            if 'cpu' in item and item['cpu'] is not None:
                 new_item['cpu'] = parse_decimal(item['cpu'])
                 new_item['cpuCost'] = round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
-            if item['volume'] is not None:
+            if 'volume' in item and item['volume'] is not None:
                 new_item['volume'] = parse_decimal(item['volume'])
                 new_item['volumeCost'] = round(parse_decimal(item['volume']) * item['volumePrice'], 4)
         else:
