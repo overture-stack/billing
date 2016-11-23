@@ -194,7 +194,7 @@ class extends Component {
 
           <div className="form-item">
             <label>
-              Bucket(?)
+              Period Grouping
             </label>
             <div className="interval-select">
               <RadioGroup>
