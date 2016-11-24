@@ -26,7 +26,16 @@
   }
 
   .form-controls {
-    align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-start;
+
+
+    .form-item {
+      align-items: flex-start;
+      flex-direction: column;
+    }
 
     .project-select {
       min-width: 22em;
@@ -43,7 +52,7 @@
     }
 
     & > * + * {
-      margin-left: 1em; 
+      margin-left: 1em;
     }
   }
 
