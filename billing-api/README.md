@@ -16,6 +16,7 @@ python run.py
 
 ## Testing
 To run the automated tests, run `pytest` on any of the test___.py files in `billing_server/tests/`
+
 For example run `pytest test_usage_queries.py`
 
 ## Developing on a Mac
