@@ -26,6 +26,7 @@ pbr==1.10.0
 positional==1.1.1
 pycparser==2.14
 pyparsing==2.1.9
+pytest==3.0.4
 python-dateutil==2.5.3
 python-keystoneclient==3.5.0
 pytz==2016.7

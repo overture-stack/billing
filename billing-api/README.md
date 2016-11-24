@@ -14,6 +14,9 @@ pip install -r requirements.txt
 python run.py
 ```
 
+## Testing
+To run the automated tests, run `pytest` on any of the test___.py files in `billing_server/tests/`
+For example run `pytest test_usage_queries.py`
 
 ## Developing on a Mac
 Getting lib files for MySQL is a little tricky for the mysql-python dependency when using a mac. 
