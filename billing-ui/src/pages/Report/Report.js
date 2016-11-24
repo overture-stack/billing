@@ -174,7 +174,7 @@ class extends Component {
             <div className="range-select">
               <DatePicker
                 format="YYYY-MM-DD"
-                onChange={this.handleFromDateChange}
+                onChange={this.handleFromDateFilterChange}
                 defaultValue={this.filters.fromDate}
               />
             </div>
@@ -186,7 +186,7 @@ class extends Component {
             <div className="range-select">
               <DatePicker
                 format="YYYY-MM-DD"
-                onChange={this.handleToDateChange}
+                onChange={this.handleToDateFilterChange}
                 defaultValue={this.filters.toDate}
               />
             </div>
