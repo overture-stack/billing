@@ -181,14 +181,6 @@ def generate_report_data(client, user_id, database):
             responses.append(image)
 
     def sort_results_into_buckets(report, item):
-        # Don't include rows with no useful information
-        if (
-                ('cpu' not in item or item['cpu'] is None) and
-                ('volume' not in item or item['volume'] is None) and
-                ('image' not in item or item['image'] is None)
-        ):
-            return report
-
         # Try to match a row to a previous row so that they can be put together
         for report_item in report:
             if (report_item['user'] == item['user'] and
