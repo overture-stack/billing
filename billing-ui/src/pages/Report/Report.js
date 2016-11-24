@@ -317,23 +317,17 @@ class extends Component {
               <RadioGroup>
                 <RadioButton
                   checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD) }
-                  onClick={() => this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)
-                      ? this.aggregationFields.splice(this.aggregationFields.indexOf(AGGREGATION_FIELDS.PERIOD), 1)
-                      : this.aggregationFields.push(AGGREGATION_FIELDS.PERIOD)}
+                  onClick={() => this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.PERIOD])}
                   value={AGGREGATION_FIELDS.PERIOD}
                 >Period</RadioButton>
                 <RadioButton
                   checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT) }
-                  onClick={() => this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)
-                      ? this.aggregationFields.splice(this.aggregationFields.indexOf(AGGREGATION_FIELDS.PROJECT), 1)
-                      : this.aggregationFields.push(AGGREGATION_FIELDS.PROJECT)}
+                  onClick={() => this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.PROJECT])}
                   value={AGGREGATION_FIELDS.PROJECT}
                 >Projects</RadioButton>
                 <RadioButton
                   checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.USER) }
-                  onClick={() => this.aggregationFields.includes(AGGREGATION_FIELDS.USER)
-                      ? this.aggregationFields.splice(this.aggregationFields.indexOf(AGGREGATION_FIELDS.USER), 1)
-                      : this.aggregationFields.push(AGGREGATION_FIELDS.USER)}
+                  onClick={() => this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.USER])}
                   value={AGGREGATION_FIELDS.USER}
                 >Users</RadioButton>
               </RadioGroup>
