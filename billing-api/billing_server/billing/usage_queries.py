@@ -34,6 +34,14 @@ class Collaboratory:
             self.database.close()
 
     def get_usage_statistics(self, start_date, end_date, billing_projects, user_projects, user_id):
+
+        # SQL doesn't like empty lists, so we ensure the invalid project_id of '' populates the list if it's empty
+        if not billing_projects:
+            billing_projects.append('')
+
+        if not user_projects:
+            user_projects.append('')
+
         results = self.database.query(
             '''
             SELECT

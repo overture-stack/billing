@@ -133,9 +133,8 @@ def generate_report_data(client, user_id, database):
 
     role_map = database.get_user_roles(user_id)
 
-    # Init lists to empty strings so that sql doesn't kill me
-    billing_projects = ['']  # The projects we want to grab all info for
-    user_projects = ['']     # The projects we want to only grab info for one user for
+    billing_projects = []  # The projects we want to grab all info for
+    user_projects = []     # The projects we want to only grab info for one user for
     for project in project_list:
         if project in role_map:
             if 'billing' in role_map[project]:
