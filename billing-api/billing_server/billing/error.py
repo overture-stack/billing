@@ -23,7 +23,7 @@ class APIError(Exception):
         self.message = message
         self.response_body = json.dumps({'code': self.code,
                                          'error': self.error,
-                                         'message:': self.message})
+                                         'message': self.message})
 
 
 class AuthenticationError(APIError):

@@ -278,7 +278,7 @@ def get_bucket_functions(bucket_size):
             return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
 
         def start_of_bucket(current_date):
-            new_date = current_date + relativedelta(weekday=MO(0))
+            new_date = current_date + relativedelta(weekday=MO(-1))
             return datetime(year=new_date.year, month=new_date.month, day=new_date.day)
 
         def next_bucket(date_to_change):
