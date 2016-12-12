@@ -332,7 +332,10 @@ class extends Component {
         <h2 className="section-heading">Details</h2>
         
         <div className={`usage-table ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
-          <div>
+          <div className="form-item">
+            <label>
+              Group By
+            </label>
             <div>
               <RadioGroup>
                 <RadioButton
