@@ -3,4 +3,4 @@
 
 service nginx restart
 source env/bin/activate
-gunicorn -w 1 -b 0.0.0.0:5000 billing:app
+gunicorn -w 1 -b 0.0.0.0:5000 billing_server.billing:app
