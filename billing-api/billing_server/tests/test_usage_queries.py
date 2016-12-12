@@ -189,13 +189,172 @@ class Test(unittest.TestCase):
     # todo: test image calculation on an instance created out deleted in the time frame
     # todo: test that all the above test cases sum correctly
 
-    # todo: test that it groups by user and project for instances/volumes
+    def test_get_usage_statistics_groups_by_user_and_project(self):
+        user_id_1 = '1'
+        user_id_2 = '2'
+        project_id_1 = 'project 1'
+        project_id_2 = 'project 5'
+
+        create_user(self.database, user_id_1, 'Cool Guy')
+        assign_role(self.database, user_id_1, project_id_1, True)
+        assign_role(self.database, user_id_1, project_id_2, True)
+
+        create_user(self.database, user_id_2, 'Way Cooler Guy')
+        assign_role(self.database, user_id_2, project_id_1, False)
+        assign_role(self.database, user_id_2, project_id_2, False)
+
+        create_instance(self.database, user_id_1, project_id_1, 4, '2016-09-04 16:42:13', '2016-11-30 23:14:00')
+        create_instance(self.database, user_id_1, project_id_2, 2, '2016-10-02 22:15:59', '2016-10-31 00:00:00')
+
+        create_instance(self.database, user_id_2, project_id_1, 8, '2016-09-15 12:04:32', '2016-10-07 19:53:23')
+        create_instance(self.database, user_id_2, project_id_2, 1, '2016-09-28 00:00:00', '2016-09-28 00:00:01')
+
+        create_volume(self.database, user_id_2, project_id_2, 64, '2016-10-01 12:52:32', '2016-10-25 09:42:13')
+
+        data = self.database.get_usage_statistics('2016-09-23 00:00:00',
+                                                  '2016-10-20 00:00:00',
+                                                  [project_id_1, project_id_2],
+                                                  [''],
+                                                  user_id_1)
+        self.assertEquals(4, data.__len__())
+        case11 = False
+        case12 = False
+        case21 = False
+        case22 = False
+        for row in data:
+            if row['user'] == user_id_1 and row['projectId'] == project_id_1:
+                case11 = True
+                self.assertEquals(2592, row['cpu'])
+            if row['user'] == user_id_1 and row['projectId'] == project_id_2:
+                case12 = True
+                self.assertEquals(820, row['cpu'])
+            if row['user'] == user_id_2 and row['projectId'] == project_id_1:
+                case21 = True
+                self.assertEquals(2848, row['cpu'])
+            if row['user'] == user_id_2 and row['projectId'] == project_id_2:
+                case22 = True
+                self.assertEquals(1, row['cpu'])
+                self.assertEquals(28416, row['volume'])
+        self.assertTrue(case11 and case12 and case21 and case22)
 
     # todo: test that it groups by project for images
 
-    # todo: test grouping by billing projects vs user projects
+    # NOTE: The query does not actually check for billing roles!
+    #       Instead it uses a distinction between billing projects
+    #       and user projects
+    def test_user_can_only_see_own_usage_if_no_billing_projects(self):
+        user_id_1 = '1'
+        user_id_2 = '2'
+        project_id = 'project 1'
+        create_user(self.database, user_id_1, 'Cool Guy')
+        assign_role(self.database, user_id_1, project_id, False)
 
-    # todo: test empty billing projects list
-    # todo: test empty user projects list
+        create_user(self.database, user_id_2, 'Way Cooler Guy')
+        assign_role(self.database, user_id_2, project_id, False)
+        create_instance(self.database, user_id_1, project_id, 4, '2016-09-04 16:42:13', '2016-11-30 23:14:00')
+        create_instance(self.database, user_id_2, project_id, 8, '2016-09-15 12:04:32', '2016-10-07 19:53:23')
+        data = self.database.get_usage_statistics('2016-09-23 00:00:00',
+                                                  '2016-10-20 00:00:00',
+                                                  [''],
+                                                  [project_id],
+                                                  user_id_1)
+        self.assertEquals(1, data.__len__())
+        self.assertEquals(user_id_1, data[0]['user'])
 
-    # todo: test deleted users
+    # todo: test user cannot see project usage if billing role
+
+    def test_user_with_multiple_roles(self):
+        user_id_1 = '1'
+        user_id_2 = '2'
+        project_id_1 = 'project 1'
+        project_id_2 = 'project 5'
+
+        create_user(self.database, user_id_1, 'Cool Guy')
+        assign_role(self.database, user_id_1, project_id_1, True)
+        assign_role(self.database, user_id_1, project_id_2, False)
+
+        create_user(self.database, user_id_2, 'Way Cooler Guy')
+        assign_role(self.database, user_id_2, project_id_1, False)
+        assign_role(self.database, user_id_2, project_id_2, False)
+
+        create_instance(self.database, user_id_1, project_id_1, 4, '2016-09-04 16:42:13', '2016-11-30 23:14:00')
+        create_instance(self.database, user_id_1, project_id_2, 2, '2016-10-02 22:15:59', '2016-10-31 00:00:00')
+
+        create_instance(self.database, user_id_2, project_id_1, 8, '2016-09-15 12:04:32', '2016-10-07 19:53:23')
+        create_instance(self.database, user_id_2, project_id_2, 1, '2016-09-28 00:00:00', '2016-09-28 00:00:01')
+
+        create_volume(self.database, user_id_2, project_id_2, 64, '2016-10-01 12:52:32', '2016-10-25 09:42:13')
+
+        data = self.database.get_usage_statistics('2016-09-23 00:00:00',
+                                                  '2016-10-20 00:00:00',
+                                                  [project_id_1],
+                                                  [project_id_2],
+                                                  user_id_1)
+        self.assertEquals(3, data.__len__())
+        case11 = False
+        case12 = False
+        case21 = False
+        for row in data:
+            if row['user'] == user_id_1 and row['projectId'] == project_id_1:
+                case11 = True
+                self.assertEquals(2592, row['cpu'])
+            if row['user'] == user_id_1 and row['projectId'] == project_id_2:
+                case12 = True
+                self.assertEquals(820, row['cpu'])
+            if row['user'] == user_id_2 and row['projectId'] == project_id_1:
+                case21 = True
+                self.assertEquals(2848, row['cpu'])
+            if row['user'] == user_id_2 and row['projectId'] == project_id_2:
+                self.fail("User 1 should not be able to see the usage of User 2 in Project 2")
+        self.assertTrue(case11 and case12 and case21)
+
+    # When passing an empty list to SQL, it breaks so we have to make sure the system does not crash when we don't
+    # specify what projects we want to search
+    def test_query_usage_empty_billing_projects_list(self):
+        user_id = '1'
+        project_id = 'thisisaproject!'
+        create_user(self.database, user_id, 'Cool Guy')
+        assign_role(self.database, user_id, project_id)
+        create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
+        data = self.database.get_usage_statistics('2016-09-10 00:00:00',
+                                                  '2016-09-30 15:00:00',
+                                                  [],
+                                                  [project_id],
+                                                  user_id)
+        self.assertEquals(1588, data[0]['cpu'])
+
+    def test_query_usage_empty_user_projects_list(self):
+        user_id = '1'
+        project_id = 'thisisaproject!'
+        create_user(self.database, user_id, 'Cool Guy')
+        assign_role(self.database, user_id, project_id)
+        create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
+        data = self.database.get_usage_statistics('2016-09-10 00:00:00',
+                                                  '2016-09-30 15:00:00',
+                                                  [project_id],
+                                                  [],
+                                                  user_id)
+        self.assertEquals(1588, data[0]['cpu'])
+
+    # Expected failure until query actually reports on deleted users
+    @unittest.expectedFailure
+    def test_query_usage_returns_data_for_deleted_user(self):
+        user_id_1 = 'I am going to run the query'
+        user_id_2 = 'I AM GOING TO BE DELETED'
+        project_id = 'wow, a project!'
+        create_user(self.database, user_id_1, 'Cool dood')
+        assign_role(self.database, user_id_1, project_id, True)
+
+        create_user(self.database, user_id_2, 'Rood dood')
+        assign_role(self.database, user_id_2, project_id, False)
+
+        create_instance(self.database, user_id_2, project_id, 5, '2016-11-01 00:00:00', '2016-11-01 01:00:00')
+        delete_user(self.database, user_id_2)
+        data = self.database.get_usage_statistics('2016-10-01 00:00:00',
+                                                  '2016-12-01 00:00:00',
+                                                  [project_id],
+                                                  [],
+                                                  user_id_1)
+        self.assertEqual(data.__len__(), 1)
+        for row in data:
+            self.assertEqual(row['user'], user_id_2)

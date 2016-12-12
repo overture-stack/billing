@@ -133,9 +133,8 @@ def generate_report_data(client, user_id, database):
 
     role_map = database.get_user_roles(user_id)
 
-    # Init lists to empty strings so that sql doesn't kill me
-    billing_projects = ['']  # The projects we want to grab all info for
-    user_projects = ['']     # The projects we want to only grab info for one user for
+    billing_projects = []  # The projects we want to grab all info for
+    user_projects = []     # The projects we want to only grab info for one user for
     for project in project_list:
         if project in role_map:
             if 'billing' in role_map[project]:
@@ -152,7 +151,9 @@ def generate_report_data(client, user_id, database):
     else:
         user = user_id
 
-    date_ranges, bucket_size, same_bucket, next_bucket = divide_time_range(start_date, end_date, bucket_size)
+    date_ranges, bucket_size, same_bucket, next_bucket, start_of_bucket = divide_time_range(start_date,
+                                                                                            end_date,
+                                                                                            bucket_size)
 
     # Generate list of responses
     responses = []
@@ -186,8 +187,6 @@ def generate_report_data(client, user_id, database):
             if (report_item['user'] == item['user'] and
                     report_item['projectId'] == item['projectId'] and
                     same_bucket(parse(report_item['fromDate']), parse(item['fromDate']))):
-                report_item['fromDate'] = min(report_item['fromDate'], item['fromDate'])
-                report_item['toDate'] = max(report_item['toDate'], item['toDate'])
                 if 'user' in report_item and report_item['user'] is not None:
                     if 'cpu' in item and item['cpu'] is not None:
                         report_item['cpu'] += item['cpu']
@@ -201,9 +200,11 @@ def generate_report_data(client, user_id, database):
                 return report
 
         # If it couldn't find a match to merge the item on to, create a new one
+        # Regardless of where the data is, we always want to show our information according to the bucket boundaries
+        # If we're looking at weekly, it doesn't make sense for the last period to cover only 3 days
         new_item = {
-            'fromDate': item['fromDate'],
-            'toDate': item['toDate'],
+            'fromDate': start_of_bucket(parse(item['fromDate'])).isoformat(),
+            'toDate': next_bucket(parse(item['fromDate'])).isoformat(),
             'user': item['user'],
             'projectId': item['projectId']
         }
@@ -231,7 +232,7 @@ def generate_report_data(client, user_id, database):
 def divide_time_range(start_date, end_date, bucket_size):
     if bucket_size not in app.valid_bucket_sizes:
         bucket_size = 'daily'
-    same_bucket, next_bucket = get_bucket_functions(bucket_size)
+    same_bucket, next_bucket, start_of_bucket = get_bucket_functions(bucket_size)
 
     pricing_periods = iter(app.pricing_periods)
     next_period = next(pricing_periods, None)
@@ -266,7 +267,7 @@ def divide_time_range(start_date, end_date, bucket_size):
 
         start_date = period_end_date
 
-    return date_ranges, bucket_size, same_bucket, next_bucket
+    return date_ranges, bucket_size, same_bucket, next_bucket, start_of_bucket
 
 
 def get_bucket_functions(bucket_size):
@@ -276,6 +277,10 @@ def get_bucket_functions(bucket_size):
             end_iso = end.isocalendar()
             return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
 
+        def start_of_bucket(current_date):
+            new_date = current_date + relativedelta(weekday=MO(-1))
+            return datetime(year=new_date.year, month=new_date.month, day=new_date.day)
+
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(days=+1, weekday=MO(+1))
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
@@ -283,12 +288,18 @@ def get_bucket_functions(bucket_size):
         def same_bucket(start, end):
             return start.year == end.year
 
+        def start_of_bucket(current_date):
+            return datetime(year=current_date.year, month=1, day=1)
+
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(years=+1)
             return datetime(year=date_to_change.year, month=1, day=1)
     elif bucket_size == 'monthly':
         def same_bucket(start, end):
             return start.year == end.year and start.month == end.month
+
+        def start_of_bucket(current_date):
+            return datetime(year=current_date.year, month=current_date.month, day=1)
 
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(months=+1)
@@ -300,8 +311,11 @@ def get_bucket_functions(bucket_size):
         def same_bucket(start, end):
             return start.year == end.year and start.month == end.month and start.day == end.day
 
+        def start_of_bucket(current_date):
+            return datetime(year=current_date.year, month=current_date.month, day=current_date.day)
+
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(days=+1)
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
 
-    return same_bucket, next_bucket
+    return same_bucket, next_bucket, start_of_bucket

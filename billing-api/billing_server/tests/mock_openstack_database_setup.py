@@ -52,6 +52,29 @@ def create_user(database, user_id, username):
         username=username)
 
 
+def delete_user(database, user_id):
+    database.database.query(
+        '''
+        DELETE
+        FROM
+          keystone.user
+
+        WHERE
+          id = :user_id;
+        '''
+        , user_id=user_id)
+    database.database.query(
+        '''
+        DELETE
+        FROM
+          keystone.assignment
+
+        WHERE
+          actor_id = :user_id;
+        '''
+        , user_id=user_id)
+
+
 def assign_role(database, user_id, project_id, billing=False):
     if billing:
         role_id = BILLING_ROLE_ID

@@ -106,6 +106,26 @@ class extends Component {
     autorun(this.redrawChart);
   }
 
+  formatDateRange = (cell, entry) => {
+    const bucket = this.report ? this.report.bucket.toUpperCase() : this.filters.bucketSize;
+    switch (bucket) {
+      case TIME_PERIODS.DAILY:
+        return moment(entry.fromDate, moment.ISO_8601).format('DD MMM YYYY');
+        break;
+      case TIME_PERIODS.WEEKLY:
+        return `${moment(entry.fromDate, moment.ISO_8601).format('MMM DD YYYY')} - ${moment(entry.toDate, moment.ISO_8601).subtract('days', 1).format('MMM DD YYYY')}`;
+        break;
+      case TIME_PERIODS.MONTHLY:
+        return moment(entry.fromDate, moment.ISO_8601).format('MMMM YYYY');
+        break;
+      case TIME_PERIODS.YEARLY:
+        return moment(entry.fromDate, moment.ISO_8601).format('YYYY');
+        break;
+      default:
+        return moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD');
+    }
+  }
+
   updateChart = async () => {
     this.isLoading = true;
     const report = await fetchReport({
@@ -275,19 +295,19 @@ class extends Component {
               >Image (hrs)</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="cpuCost"
-                dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+                dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
                 hidden={!this.shouldShowCost}
                 dataAlign="right"
               >CPU Cost</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="volumeCost"
-                dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+                dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}) : ''}
                 hidden={!this.shouldShowCost}
                 dataAlign="right"
               >Volume Cost</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="imageCost"
-                dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+                dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
                 hidden={!this.shouldShowCost}
                 dataAlign="right"
               >Image Cost</TableHeaderColumn>
@@ -297,7 +317,7 @@ class extends Component {
                 hidden={this.shouldShowCost}
               >Total (hrs)</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2).toLocaleString()}`}
+                dataFormat={(cell, row) => _.sum([row.cpuCost, row.volumeCost, row.imageCost]).toLocaleString(undefined, {style:'currency', currency:'CAD'})}
                 dataAlign="right"
                 hidden={!this.shouldShowCost}
               >Total Cost</TableHeaderColumn>
@@ -312,7 +332,10 @@ class extends Component {
         <h2 className="section-heading">Details</h2>
         
         <div className={`usage-table ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
-          <div>
+          <div className="form-item">
+            <label>
+              Group By
+            </label>
             <div>
               <RadioGroup>
                 <RadioButton
@@ -351,14 +374,15 @@ class extends Component {
             >
             <TableHeaderColumn
               dataField="fromDate"
-              dataFormat={(cell, entry) => `${moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD')} - ${moment(entry.toDate, moment.ISO_8601).format('YYYY-MM-DD')}`}
+              dataFormat={this.formatDateRange}
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
+              export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
               dataSort={true}
             >Period</TableHeaderColumn>
             <TableHeaderColumn
               dataField="toDate"
               hidden={true}
-              export={true}
+              export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
             >Period</TableHeaderColumn>
             <TableHeaderColumn
               dataField="projectId"
@@ -392,7 +416,7 @@ class extends Component {
             >CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpuCost"
-              dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+              dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
@@ -406,7 +430,7 @@ class extends Component {
             >Volume (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volumeCost"
-              dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+              dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
@@ -420,7 +444,7 @@ class extends Component {
             >Image (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="imageCost"
-              dataFormat={x => x ? `$${x.toFixed(2).toLocaleString()}` : ''}
+              dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
@@ -432,7 +456,7 @@ class extends Component {
               hidden={this.shouldShowCost}
             >Total (hrs)</TableHeaderColumn>
             <TableHeaderColumn
-              dataFormat={(cell, row) => `$${_.sum([row.cpuCost, row.volumeCost, row.imageCost]).toFixed(2).toLocaleString()}`}
+              dataFormat={(cell, row) => _.sum([row.cpuCost, row.volumeCost, row.imageCost]).toLocaleString(undefined, {style:'currency', currency:'CAD'})}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
