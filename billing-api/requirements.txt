@@ -13,6 +13,7 @@ itsdangerous==0.24
 Jinja2==2.8
 keystoneauth1==2.12.1
 MarkupSafe==0.23
+mock==2.0.0
 monotonic==1.2
 msgpack-python==0.4.8
 MySQL-python==1.2.5
