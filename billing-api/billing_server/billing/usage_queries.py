@@ -153,6 +153,9 @@ class Collaboratory:
         return results.all(as_dict=True)
 
     def get_image_storage_gigabyte_hours_by_project(self, start_date, end_date, projects):
+        if not projects:
+            projects.append('')
+
         results = self.database.query(
             '''
             SELECT
