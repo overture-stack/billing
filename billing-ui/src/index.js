@@ -37,7 +37,7 @@ observe(user, change => {
   }
   if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
     console.log('user logged out. redirecting to /login');
-    browserHistory.push('/login');
+    window.location.href = '/login';
   }
 })
 
