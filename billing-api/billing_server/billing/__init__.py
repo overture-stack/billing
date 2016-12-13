@@ -242,6 +242,7 @@ def divide_time_range(start_date, end_date, bucket_size):
         if next_period is not None:
             period = next_period
 
+    query_periods = 62  # refactor to make this configurable
     date_ranges = []
     while not start_date == end_date:
         next_bucket_date = next_bucket(start_date)
@@ -264,6 +265,11 @@ def divide_time_range(start_date, end_date, bucket_size):
         bucket['image_price'] = period['image_price']
 
         date_ranges.append(bucket)
+
+        if query_periods > 0:
+            query_periods -= 1
+        else:
+            date_ranges.pop(0)
 
         start_date = period_end_date
 
