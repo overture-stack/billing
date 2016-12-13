@@ -12,6 +12,13 @@ from mock_openstack_database_setup import initialize_database, teardown_database
 
 class MyTestCase(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        @app.route('/test', methods=['GET'])
+        @authenticate
+        def test_endpoint(client, user_id, database):
+            return None
+
     def setUp(self):
         app.config['TESTING'] = True
         app.config['MYSQL_URI'] = 'mysql://root@localhost'
@@ -34,10 +41,6 @@ class MyTestCase(unittest.TestCase):
     @mock.patch('billing_server.billing.sessions.renew_token', return_value=dict(user_id='user', token='new_token'))
     @mock.patch('billing_server.billing.sessions.validate_token', return_value=None)
     def test_authentication_success(self, validate_mock, renew_mock):
-        @app.route('/test', methods=['GET'])
-        @authenticate
-        def test_endpoint(client, user_id, database):
-            return Response()
         self.app.get('/test', headers={'Authorization': 'Token 12345'})
         validate_mock.assert_called()
         renew_mock.assert_called()
