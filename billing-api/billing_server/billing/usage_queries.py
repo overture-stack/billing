@@ -33,7 +33,7 @@ class Collaboratory:
         if hasattr(self, 'database'):
             self.database.close()
 
-    def get_usage_statistics(self, start_date, end_date, billing_projects, user_projects, user_id):
+    def get_instance_core_hours(self, start_date, end_date, billing_projects, user_projects, user_id):
 
         # SQL doesn't like empty lists, so we ensure the invalid project_id of '' populates the list if it's empty
         if not billing_projects:
@@ -45,104 +45,108 @@ class Collaboratory:
         results = self.database.query(
             '''
             SELECT
-              instances.user_id as user,
-              instances.project_id as projectId,
-              instances.core_hours as cpu,
-              volumes.gigabyte_hours as volume
+              user_id as user,
+              project_id as projectId,
+              SUM(
+                CEIL(
+                  TIMESTAMPDIFF(
+                    SECOND,
+                    GREATEST(
+                      :start_date,
+                      created_at
+                    ),
+                    LEAST(
+                      :end_date,
+                      COALESCE(
+                        deleted_at,
+                        :end_date
+                      )
+                    )
+                  ) / 3600
+                ) * vcpus
+              ) AS cpu
+
             FROM
+              nova.instances
 
+            WHERE
+              vm_state   != 'error'           AND
+              (
+                deleted_at >  :start_date  OR
+                deleted_at IS NULL
+              )                               AND
+              created_at <  :end_date         AND
+              (
+                project_id IN :billing_projects OR
                 (
-                  SELECT
-                    user_id,
-                    project_id,
-                    SUM(
-                      CEIL(
-                        TIMESTAMPDIFF(
-                          SECOND,
-                          GREATEST(
-                            :start_date,
-                            created_at
-                          ),
-                          LEAST(
-                            :end_date,
-                            COALESCE(
-                              deleted_at,
-                              :end_date
-                            )
-                          )
-                        ) / 3600
-                      ) * vcpus
-                    ) AS core_hours
+                  user_id    =  :user_id      AND
+                  project_id IN :user_projects
+                )
+              )
+            GROUP BY
+              user_id,
+              project_id
+            ''',
+            start_date=start_date,
+            end_date=end_date,
+            billing_projects=billing_projects,
+            user_projects=user_projects,
+            user_id=user_id)
 
-                  FROM
-                    nova.instances
+        return results.all(as_dict=True)
 
-                  WHERE
-                    vm_state   != 'error'           AND
-                    (
-                      deleted_at >  :start_date  OR
-                      deleted_at IS NULL
-                    )                               AND
-                    created_at <  :end_date         AND
-                    (
-                      project_id IN :billing_projects OR
-                      (
-                        user_id    =  :user_id      AND
-                        project_id IN :user_projects
+    def get_volume_gigabyte_hours(self, start_date, end_date, billing_projects, user_projects, user_id):
+
+        # SQL doesn't like empty lists, so we ensure the invalid project_id of '' populates the list if it's empty
+        if not billing_projects:
+            billing_projects.append('')
+
+        if not user_projects:
+            user_projects.append('')
+
+        results = self.database.query(
+            '''
+            SELECT
+              user_id as user,
+              project_id as projectId,
+              SUM(
+                CEIL(
+                  TIMESTAMPDIFF(
+                    SECOND,
+                    GREATEST(
+                      :start_date,
+                      created_at
+                    ),
+                    LEAST(
+                      :end_date,
+                      COALESCE(
+                        deleted_at,
+                        :end_date
                       )
                     )
-                  GROUP BY
-                    user_id,
-                    project_id
-                ) AS instances
-              LEFT OUTER JOIN
+                  ) / 3600
+                ) * size
+              ) AS volume
+
+            FROM
+              cinder.volumes
+
+            WHERE
+              (
+                deleted_at >  :start_date  OR
+                deleted_at IS NULL
+              )                              AND
+              created_at <  :end_date        AND
+              (
+                project_id IN :billing_projects OR
                 (
-                  SELECT
-                    user_id,
-                    project_id,
-                    SUM(
-                      CEIL(
-                        TIMESTAMPDIFF(
-                          SECOND,
-                          GREATEST(
-                            :start_date,
-                            created_at
-                          ),
-                          LEAST(
-                            :end_date,
-                            COALESCE(
-                              deleted_at,
-                              :end_date
-                            )
-                          )
-                        ) / 3600
-                      ) * size
-                    ) AS gigabyte_hours
-
-                  FROM
-                    cinder.volumes
-
-                  WHERE
-                    (
-                      deleted_at >  :start_date  OR
-                      deleted_at IS NULL
-                    )                              AND
-                    created_at <  :end_date        AND
-                    (
-                      project_id IN :billing_projects OR
-                      (
-                        user_id    =  :user_id      AND
-                        project_id IN :user_projects
-                      )
-                    )
-                  GROUP BY
-                    user_id,
-                    project_id
-                ) AS volumes
-
-            ON
-              instances.user_id    = volumes.user_id     AND
-              instances.project_id = volumes.project_id;
+                  user_id    =  :user_id      AND
+                  project_id IN :user_projects
+                )
+              )
+            GROUP BY
+              user_id,
+              project_id
             ''',
             start_date=start_date,
             end_date=end_date,
@@ -243,7 +247,7 @@ class Collaboratory:
               name
 
             FROM
-              keystone.user
+              keystone.local_user
             '''
         )
         for result in results.all(as_dict=True):

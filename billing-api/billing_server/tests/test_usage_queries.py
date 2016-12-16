@@ -37,11 +37,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-10 00:00:00',
-                                                  '2016-09-30 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-10 00:00:00',
+                                                     '2016-09-30 15:00:00',
+                                                     [project_id],
+                                                     [''],
+                                                     user_id)
         self.assertEquals(1588, data[0]['cpu'])
 
     def test_instance_core_hours_created_and_deleted_out_of_date_range_one_user(self):
@@ -50,11 +50,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', None)
-        data = self.database.get_usage_statistics('2016-09-15 00:00:00',
-                                                  '2016-09-26 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-15 00:00:00',
+                                                     '2016-09-26 15:00:00',
+                                                     [project_id],
+                                                     [''],
+                                                     user_id)
         self.assertEquals(1116, data[0]['cpu'])
 
     def test_instance_core_hours_created_in_and_deleted_out_of_date_range_one_user(self):
@@ -63,11 +63,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-10 00:00:00',
-                                                  '2016-09-26 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-10 00:00:00',
+                                                     '2016-09-26 15:00:00',
+                                                     [project_id],
+                                                     [''],
+                                                     user_id)
         self.assertEquals(1388, data[0]['cpu'])
 
     def test_instance_core_hours_created_out_and_deleted_in_date_range_one_user(self):
@@ -76,11 +76,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-15 00:00:00',
-                                                  '2016-09-30 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-15 00:00:00',
+                                                     '2016-09-30 15:00:00',
+                                                     [project_id],
+                                                     [''],
+                                                     user_id)
         self.assertEquals(1316, data[0]['cpu'])
 
     def test_instance_core_hours_sum_all_cases_one_user(self):
@@ -92,11 +92,11 @@ class Test(unittest.TestCase):
         create_instance(self.database, user_id, project_id, 8, '2016-09-01 04:39:13', '2016-09-30 16:48:19')
         create_instance(self.database, user_id, project_id, 2, '2016-09-01 04:39:13', '2016-09-18 12:35:11')
         create_instance(self.database, user_id, project_id, 1, '2016-09-17 00:39:13', '2016-09-30 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-10 10:00:00',
-                                                  '2016-09-25 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-10 10:00:00',
+                                                     '2016-09-25 15:00:00',
+                                                     [project_id],
+                                                     [''],
+                                                     user_id)
         self.assertEquals(820+2920+390+207, data[0]['cpu'])
 
     def test_volume_gigabyte_hours_created_and_deleted_in_date_range_one_user(self):
@@ -105,11 +105,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_volume(self.database, user_id, project_id, 64, '2016-09-24 19:40:23', '2016-10-05 20:10:29')
-        data = self.database.get_usage_statistics('2016-09-10 10:00:00',
-                                                  '2016-10-25 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_volume_gigabyte_hours('2016-09-10 10:00:00',
+                                                       '2016-10-25 15:00:00',
+                                                       [project_id],
+                                                       [''],
+                                                       user_id)
         self.assertEquals(16960, data[0]['volume'])
 
     def test_volume_gigabyte_hours_created_and_deleted_outside_date_range_one_user(self):
@@ -118,11 +118,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_volume(self.database, user_id, project_id, 128, '2016-09-24 19:40:23', '2016-10-05 20:10:29')
-        data = self.database.get_usage_statistics('2016-09-30 10:00:00',
-                                                  '2016-10-03 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_volume_gigabyte_hours('2016-09-30 10:00:00',
+                                                       '2016-10-03 15:00:00',
+                                                       [project_id],
+                                                       [''],
+                                                       user_id)
         self.assertEquals(9856, data[0]['volume'])
 
     def test_volume_gigabyte_hours_created_in_and_deleted_out_of_date_range_one_user(self):
@@ -131,11 +131,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_volume(self.database, user_id, project_id, 32, '2016-09-24 19:40:23', None)
-        data = self.database.get_usage_statistics('2016-09-10 10:00:00',
-                                                  '2016-10-25 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_volume_gigabyte_hours('2016-09-10 10:00:00',
+                                                       '2016-10-25 15:00:00',
+                                                       [project_id],
+                                                       [''],
+                                                       user_id)
         self.assertEquals(23680, data[0]['volume'])
 
     def test_volume_gigabyte_hours_created_out_of_and_deleted_in_date_range_one_user(self):
@@ -144,11 +144,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_volume(self.database, user_id, project_id, 64, '2016-09-24 19:40:23', '2016-10-05 20:10:29')
-        data = self.database.get_usage_statistics('2016-09-26 18:20:00',
-                                                  '2016-10-25 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_volume_gigabyte_hours('2016-09-26 18:20:00',
+                                                       '2016-10-25 15:00:00',
+                                                       [project_id],
+                                                       [''],
+                                                       user_id)
         self.assertEquals(13952, data[0]['volume'])
 
     def test_volume_gigabyte_hours_sum_all_cases_one_user(self):
@@ -160,28 +160,12 @@ class Test(unittest.TestCase):
         create_volume(self.database, user_id, project_id, 8, '2016-09-01 04:39:13', '2016-09-30 16:48:19')
         create_volume(self.database, user_id, project_id, 2, '2016-09-01 04:39:13', '2016-09-18 12:35:11')
         create_volume(self.database, user_id, project_id, 1, '2016-09-17 00:39:13', '2016-09-30 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-10 10:00:00',
-                                                  '2016-09-25 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
+        data = self.database.get_volume_gigabyte_hours('2016-09-10 10:00:00',
+                                                       '2016-09-25 15:00:00',
+                                                       [project_id],
+                                                       [''],
+                                                       user_id)
         self.assertEquals(820 + 2920 + 390 + 207, data[0]['volume'])
-
-    def test_sum_instance_core_hours_volume_gigabyte_hours_one_user(self):
-        user_id = '1'
-        project_id = 'thisisaproject!'
-        create_user(self.database, user_id, 'Cool Guy')
-        assign_role(self.database, user_id, project_id)
-
-        create_instance(self.database, user_id, project_id, 4, '2016-09-20 06:23:15', None)
-        create_volume(self.database, user_id, project_id, 128, '2016-09-10 13:42:10', '2016-10-05 23:14:59')
-        data = self.database.get_usage_statistics('2016-09-15 10:00:00',
-                                                  '2016-10-10 15:00:00',
-                                                  [project_id],
-                                                  [''],
-                                                  user_id)
-        self.assertEquals(1956, data[0]['cpu'])
-        self.assertEquals(63232, data[0]['volume'])
 
     # todo: test image calculation on an instance created and deleted within the time frame
     # todo: test image calculation on an instance created and deleted outside the time frame
@@ -209,13 +193,11 @@ class Test(unittest.TestCase):
         create_instance(self.database, user_id_2, project_id_1, 8, '2016-09-15 12:04:32', '2016-10-07 19:53:23')
         create_instance(self.database, user_id_2, project_id_2, 1, '2016-09-28 00:00:00', '2016-09-28 00:00:01')
 
-        create_volume(self.database, user_id_2, project_id_2, 64, '2016-10-01 12:52:32', '2016-10-25 09:42:13')
-
-        data = self.database.get_usage_statistics('2016-09-23 00:00:00',
-                                                  '2016-10-20 00:00:00',
-                                                  [project_id_1, project_id_2],
-                                                  [''],
-                                                  user_id_1)
+        data = self.database.get_instance_core_hours('2016-09-23 00:00:00',
+                                                     '2016-10-20 00:00:00',
+                                                     [project_id_1, project_id_2],
+                                                     [''],
+                                                     user_id_1)
         self.assertEquals(4, data.__len__())
         case11 = False
         case12 = False
@@ -234,7 +216,6 @@ class Test(unittest.TestCase):
             if row['user'] == user_id_2 and row['projectId'] == project_id_2:
                 case22 = True
                 self.assertEquals(1, row['cpu'])
-                self.assertEquals(28416, row['volume'])
         self.assertTrue(case11 and case12 and case21 and case22)
 
     # todo: test that it groups by project for images
@@ -253,11 +234,11 @@ class Test(unittest.TestCase):
         assign_role(self.database, user_id_2, project_id, False)
         create_instance(self.database, user_id_1, project_id, 4, '2016-09-04 16:42:13', '2016-11-30 23:14:00')
         create_instance(self.database, user_id_2, project_id, 8, '2016-09-15 12:04:32', '2016-10-07 19:53:23')
-        data = self.database.get_usage_statistics('2016-09-23 00:00:00',
-                                                  '2016-10-20 00:00:00',
-                                                  [''],
-                                                  [project_id],
-                                                  user_id_1)
+        data = self.database.get_instance_core_hours('2016-09-23 00:00:00',
+                                                     '2016-10-20 00:00:00',
+                                                     [''],
+                                                     [project_id],
+                                                     user_id_1)
         self.assertEquals(1, data.__len__())
         self.assertEquals(user_id_1, data[0]['user'])
 
@@ -283,13 +264,11 @@ class Test(unittest.TestCase):
         create_instance(self.database, user_id_2, project_id_1, 8, '2016-09-15 12:04:32', '2016-10-07 19:53:23')
         create_instance(self.database, user_id_2, project_id_2, 1, '2016-09-28 00:00:00', '2016-09-28 00:00:01')
 
-        create_volume(self.database, user_id_2, project_id_2, 64, '2016-10-01 12:52:32', '2016-10-25 09:42:13')
-
-        data = self.database.get_usage_statistics('2016-09-23 00:00:00',
-                                                  '2016-10-20 00:00:00',
-                                                  [project_id_1],
-                                                  [project_id_2],
-                                                  user_id_1)
+        data = self.database.get_instance_core_hours('2016-09-23 00:00:00',
+                                                     '2016-10-20 00:00:00',
+                                                     [project_id_1],
+                                                     [project_id_2],
+                                                     user_id_1)
         self.assertEquals(3, data.__len__())
         case11 = False
         case12 = False
@@ -316,11 +295,11 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-10 00:00:00',
-                                                  '2016-09-30 15:00:00',
-                                                  [],
-                                                  [project_id],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-10 00:00:00',
+                                                     '2016-09-30 15:00:00',
+                                                     [],
+                                                     [project_id],
+                                                     user_id)
         self.assertEquals(1588, data[0]['cpu'])
 
     def test_query_usage_empty_user_projects_list(self):
@@ -329,15 +308,14 @@ class Test(unittest.TestCase):
         create_user(self.database, user_id, 'Cool Guy')
         assign_role(self.database, user_id, project_id)
         create_instance(self.database, user_id, project_id, 4, '2016-09-12 04:39:13', '2016-09-28 16:48:19')
-        data = self.database.get_usage_statistics('2016-09-10 00:00:00',
-                                                  '2016-09-30 15:00:00',
-                                                  [project_id],
-                                                  [],
-                                                  user_id)
+        data = self.database.get_instance_core_hours('2016-09-10 00:00:00',
+                                                     '2016-09-30 15:00:00',
+                                                     [project_id],
+                                                     [],
+                                                     user_id)
         self.assertEquals(1588, data[0]['cpu'])
 
     # Expected failure until query actually reports on deleted users
-    @unittest.expectedFailure
     def test_query_usage_returns_data_for_deleted_user(self):
         user_id_1 = 'I am going to run the query'
         user_id_2 = 'I AM GOING TO BE DELETED'
@@ -350,11 +328,11 @@ class Test(unittest.TestCase):
 
         create_instance(self.database, user_id_2, project_id, 5, '2016-11-01 00:00:00', '2016-11-01 01:00:00')
         delete_user(self.database, user_id_2)
-        data = self.database.get_usage_statistics('2016-10-01 00:00:00',
-                                                  '2016-12-01 00:00:00',
-                                                  [project_id],
-                                                  [],
-                                                  user_id_1)
+        data = self.database.get_instance_core_hours('2016-10-01 00:00:00',
+                                                     '2016-12-01 00:00:00',
+                                                     [project_id],
+                                                     [],
+                                                     user_id_1)
         self.assertEqual(data.__len__(), 1)
         for row in data:
             self.assertEqual(row['user'], user_id_2)
