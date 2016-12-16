@@ -158,15 +158,27 @@ def generate_report_data(client, user_id, database):
     # Generate list of responses
     responses = []
     for bucket_range in date_ranges:
-        records = database.get_usage_statistics(bucket_range['start_date'],
-                                                bucket_range['end_date'],
-                                                billing_projects,
-                                                user_projects,
-                                                user)
+
+        records = database.get_instance_core_hours(bucket_range['start_date'],
+                                                   bucket_range['end_date'],
+                                                   billing_projects,
+                                                   user_projects,
+                                                   user)
         for record in records:
             record['fromDate'] = bucket_range['start_date']
             record['toDate'] = bucket_range['end_date']
             record['cpuPrice'] = bucket_range['cpu_price']
+            record['username'] = database.get_username(record['user'])
+            responses.append(record)
+
+        records = database.get_volume_gigabyte_hours(bucket_range['start_date'],
+                                                     bucket_range['end_date'],
+                                                     billing_projects,
+                                                     user_projects,
+                                                     user)
+        for record in records:
+            record['fromDate'] = bucket_range['start_date']
+            record['toDate'] = bucket_range['end_date']
             record['volumePrice'] = bucket_range['volume_price']
             record['username'] = database.get_username(record['user'])
             responses.append(record)
@@ -189,9 +201,15 @@ def generate_report_data(client, user_id, database):
                     same_bucket(parse(report_item['fromDate']), parse(item['fromDate']))):
                 if 'user' in report_item and report_item['user'] is not None:
                     if 'cpu' in item and item['cpu'] is not None:
+                        if 'cpu' not in report_item:
+                            report_item['cpu'] = 0
+                            report_item['cpuCost'] = 0
                         report_item['cpu'] += item['cpu']
                         report_item['cpuCost'] += round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
                     if 'volume' in item and item['volume'] is not None:
+                        if 'volume' not in report_item:
+                            report_item['volume'] = 0
+                            report_item['volumeCost'] = 0
                         report_item['volume'] += item['volume']
                         report_item['volumeCost'] += round(parse_decimal(item['volume']) * item['volumePrice'], 4)
                 else:
@@ -242,6 +260,11 @@ def divide_time_range(start_date, end_date, bucket_size):
         if next_period is not None:
             period = next_period
 
+    # We only want to report on 62 time periods at max. For each time period, 3 queries are made, so we're
+    # limiting the number of time periods to 62 in order to prevent the database from taking too much load and
+    # in order to maintain a reasonable run time. We want to be able to display around 2 months of data if going daily
+    # and 62 is the maximum number of days that 2 months can take.
+    query_periods = 62  # refactor to make this configurable
     date_ranges = []
     while not start_date == end_date:
         next_bucket_date = next_bucket(start_date)
@@ -264,6 +287,11 @@ def divide_time_range(start_date, end_date, bucket_size):
         bucket['image_price'] = period['image_price']
 
         date_ranges.append(bucket)
+
+        if query_periods > 0:
+            query_periods -= 1
+        else:
+            date_ranges.pop(0)
 
         start_date = period_end_date
 

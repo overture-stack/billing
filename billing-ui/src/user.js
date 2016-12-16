@@ -24,6 +24,7 @@ const user = observable({
   token: '',
   
   login: action(async function (username, password) {
+    this.isLoggedIn = false;
     this.isLoggingIn = true;
     const response = await fetch('/api/login', {
         method: 'POST',

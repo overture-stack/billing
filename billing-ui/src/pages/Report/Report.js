@@ -126,6 +126,14 @@ class extends Component {
     }
   }
 
+  formatNumber = (n) => {
+    return n ? n.toLocaleString() : '';
+  }
+
+  formatCurrency = (n) => {
+    return n ? `$${n.toLocaleString(undefined, {minimumFractionDigits: 2})}` : '';
+  }
+
   updateChart = async () => {
     this.isLoading = true;
     const report = await fetchReport({
@@ -278,46 +286,46 @@ class extends Component {
               <TableHeaderColumn
                 dataField="cpu"
                 hidden={this.shouldShowCost}
-                dataFormat={x => x ? x.toLocaleString() : ''}
+                dataFormat={this.formatNumber}
                 dataAlign="right"
               >CPU (hrs)</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="volume"
                 hidden={this.shouldShowCost}
-                dataFormat={x => x ? x.toLocaleString() : ''}
+                dataFormat={this.formatNumber}
                 dataAlign="right"
               >Volume (hrs)</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="image"
                 hidden={this.shouldShowCost}
-                dataFormat={x => x ? x.toLocaleString() : ''}
+                dataFormat={this.formatNumber}
                 dataAlign="right"
               >Image (hrs)</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="cpuCost"
-                dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
+                dataFormat={this.formatCurrency}
                 hidden={!this.shouldShowCost}
                 dataAlign="right"
               >CPU Cost</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="volumeCost"
-                dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}) : ''}
+                dataFormat={this.formatCurrency}
                 hidden={!this.shouldShowCost}
                 dataAlign="right"
               >Volume Cost</TableHeaderColumn>
               <TableHeaderColumn
                 dataField="imageCost"
-                dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
+                dataFormat={this.formatCurrency}
                 hidden={!this.shouldShowCost}
                 dataAlign="right"
               >Image Cost</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image]).toLocaleString()}
+                dataFormat={(cell, row) => this.formatNumber(_.sum([row.cpu, row.volume, row.image]))}
                 dataAlign="right"
                 hidden={this.shouldShowCost}
               >Total (hrs)</TableHeaderColumn>
               <TableHeaderColumn
-                dataFormat={(cell, row) => _.sum([row.cpuCost, row.volumeCost, row.imageCost]).toLocaleString(undefined, {style:'currency', currency:'CAD'})}
+                dataFormat={(cell, row) => this.formatCurrency(_.sum([row.cpuCost, row.volumeCost, row.imageCost]))}
                 dataAlign="right"
                 hidden={!this.shouldShowCost}
               >Total Cost</TableHeaderColumn>
@@ -408,7 +416,7 @@ class extends Component {
             >User</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpu"
-              dataFormat={x => x ? x.toLocaleString() : ''}
+              dataFormat={this.formatNumber}
               dataAlign="right"
               dataSort={true}
               sortFunc={(a, b, order) => ((a.cpu === '') ? 0 : a.cpu) - ((b.cpu === '') ? 0 : b.cpu)}
@@ -416,47 +424,47 @@ class extends Component {
             >CPU (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpuCost"
-              dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
+              dataFormat={this.formatCurrency}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
             >CPU Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume"
-              dataFormat={x => x ? x.toLocaleString() : ''}
+              dataFormat={this.formatNumber}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >Volume (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volumeCost"
-              dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
+              dataFormat={this.formatCurrency}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
             >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="image"
-              dataFormat={x => x ? x.toLocaleString() : ''}
+              dataFormat={this.formatNumber}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >Image (hrs)</TableHeaderColumn>
             <TableHeaderColumn
               dataField="imageCost"
-              dataFormat={x => x ? x.toLocaleString(undefined, {style:'currency', currency:'CAD'}): ''}
+              dataFormat={this.formatCurrency}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
             >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
-              dataFormat={(cell, row) => _.sum([row.cpu, row.volume, row.image]).toLocaleString()}
+              dataFormat={(cell, row) => this.formatNumber(_.sum([row.cpu, row.volume, row.image]))}
               dataAlign="right"
               dataSort={true}
               hidden={this.shouldShowCost}
             >Total (hrs)</TableHeaderColumn>
             <TableHeaderColumn
-              dataFormat={(cell, row) => _.sum([row.cpuCost, row.volumeCost, row.imageCost]).toLocaleString(undefined, {style:'currency', currency:'CAD'})}
+              dataFormat={(cell, row) => this.formatCurrency(_.sum([row.cpuCost, row.volumeCost, row.imageCost]))}
               dataAlign="right"
               dataSort={true}
               hidden={!this.shouldShowCost}
