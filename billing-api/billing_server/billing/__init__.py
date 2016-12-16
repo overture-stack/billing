@@ -260,6 +260,10 @@ def divide_time_range(start_date, end_date, bucket_size):
         if next_period is not None:
             period = next_period
 
+    # We only want to report on 62 time periods at max. For each time period, 3 queries are made, so we're
+    # limiting the number of time periods to 62 in order to prevent the database from taking too much load and
+    # in order to maintain a reasonable run time. We want to be able to display around 2 months of data if going daily
+    # and 62 is the maximum number of days that 2 months can take.
     query_periods = 62  # refactor to make this configurable
     date_ranges = []
     while not start_date == end_date:
