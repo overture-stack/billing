@@ -54,7 +54,7 @@
     "whatwg-fetch": "1.0.0"
   },
   "dependencies": {
-    "antd": "2.0.1",
+    "antd": "^2.6.4",
     "bootstrap": "3.3.7",
     "encode-uri-query": "^1.0.1",
     "gsap-promise": "2.0.0",
