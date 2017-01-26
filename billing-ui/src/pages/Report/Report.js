@@ -25,9 +25,12 @@ import moment from 'moment';
 import CHART_SETTINGS from './CHART_SETTINGS';
 
 import { Button, DatePicker, Radio } from 'antd';
-const RangePicker = DatePicker.RangePicker;
+const { MonthPicker } = DatePicker;
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
+
+import { Select as AntdSelect } from 'antd';
+const Option = AntdSelect.Option;
 
 import Select from 'react-select';
 import 'react-select/dist/react-select.css';
@@ -62,6 +65,10 @@ const defaultAggregationFields = [
   AGGREGATION_FIELDS.PERIOD
 ];
 
+const START_YEAR = 2013;
+const currentYear = new Date().getUTCFullYear();
+const getYearsSinceStart = () => _.range(currentYear - START_YEAR).map(x => x + START_YEAR);
+
 export default @observer
 class extends Component {
 
@@ -93,6 +100,7 @@ class extends Component {
   }
 
   handleFromDateFilterChange = (date) => {
+    console.log(date);
     this.filters.fromDate = date;
   }
 
@@ -200,11 +208,35 @@ class extends Component {
               From
             </label>
             <div className="range-select">
-              <DatePicker
-                format="YYYY-MM-DD"
-                onChange={this.handleFromDateFilterChange}
-                defaultValue={this.filters.fromDate}
-              />
+              { 
+                _.includes([TIME_PERIODS.DAILY, TIME_PERIODS.WEEKLY], this.filters.bucketSize) && <DatePicker
+                  format="YYYY-MM-DD"
+                  onChange={this.handleFromDateFilterChange}
+                  defaultValue={this.filters.fromDate}
+                />
+              }
+
+              {
+                this.filters.bucketSize === TIME_PERIODS.MONTHLY && <MonthPicker
+                  format="MMMM, YYYY"
+                  onChange={this.handleFromDateFilterChange}
+                  defaultValue={this.filters.fromDate}
+                />
+              }
+
+              {
+                this.filters.bucketSize === TIME_PERIODS.YEARLY && <AntdSelect
+                  defaultValue={moment(this.filters.fromDate).format('YYYY')}
+                  showSearch={false}
+                  onChange={this.handleFromDateFilterChange}
+                >
+                  {
+                    getYearsSinceStart().map(year => (
+                      <Option key={year} value={moment(year, 'YYYY')}>{year}</Option>
+                    ))
+                  }
+                </AntdSelect>
+              }
             </div>
           </div>
           <div className="form-item">
@@ -212,11 +244,35 @@ class extends Component {
               To
             </label>
             <div className="range-select">
-              <DatePicker
-                format="YYYY-MM-DD"
-                onChange={this.handleToDateFilterChange}
-                defaultValue={this.filters.toDate}
-              />
+              { 
+                _.includes([TIME_PERIODS.DAILY, TIME_PERIODS.WEEKLY], this.filters.bucketSize) && <DatePicker
+                  format="YYYY-MM-DD"
+                  onChange={this.handleToDateFilterChange}
+                  defaultValue={this.filters.toDate}
+                />
+              }
+
+              {
+                this.filters.bucketSize === TIME_PERIODS.MONTHLY && <MonthPicker
+                  format="MMMM, YYYY"
+                  onChange={this.handleFromDateFilterChange}
+                  defaultValue={moment(this.filters.toDate).endOf('month')}
+                />
+              }
+
+              {
+                this.filters.bucketSize === TIME_PERIODS.YEARLY && <AntdSelect
+                  showSearch={false}
+                  defaultValue={moment(this.filters.toDate).endOf('year').format('YYYY')}
+                  onChange={this.handleFromDateFilterChange}
+                >
+                  {
+                    getYearsSinceStart().map(year => (
+                      <Option key={year} value={moment(year, 'YYYY').endOf('year')}>{year}</Option>
+                    ))
+                  }
+                </AntdSelect>
+              }
             </div>
           </div>
 
