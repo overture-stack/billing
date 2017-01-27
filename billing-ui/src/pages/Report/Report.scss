@@ -30,11 +30,15 @@
     flex-direction: row;
     align-items: flex-end;
     justify-content: flex-start;
-
+    flex-wrap: wrap;
 
     .form-item {
       align-items: flex-start;
       flex-direction: column;
+      margin-top: 1em;
+      &:not(:last-child) {
+        margin-right: 1em;
+      }
     }
 
     .project-select {
@@ -49,10 +53,6 @@
       .Select-placeholder {
         line-height: 28px;
       }
-    }
-
-    & > * + * {
-      margin-left: 1em;
     }
   }
 
