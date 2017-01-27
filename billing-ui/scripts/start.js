@@ -158,10 +158,11 @@ function runDevServer(port) {
       ignored: /node_modules/
     },
     proxy: {
-      '/api/*': {
-        target: 'http://localhost:5000',
+      '/api/**': {
+        // target: 'http://localhost:5000',
+        target: 'https://billing.cancercollaboratory.org:8090',
         secure: false,
-        pathRewrite: {'^/api' : ''},
+        // pathRewrite: {'^/api' : ''},
       },
     },
   }).listen(port, (err, result) => {
