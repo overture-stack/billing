@@ -184,7 +184,7 @@ class extends Component {
 
   render () {
     return (
-      <div className="Report">
+      <div className={`Report ${this.isLoading ? 'is-loading' : ''}`}>
         <h1 className="page-heading">Billing Report</h1>
         <div className="form-controls">
           <div className="form-item">
