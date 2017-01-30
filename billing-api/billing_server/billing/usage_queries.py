@@ -243,7 +243,7 @@ class Collaboratory:
         results = self.database.query(
             '''
             SELECT
-              id,
+              user_id,
               name
 
             FROM
@@ -251,7 +251,7 @@ class Collaboratory:
             '''
         )
         for result in results.all(as_dict=True):
-            self.user_map[result['id']] = result['name']
+            self.user_map[result['user_id']] = result['name']
         return self.user_map
 
     def get_username(self, user_id):
