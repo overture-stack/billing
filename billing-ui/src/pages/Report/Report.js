@@ -95,6 +95,10 @@ class extends Component {
     return aggregateEntries(this.report.entries, "" );
   }
 
+  @computed get isEmpty() {
+    return this.report.entries.length === 0;
+  }
+
   handleProjectsChange = (option) => {
     this.filters.projects = option.map(x => x.value);
   }
@@ -185,7 +189,13 @@ class extends Component {
   render () {
     return (
       <div className={`Report ${this.isLoading ? 'is-loading' : ''}`}>
-        <h1 className="page-heading">Billing Report</h1>
+        <h1 className="page-heading">
+          {
+            this.isLoading
+              ? 'Loading Billing Report...'
+              : 'Billing Report'
+          }
+        </h1>
         <div className="form-controls">
           <div className="form-item">
             <label>
