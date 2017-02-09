@@ -192,8 +192,8 @@ class extends Component {
         <h1 className="page-heading">
           {
             this.isLoading
-              ? 'Loading Billing Report...'
-              : 'Billing Report'
+              ? 'Loading Usage Report...'
+              : 'Usage Report'
           }
         </h1>
         <div className="form-controls">
