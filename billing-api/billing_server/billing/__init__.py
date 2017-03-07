@@ -27,6 +27,9 @@ from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 
+import logging
+from logging.handlers import RotatingFileHandler
+
 app = Flask(__name__)
 app.config.from_object(default)
 
@@ -34,6 +37,13 @@ app.secret_key = app.config['SECRET_KEY']
 
 app.valid_bucket_sizes = app.config['VALID_BUCKET_SIZES']
 app.pricing_periods = app.config['PRICING_PERIODS']
+
+handler = RotatingFileHandler(app.config['FLASK_LOG_FILE'], maxBytes=100000, backupCount=3)
+if app.config['DEBUG']:
+    handler.setLevel(logging.DEBUG)
+else:
+    handler.setLevel(logging.info)
+app.logger.addHandler(handler)
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:

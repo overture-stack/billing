@@ -34,5 +34,7 @@ RUN source env/bin/activate && pip install -r requirements.txt && pip install gu
 RUN rm -f /etc/nginx/sites-enabled/default
 ADD nginx/billing.conf /etc/nginx/sites-enabled/billing.conf
 
+RUN mkdir -p /var/log/gunicorn && mkdir -p /srv/billing-api/logs
+
 # RUN FLASK API
 CMD ["/srv/billing-api/run.sh"]
