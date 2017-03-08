@@ -239,15 +239,41 @@ class Collaboratory:
                 role_map[result['project_id']] = [result['name'].lower()]
         return role_map
 
+    def get_project_billing_map(self):
+        results = self.database.query(
+            '''
+            SELECT assignment.target_id AS project_id, assignment.actor_id AS user_id
+            FROM keystone.assignment
+            WHERE role_id = (SELECT role.id FROM keystone.role WHERE name='billing' LIMIT 1);
+            '''
+        )
+        return results.all()
+
+    def get_project_id_map(self):
+        results = self.database.query(
+            '''
+            SELECT id, name
+            FROM keystone.project
+            '''
+        )
+        return results.all()
+
+    def get_user_extras(self, user_id):
+        results = self.database.query(
+            '''
+            SELECT extra
+            FROM keystone.user
+            WHERE id = :user_id
+            ''',
+            user_id=user_id
+        )
+        return results.all(as_dict=True)[0]
+
     def refresh_user_id_map(self):
         results = self.database.query(
             '''
-            SELECT
-              user_id,
-              name
-
-            FROM
-              keystone.local_user
+            SELECT user_id, name
+            FROM keystone.local_user;
             '''
         )
         for result in results.all(as_dict=True):

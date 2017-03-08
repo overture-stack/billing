@@ -20,12 +20,13 @@ from functools import wraps
 
 from dateutil.parser import parse
 from dateutil.relativedelta import *
-from flask import Flask, request, Response
+from flask import Flask, request, Response, abort
 
 from auth import sessions
 from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
+from service import projects
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -105,13 +106,13 @@ def login():
 @app.route('/projects', methods=['GET'])
 @authenticate
 def get_projects(client, user_id, database):
-    role_map = database.get_user_roles(user_id)
-    tenants = map(lambda tenant: {'id': tenant.to_dict()['id'],
-                                  'name': tenant.to_dict()['name'],
-                                  'roles': role_map[tenant.to_dict()['id']]},
-                  sessions.list_projects(client))
+    return projects.get_tenants(user_id, database, sessions.list_projects(client))
 
-    return tenants
+
+@app.route('/billingprojects', methods=['GET'])
+@authenticate
+def get_billing_projects(client, user_id, database):
+    return projects.get_billing_info(user_id, database)
 
 
 @app.route('/reports', methods=['GET'])
