@@ -153,7 +153,7 @@ def generate_report_data(client, user_id, database):
                 user_projects.append(project)
 
     if user is not None and user == user_id:
-        user_projects = user_projects + billing_projects
+        user_projects += billing_projects
         billing_projects = ['']
     elif user is not None:
         user_projects = billing_projects
