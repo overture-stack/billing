@@ -10,20 +10,37 @@ interface BillableProject {
 
 }
 
+interface BillingConfig {
+
+  api: string;
+  username: string;
+  password: string;
+
+}
+
 class BillingApi {
+
+  /**
+   * Dependencies
+   */
+  private config: BillingConfig;
 
   /**
    * State
    */
   private token: string;
 
+  constructor(config: BillingConfig) {
+    this.config = config;
+  }
+
   public async login() : Promise<string> {
     let json = {
-      username: 'admin',
-      password: 'test'
+      username: this.config.username,
+      password: this.config.password
     };
     
-    return axios.post(`http://localhost:5000/login`, json)
+    return axios.post(`${ this.config.api }/login`, json)
       .then( response => {
         this.token = response.headers.authorization;
         return this.token;
@@ -35,7 +52,7 @@ class BillingApi {
       authorization: `Bearer ${this.token}`
     };
 
-    return axios.get(`http://localhost:5000/billingprojects`, {headers: headers})
+    return axios.get(`${ this.config.api }/billingprojects`, {headers: headers})
       .then( response => {
         let projects: Array<BillableProject> = response.data;
         return projects;
@@ -52,7 +69,7 @@ class BillingApi {
     var lastDay = new Date(y, m + 1, 0);
 
     return axios.get(
-      `http://localhost:5000/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${projectId}`,
+      `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${projectId}`,
       {headers: headers})
       .then( response => {
         if (response.data['entries'].length > 0) {

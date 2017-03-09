@@ -1,34 +1,24 @@
 import { BillingApi } from './service/billing';
 import { Mailer } from './service/email';
-
-
-/**
- * Config
- */
-let config = {
-  smtpConfig: {
-    host: '',
-    port: '25',
-    secure: false,
-    auth: null
-  },
-  emailConfig: {
-    fromAddress: 'billing@cancercollaboratory.org',
-    subject: 'Collaboratory Usage Report'
-  }
-};
-
-
-console.log(process.argv);
+import * as fs from 'fs';
 
 /**
- * Run this stuff here
+ * Argument Parsing for Config Path
  */
-let billing = new BillingApi();
-let mailer = new Mailer(config);
+let args = process.argv;
+if (args.length < 3) {
+  console.log('Missing argument for config.json');
+  process.exit(-1);
+}
+let configPath = args[2];
+let config = JSON.parse(fs.readFileSync(configPath).toString());
 
+/**
+ * Generate reports from billing api and email them to billing users
+ */
+let billing = new BillingApi(config['billingConfig']);
+let mailer = new Mailer({emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig']});
 let projects = billing.login().then(() => billing.projects());
-
 projects.then( p => p.map(project => billing.monthlyReport(project.project_id).then(
   report => mailer.sendEmail(project.extra.email, JSON.stringify(report))
 )));
