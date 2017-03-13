@@ -54,6 +54,9 @@ class Mailer {
       replyTo: this.config.emailConfig.replyTo,
       to: email,
       subject: this.config.emailConfig.subject,
+      headers: {
+        'Reply-To': this.config.emailConfig.replyTo
+      },
       text: report,
       html: html
     };
