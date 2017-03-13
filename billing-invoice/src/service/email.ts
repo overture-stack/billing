@@ -15,6 +15,7 @@ interface EmailConfig {
 
   fromAddress: string;
   subject: string;
+  replyTo: string;
 
 }
 
@@ -50,6 +51,7 @@ class Mailer {
     let html = handlebars.compile(emailTemplate)(report);
     let message = {
       from: this.config.emailConfig.fromAddress,
+      replyTo: this.config.emailConfig.replyTo,
       to: email,
       subject: this.config.emailConfig.subject,
       text: report,
