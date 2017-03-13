@@ -1,4 +1,6 @@
 import * as nodemailer from 'nodemailer';
+import * as handlebars from 'handlebars';
+import * as fs from 'fs';
 
 interface SMTPConfig {
 
@@ -29,23 +31,29 @@ class Mailer {
    * Dependencies
    */
   private config: MailerConfig;
+  private emailPath: string;
 
   /**
    * State
    */
   private transport: nodemailer.Transporter;
 
-  constructor(config: MailerConfig) {
+  constructor(config: MailerConfig, emailPath: string) {
     this.config = config;
+    this.emailPath = emailPath;
     this.transport = nodemailer.createTransport(this.config.smtpConfig);
   }
 
   public sendEmail(email: string, report: string) {
+
+    let emailTemplate = fs.readFileSync(this.emailPath).toString();
+    let html = handlebars.compile(emailTemplate)(report);
     let message = {
       from: this.config.emailConfig.fromAddress,
       to: email,
       subject: this.config.emailConfig.subject,
-      text: report
+      text: report,
+      html: html
     };
     this.transport.sendMail(message, function(err) {
       if(err) {
