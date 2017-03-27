@@ -45,10 +45,9 @@ class Mailer {
     this.transport = nodemailer.createTransport(this.config.smtpConfig);
   }
 
-  public sendEmail(email: string, report: any) {
-
+  public sendEmail(email: string, report: any, price: any) {
     let emailTemplate = fs.readFileSync(this.emailPath).toString();
-    let html = handlebars.compile(emailTemplate)(report[0]);
+    let html = handlebars.compile(emailTemplate)(this.finishReport(report[0], price));
     let message = {
       from: this.config.emailConfig.fromAddress,
       replyTo: this.config.emailConfig.replyTo,
@@ -65,6 +64,12 @@ class Mailer {
         console.log(err);
       }  
     }); 
+  }
+
+  private finishReport(report: any, price: any) {
+    let finalReport = Object.assign(report, price);
+    finalReport.total = report['cpuCost'] + report['volumeCost'] + report['imageCost'];
+    return finalReport;
   }
 
 }

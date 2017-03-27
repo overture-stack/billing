@@ -1771,30 +1771,36 @@
                                 <h5>Project breakdown for {{Project}}</h5>
                                 <table class="large">
                                   <tr>
+                                     <td colspan="3">Item</td>
+                                     <td colspan="1">Amount</td>
+                                     <td colspan="1">Rate</td>
+                                     <td colspan="1">Cost</td>
+                                  </tr>
+                                  <tr>
                                     <td colspan="3">CPU (Core Hours):</td>
                                     <td colspan="1">{{ cpu }}</td>
-                                    <td colspan="1">cpuPrice</td>
+                                    <td colspan="1">{{ cpuPrice }}</td>
                                     <td colspan="1">{{ cpuCost }}</td>
                                   </tr>
                                   <tr>
                                     <td colspan="3">Volume (Volume Hours):</td>
                                     <td colspan="1">{{ volume }}</td>
-                                    <td colspan="1">volumePrice</td>
+                                    <td colspan="1">{{ volumePrice }}</td>
                                     <td colspan="1">{{ volumeCost }}</td>
                                   </tr>
                                   <tr>
                                     <td colspan="3">Image (Image Hours):</td>
                                     <td colspan="1">{{ image }}</td>
-                                    <td colspan="1">imagePrice</td>
+                                    <td colspan="1">{{ imagePrice }}</td>
                                     <td colspan="1">{{ imageCost }}</td>
                                   </tr>
                                   <tr style="border-top: 1px black solid;">
                                     <td colspan="5">Total:</td>
-                                    <td colspan="1">$total</td>
+                                    <td colspan="1">{{ total }}</td>
                                   </tr>
                                   <tr>
                                     <td colspan="5">Costs Covered By OICR:</td>
-                                    <td colspan="1">($total)</td>
+                                    <td colspan="1">({{ total }})</td>
                                   </tr>
                                   <tr style="border-top: 1px black solid;">
                                     <td colspan="5">Total Amount Due:</td>

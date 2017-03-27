@@ -18,6 +18,15 @@ interface BillingConfig {
 
 }
 
+
+interface Price {
+
+  cpuPrice: number;
+  volumePrice: number;
+  imagePrice: number;
+
+}
+
 class BillingApi {
 
   /**
@@ -44,6 +53,17 @@ class BillingApi {
       .then( response => {
         this.token = response.headers.authorization;
         return this.token;
+      });
+  }
+
+  public async price() : Promise<Price> {
+    var date = new Date(), y = date.getFullYear(), m = date.getMonth();
+    var firstDay = new Date(y, m, 1);
+
+    // Bill based on first price at first day of the month
+    return axios.get(`${ this.config.api }/price?date=${ firstDay }`)
+      .then( response => {
+        return response.data;
       });
   }
 

@@ -19,8 +19,11 @@ let emailPath = args[3];
  */
 let billing = new BillingApi(config['billingConfig']);
 let mailer = new Mailer({emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig']}, emailPath);
-let projects = billing.login().then(() => billing.projects());
-projects.then( p => p.map(project => billing.monthlyReport(project.project_id).then(
-  report => mailer.sendEmail(project.extra.email, report)
-)));
 
+let pricePromise = billing.price();
+let projectsPromise = billing.login().then(() => billing.projects());
+Promise.all([pricePromise, projectsPromise]).then( results => {
+  let price = results[0];
+  let projects = results[1];
+  projects.map(project => billing.monthlyReport(project.project_id).then(report => mailer.sendEmail(project.extra.email, report, price)));
+});

@@ -375,6 +375,6 @@ def get_price_period(date):
         if next_period is not None:
             retval = next_period
 
-    return json.dumps({'cpu_price': retval['cpu_price'],
-                       'volume_price': retval['volume_price'],
-                       'image_price': retval['image_price']})
+    return json.dumps({'cpuPrice': retval['cpu_price'],
+                       'volumePrice': retval['volume_price'],
+                       'imagePrice': retval['image_price']})
