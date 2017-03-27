@@ -77,7 +77,14 @@ class BillingApi {
           var report = this.aggregateEntries(response.data['entries'], 'fromDate');
           return report;
         } else {
-          return [];
+          return [{
+            cpu: 0,
+            volume: 0,
+            image: 0,
+            cpuCost: 0,
+            volumeCost: 0,
+            imageCost: 0,
+          }];
         }
       });
   }

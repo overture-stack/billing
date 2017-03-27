@@ -115,6 +115,12 @@ def get_billing_projects(client, user_id, database):
     return projects.get_billing_info(user_id, database)
 
 
+@app.route('/price', methods=['GET'])
+def get_price():
+    date = parse(request.args.get('date'), ignoretz=True)
+    return get_price_period(date)
+
+
 @app.route('/reports', methods=['GET'])
 @authenticate
 def generate_report_data(client, user_id, database):
@@ -358,3 +364,17 @@ def get_bucket_functions(bucket_size):
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
 
     return same_bucket, next_bucket, start_of_bucket
+
+
+def get_price_period(date):
+    pricing_periods = iter(app.pricing_periods)
+    next_period = next(pricing_periods, None)
+    retval = next_period
+    while date >= retval['period_end'] and next_period is not None:
+        next_period = next(pricing_periods, None)
+        if next_period is not None:
+            retval = next_period
+
+    return json.dumps({'cpu_price': retval['cpu_price'],
+                       'volume_price': retval['volume_price'],
+                       'image_price': retval['image_price']})

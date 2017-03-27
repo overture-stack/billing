@@ -45,10 +45,10 @@ class Mailer {
     this.transport = nodemailer.createTransport(this.config.smtpConfig);
   }
 
-  public sendEmail(email: string, report: string) {
+  public sendEmail(email: string, report: any) {
 
     let emailTemplate = fs.readFileSync(this.emailPath).toString();
-    let html = handlebars.compile(emailTemplate)(report);
+    let html = handlebars.compile(emailTemplate)(report[0]);
     let message = {
       from: this.config.emailConfig.fromAddress,
       replyTo: this.config.emailConfig.replyTo,
@@ -57,7 +57,7 @@ class Mailer {
       headers: {
         'Reply-To': this.config.emailConfig.replyTo
       },
-      text: report,
+      text: JSON.stringify(report),
       html: html
     };
     this.transport.sendMail(message, function(err) {
