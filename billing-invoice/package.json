@@ -1,0 +1,30 @@
+{
+  "name": "billing-invoice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./build/index.js",
+    "dev": "node ./build/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GPLv3",
+  "devDependencies": {
+    "@types/node": "^7.0.5",
+    "@types/nodemailer": "^1.3.32",
+    "@types/request": "0.0.40",
+    "@types/handlebars": "^4.0.32",
+    "@types/lodash": "^4.14.54",
+    "lodash": "^4.17.4",
+    "tslint": "^4.5.1",
+    "typescript": "^2.2.1"
+  },
+  "dependencies": {
+    "handlebars": "^4.0.6",
+    "lodash": "^4.17.4",
+    "nodemailer": "^3.1.4",
+    "axios": "^0.15.3",
+    "request": "^2.79.0"
+  }
+}

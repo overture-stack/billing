@@ -1,0 +1,18 @@
+{
+  "smtpConfig": {
+    "host": "<fill in smtp hostname>",
+    "port": "25",
+    "secure": false,
+    "auth": null
+  },
+  "emailConfig": {
+    "fromAddress": "foo@bar.org",
+    "subject": "Usage Report",
+    "replyTo": "reply@bar.org"
+  },
+  "billingConfig": {
+    "api": "http://localhost:5000",
+    "username": "admin",
+    "password": "test"
+  }
+}

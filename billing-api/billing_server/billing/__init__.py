@@ -73,7 +73,7 @@ def authenticate(func):
                 raise AuthenticationError('Cannot parse authorization token')
             c = sessions.validate_token(app.config['AUTH_URI'], token)
             new_token = sessions.renew_token(app.config['AUTH_URI'], token)
-            database = Collaboratory(app.config['MYSQL_URI'], app.logger)
+            database = Collaboratory(app.config['MYSQL_URI'], app.logger, app.config['BILLING_ROLE'])
             retval = func(c, new_token['user_id'], database, *args, **kwargs)
             response = Response(json.dumps(retval, default=parse_decimal), status=200, content_type='application/json')
             response.headers['Authorization'] = new_token['token']
@@ -90,7 +90,7 @@ def api_error_handler(e):
 
 @app.route('/login', methods=['POST'])
 def login():
-    database = Collaboratory(app.config['MYSQL_URI'], app.logger)
+    database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
     if 'username' not in request.json or 'password' not in request.json:
         raise BadRequestError('Please provide username and password in the body of your request')
     token = sessions.get_new_token(
@@ -113,6 +113,12 @@ def get_projects(client, user_id, database):
 @authenticate
 def get_billing_projects(client, user_id, database):
     return projects.get_billing_info(user_id, database)
+
+
+@app.route('/price', methods=['GET'])
+def get_price():
+    date = parse(request.args.get('date'), ignoretz=True)
+    return get_price_period(date)
 
 
 @app.route('/reports', methods=['GET'])
@@ -358,3 +364,17 @@ def get_bucket_functions(bucket_size):
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
 
     return same_bucket, next_bucket, start_of_bucket
+
+
+def get_price_period(date):
+    pricing_periods = iter(app.pricing_periods)
+    next_period = next(pricing_periods, None)
+    retval = next_period
+    while date >= retval['period_end'] and next_period is not None:
+        next_period = next(pricing_periods, None)
+        if next_period is not None:
+            retval = next_period
+
+    return json.dumps({'cpuPrice': retval['cpu_price'],
+                       'volumePrice': retval['volume_price'],
+                       'imagePrice': retval['image_price']})
