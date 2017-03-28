@@ -73,7 +73,7 @@ def authenticate(func):
                 raise AuthenticationError('Cannot parse authorization token')
             c = sessions.validate_token(app.config['AUTH_URI'], token)
             new_token = sessions.renew_token(app.config['AUTH_URI'], token)
-            database = Collaboratory(app.config['MYSQL_URI'], app.logger)
+            database = Collaboratory(app.config['MYSQL_URI'], app.logger, app.config['BILLING_ROLE'])
             retval = func(c, new_token['user_id'], database, *args, **kwargs)
             response = Response(json.dumps(retval, default=parse_decimal), status=200, content_type='application/json')
             response.headers['Authorization'] = new_token['token']
@@ -90,7 +90,7 @@ def api_error_handler(e):
 
 @app.route('/login', methods=['POST'])
 def login():
-    database = Collaboratory(app.config['MYSQL_URI'], app.logger)
+    database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
     if 'username' not in request.json or 'password' not in request.json:
         raise BadRequestError('Please provide username and password in the body of your request')
     token = sessions.get_new_token(

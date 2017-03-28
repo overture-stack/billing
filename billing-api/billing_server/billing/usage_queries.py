@@ -19,8 +19,8 @@ import records
 # TODO: Make this not use Records, as Records caches responses
 class Collaboratory:
 
-    def __init__(self, database_url, logger, initialized=True):
-
+    def __init__(self, database_url, logger, billing_role='billing', initialized=True):
+        self.billing_role = billing_role
         self.logger = logger
         logger.info('Acquiring database')
         self.database = records.Database(database_url)
@@ -244,8 +244,8 @@ class Collaboratory:
             '''
             SELECT assignment.target_id AS project_id, assignment.actor_id AS user_id
             FROM keystone.assignment
-            WHERE role_id = (SELECT role.id FROM keystone.role WHERE name='billing' LIMIT 1);
-            '''
+            WHERE role_id = (SELECT role.id FROM keystone.role WHERE name=:billing_role LIMIT 1);
+            ''', billing_role=self.billing_role
         )
         return results.all()
 
