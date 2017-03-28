@@ -57,11 +57,13 @@ class BillingApi {
   }
 
   public async price() : Promise<Price> {
-    var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-    var firstDay = new Date(y, m, 1);
+    let date = new Date(), y = date.getFullYear(), m = date.getMonth();
+    let firstDay = new Date(y, m-1, 1);
 
     // Bill based on first price at first day of the month
-    return axios.get(`${ this.config.api }/price?date=${ firstDay }`)
+    let isoDate = firstDay.toISOString();
+    console.log(isoDate);
+    return axios.get(`${ this.config.api }/price?date=${ isoDate }`)
       .then( response => {
         return response.data;
       });
@@ -85,8 +87,8 @@ class BillingApi {
     };
 
     var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-    var firstDay = new Date(y, m, 1);
-    var lastDay = new Date(y, m + 1, 0);
+    var firstDay = (new Date(y, m - 1, 1)).toISOString();
+    var lastDay = (new Date(y, m, 0)).toISOString();
 
     return axios.get(
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${projectId}`,
