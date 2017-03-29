@@ -69,7 +69,7 @@ class BillingApi {
     // Bill based on first price at first day of the month
     let isoDate = firstDay.toISOString();
     console.log(isoDate);
-    return axios.get(`${ this.config.api }/price?date=${ isoDate }`)
+    return axios.get(`${ this.config.api }/price?date=${ isoDate }`, { httpsAgent: this.agent })
       .then( response => {
         return response.data;
       });
