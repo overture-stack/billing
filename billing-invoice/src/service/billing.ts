@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as _ from 'lodash';
+import * as https from 'https';
 
 interface BillableProject {
 
@@ -15,6 +16,7 @@ interface BillingConfig {
   api: string;
   username: string;
   password: string;
+  insecure: boolean;
 
 }
 
@@ -38,9 +40,13 @@ class BillingApi {
    * State
    */
   private token: string;
+  private agent: https.Agent;
 
   constructor(config: BillingConfig) {
     this.config = config;
+    this.agent = new https.Agent({  
+      rejectUnauthorized: config.insecure
+    });
   }
 
   public async login() : Promise<string> {
@@ -49,7 +55,7 @@ class BillingApi {
       password: this.config.password
     };
     
-    return axios.post(`${ this.config.api }/login`, json)
+    return axios.post(`${ this.config.api }/login`, json, { httpsAgent: this.agent })
       .then( response => {
         this.token = response.headers.authorization;
         return this.token;
@@ -74,7 +80,7 @@ class BillingApi {
       authorization: `Bearer ${this.token}`
     };
 
-    return axios.get(`${ this.config.api }/billingprojects`, {headers: headers})
+    return axios.get(`${ this.config.api }/billingprojects`, {headers: headers, httpsAgent: this.agent})
       .then( response => {
         let projects: Array<BillableProject> = response.data;
         return projects;
@@ -92,7 +98,7 @@ class BillingApi {
 
     return axios.get(
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${projectId}`,
-      {headers: headers})
+      {headers: headers, httpsAgent: this.agent})
       .then( response => {
         if (response.data['entries'].length > 0) {
           console.log(response.data['entries']);

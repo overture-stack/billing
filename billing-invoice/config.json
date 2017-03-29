@@ -13,6 +13,7 @@
   "billingConfig": {
     "api": "http://localhost:5000",
     "username": "admin",
-    "password": "test"
+    "password": "test",
+    "insecure": false
   }
 }
