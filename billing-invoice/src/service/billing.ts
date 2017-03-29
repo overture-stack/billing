@@ -16,7 +16,7 @@ interface BillingConfig {
   api: string;
   username: string;
   password: string;
-  insecure: boolean;
+  rejectInsecure: boolean;
 
 }
 
@@ -45,7 +45,7 @@ class BillingApi {
   constructor(config: BillingConfig) {
     this.config = config;
     this.agent = new https.Agent({  
-      rejectUnauthorized: config.insecure
+      rejectUnauthorized: config.rejectInsecure
     });
   }
 
