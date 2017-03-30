@@ -55,6 +55,8 @@ class BillingApi {
       password: this.config.password
     };
     
+    console.log('Logging in...')
+
     return axios.post(`${ this.config.api }/login`, json, { httpsAgent: this.agent })
       .then( response => {
         this.token = response.headers.authorization;
@@ -68,7 +70,7 @@ class BillingApi {
 
     // Bill based on first price at first day of the month
     let isoDate = firstDay.toISOString();
-    console.log(isoDate);
+    console.log(`Getting Price for Date: ${ isoDate }`);
     return axios.get(`${ this.config.api }/price?date=${ isoDate }`, { httpsAgent: this.agent })
       .then( response => {
         return response.data;
@@ -80,6 +82,7 @@ class BillingApi {
       authorization: `Bearer ${this.token}`
     };
 
+    console.log('Searching for billable projects...')
     return axios.get(`${ this.config.api }/billingprojects`, {headers: headers, httpsAgent: this.agent})
       .then( response => {
         let projects: Array<BillableProject> = response.data;
@@ -91,6 +94,8 @@ class BillingApi {
     let headers = {
       authorization: `Bearer ${this.token}`
     };
+
+    console.log(`Generating report for projectId: ${ projectId }`)
 
     var date = new Date(), y = date.getFullYear(), m = date.getMonth();
     var firstDay = (new Date(y, m - 1, 1)).toISOString();

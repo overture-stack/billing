@@ -25,5 +25,8 @@ let projectsPromise = billing.login().then(() => billing.projects());
 Promise.all([pricePromise, projectsPromise]).then( results => {
   let price = results[0];
   let projects = results[1];
-  projects.map(project => billing.monthlyReport(project.project_id).then(report => mailer.sendEmail(project.extra.email, report, price)));
+  projects.map(project => billing.monthlyReport(project.project_id).then(report => {
+    console.log(`Sending email to ${ project.extra.email } for project ${ project.project_id }`);
+    mailer.sendEmail(project.extra.email, report, price);
+  }));
 });
