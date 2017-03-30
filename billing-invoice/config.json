@@ -3,6 +3,7 @@
     "host": "<fill in smtp hostname>",
     "port": "25",
     "secure": false,
+    "ignoreTLS": true,
     "auth": null
   },
   "emailConfig": {

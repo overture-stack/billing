@@ -7,6 +7,7 @@ interface SMTPConfig {
     host: string;
     port: string;
     secure: boolean;
+    ignoreTLS: boolean;
     auth: any;
 
 }
