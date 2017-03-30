@@ -107,36 +107,30 @@ class BillingApi {
       .then( response => {
         if (response.data['entries'].length > 0) {
           console.log(response.data['entries']);
-          var report = this.aggregateEntries(response.data['entries'], 'fromDate');
+          var report = this.getTotals(response.data['entries']);
           return report;
         } else {
-          return [{
+          return {
             cpu: 0,
             volume: 0,
             image: 0,
             cpuCost: 0,
             volumeCost: 0,
             imageCost: 0,
-          }];
+          };
         }
       });
   }
 
-  private aggregateEntries(entries, groupByIteratee) {
-    return _(entries)
-      .groupBy(groupByIteratee)
-      .map((items, key) => items.reduce((acc, entry) => ({
-        ...acc,
-        ...entry,
-        cpu: (acc.cpu || 0) + (entry.cpu || 0),
-        volume: (acc.volume || 0) + (entry.volume || 0),
-        image: (acc.image || 0) + (entry.image || 0),
-        cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
-        volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
-        imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
-        key,
-      })))
-      .value();
+  private getTotals(entries: Array<any>) {
+    return {
+      cpu: _.sumBy(entries, e => e.cpu) || 0,
+      volume: _.sumBy(entries, e => e.volume) || 0,
+      image: _.sumBy(entries, e => e.image) || 0,
+      cpuCost: _.sumBy(entries, e => e.cpuCost) || 0,
+      volumeCost: _.sumBy(entries, e => e.volumeCost) || 0,
+      imageCost: _.sumBy(entries, e => e.imageCost) || 0
+    };    
   }
 
 }

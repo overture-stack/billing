@@ -48,7 +48,7 @@ class Mailer {
 
   public sendEmail(email: string, report: any, price: any) {
     let emailTemplate = fs.readFileSync(this.emailPath).toString();
-    let html = handlebars.compile(emailTemplate)(this.finishReport(report[0], price));
+    let html = handlebars.compile(emailTemplate)(this.finishReport(report, price));
     let message = {
       from: this.config.emailConfig.fromAddress,
       replyTo: this.config.emailConfig.replyTo,
