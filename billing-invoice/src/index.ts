@@ -31,4 +31,4 @@ Promise.all([pricePromise, projectsPromise]).then(results => {
     console.log(`Sending email to ${project.extra.email} for project ${project.project_id}`);
     mailer.sendEmail(project.extra.email, report, price);
   }));
-}).then(() => console.log("*** Finished Email Reporting ***"));
+});

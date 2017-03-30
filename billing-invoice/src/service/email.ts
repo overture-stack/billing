@@ -69,7 +69,7 @@ class Mailer {
 
   private finishReport(report: any, price: any) {
     let finalReport = Object.assign(report, price);
-    finalReport.total = report['cpuCost'] + report['volumeCost'] + report['imageCost'];
+    finalReport.total = (report['cpuCost'] + report['volumeCost'] + report['imageCost']).toFixed(2);
     return finalReport;
   }
 

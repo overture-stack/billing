@@ -101,12 +101,11 @@ class BillingApi {
     var firstDay = (new Date(y, m - 1, 1)).toISOString();
     var lastDay = (new Date(y, m, 0)).toISOString();
 
-    return axios.get(
+    return await axios.get(
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${projectId}`,
       {headers: headers, httpsAgent: this.agent})
       .then( response => {
-        if (response.data['entries'].length > 0) {
-          console.log(response.data['entries']);
+        if (response.data.entries.length > 0) {
           var report = this.getTotals(response.data['entries']);
           return report;
         } else {
