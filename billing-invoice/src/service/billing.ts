@@ -90,19 +90,19 @@ class BillingApi {
       });
   }
 
-  public async monthlyReport(projectId: string) : Promise<any> {
+  public async monthlyReport(project: any) : Promise<any> {
     let headers = {
       authorization: `Bearer ${this.token}`
     };
 
-    console.log(`Generating report for projectId: ${ projectId }`)
+    console.log(`Generating report for projectId: ${ project.project_name }`)
 
     var date = new Date(), y = date.getFullYear(), m = date.getMonth();
     var firstDay = (new Date(y, m - 1, 1)).toISOString();
     var lastDay = (new Date(y, m, 0)).toISOString();
 
     return await axios.get(
-      `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${projectId}`,
+      `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,
       {headers: headers, httpsAgent: this.agent})
       .then( response => {
         if (response.data.entries.length > 0) {

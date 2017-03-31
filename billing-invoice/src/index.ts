@@ -4,6 +4,13 @@ import * as fs from 'fs';
 
 console.log("*** Starting Email Reporting ***")
 
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+var lastMonth = (new Date()).getMonth();
+var monthIndex = lastMonth - 1 < 0 ? 12 : lastMonth - 1;
+var month = MONTH_NAMES[monthIndex];
+
 /**
  * Argument Parsing for Config Path
  */
@@ -27,8 +34,10 @@ let projectsPromise = billing.login().then(() => billing.projects());
 Promise.all([pricePromise, projectsPromise]).then(results => {
   let price = results[0];
   let projects = results[1];
-  return projects.map(project => billing.monthlyReport(project.project_id).then(report => {
-    console.log(`Sending email to ${project.extra.email} for project ${project.project_id}`);
+  return projects.map(project => billing.monthlyReport(project).then(report => {
+    console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
+    report.month = month;
+    report.project_name = project.project_name;
     mailer.sendEmail(project.extra.email, report, price);
   }));
 });
