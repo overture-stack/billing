@@ -112,7 +112,7 @@ def get_projects(client, user_id, database):
 @app.route('/billingprojects', methods=['GET'])
 @authenticate
 def get_billing_projects(client, user_id, database):
-    return projects.get_billing_info(user_id, database)
+    return projects.get_billing_info(user_id, app.config['INVOICE_ROLE'], database)
 
 
 @app.route('/price', methods=['GET'])
@@ -154,7 +154,7 @@ def generate_report_data(client, user_id, database):
     user_projects = []     # The projects we want to only grab info for one user for
     for project in project_list:
         if project in role_map:
-            if 'billing' in role_map[project]:
+            if app.config['BILLING_ROLE'] in role_map[project] or app.config['INVOICE_ROLE'] in role_map[project]:
                 billing_projects.append(project)
             else:
                 user_projects.append(project)

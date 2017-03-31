@@ -27,10 +27,10 @@ def get_tenants(user_id, database, project_list):
     return tenants
 
 
-def get_billing_info(user_id, database):
+def get_billing_info(user_id, invoice_role, database):
     role_map = database.get_user_roles(user_id)
     role_flatmap = [role for role_list in role_map.values() for role in role_list]
-    if 'admin' in role_flatmap:
+    if invoice_role in role_flatmap:
         return get_billing_map(database)
     else:
         abort(403)
