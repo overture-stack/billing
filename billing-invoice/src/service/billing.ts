@@ -64,9 +64,9 @@ class BillingApi {
       });
   }
 
-  public async price() : Promise<Price> {
-    let date = new Date(), y = date.getFullYear(), m = date.getMonth();
-    let firstDay = new Date(y, m-1, 1);
+  public async price(month: number) : Promise<Price> {
+    let date = new Date(), y = date.getFullYear(), m = month;
+    let firstDay = new Date(y, m, 1);
 
     // Bill based on first price at first day of the month
     let isoDate = firstDay.toISOString();
@@ -90,16 +90,16 @@ class BillingApi {
       });
   }
 
-  public async monthlyReport(project: any) : Promise<any> {
+  public async monthlyReport(project: any, month: number) : Promise<any> {
     let headers = {
       authorization: `Bearer ${this.token}`
     };
 
     console.log(`Generating report for projectId: ${ project.project_name }`)
 
-    var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-    var firstDay = (new Date(y, m - 1, 1)).toISOString();
-    var lastDay = (new Date(y, m, 0)).toISOString();
+    var date = new Date(), y = date.getFullYear(), m = month;
+    var firstDay = (new Date(y, m, 1)).toISOString();
+    var lastDay = (new Date(y, m + 1, 0)).toISOString();
 
     return await axios.get(
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,
@@ -126,9 +126,9 @@ class BillingApi {
       cpu: _.sumBy(entries, e => e.cpu) || 0,
       volume: _.sumBy(entries, e => e.volume) || 0,
       image: _.sumBy(entries, e => e.image) || 0,
-      cpuCost: _.sumBy(entries, e => e.cpuCost) || 0,
-      volumeCost: _.sumBy(entries, e => e.volumeCost) || 0,
-      imageCost: _.sumBy(entries, e => e.imageCost) || 0
+      cpuCost: _.sumBy(entries, e => e.cpuCost).toFixed(2) || 0.00,
+      volumeCost: _.sumBy(entries, e => e.volumeCost).toFixed(2) || 0.00,
+      imageCost: _.sumBy(entries, e => e.imageCost).toFixed(2) || 0.00
     };    
   }
 
