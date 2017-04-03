@@ -15,7 +15,7 @@ tsc -p .
 ### From source:
 
 ```bash
-node build/index.js <path_to_config> <path_to_email.html>
+node build/index.js <path_to_config> <path_to_email.html> [<month_num: 0-11> <project0,project1>]
 ```
 
 ### As a docker container:
