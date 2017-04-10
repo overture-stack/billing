@@ -1,3 +1,13 @@
 #!/bin/bash
 source ~/.nvm/nvm.sh
-node /srv/billing-invoice/build/index.js /srv/billing-invoice/config.json /srv/billing-invoice/collab-billing.html
+
+# Date format: YYYY-MM
+if [ -z "$BILL_PERIOD" ]; then
+  BILL_PERIOD=`date '+%Y-%m' --date '1 month ago'`
+fi
+
+if [ -z "$PROJECTS" ]; then
+  PROJECTS="ALL"
+fi
+
+node /srv/billing-invoice/build/index.js /srv/billing-invoice/config.json /srv/billing-invoice/collab-billing.html $BILL_PERIOD $PROJECTS

@@ -64,9 +64,8 @@ class BillingApi {
       });
   }
 
-  public async price(month: number) : Promise<Price> {
-    let date = new Date(), y = date.getFullYear(), m = month;
-    let firstDay = new Date(y, m, 1);
+  public async price(year: number, month: number) : Promise<Price> {
+    let firstDay = new Date(year, month - 1, 1);
 
     // Bill based on first price at first day of the month
     let isoDate = firstDay.toISOString();
@@ -90,16 +89,16 @@ class BillingApi {
       });
   }
 
-  public async monthlyReport(project: any, month: number) : Promise<any> {
+  public async monthlyReport(project: any, year:number, month: number) : Promise<any> {
     let headers = {
       authorization: `Bearer ${this.token}`
     };
 
     console.log(`Generating report for projectId: ${ project.project_name }`)
 
-    var date = new Date(), y = date.getFullYear(), m = month;
-    var firstDay = (new Date(y, m, 1)).toISOString();
-    var lastDay = (new Date(y, m + 1, 0)).toISOString();
+    var date = new Date();
+    var firstDay = (new Date(year, month - 1, 1)).toISOString();
+    var lastDay = (new Date(year, month, 0)).toISOString();
 
     return await axios.get(
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,
