@@ -1,6 +1,7 @@
 import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
+import * as _ from 'lodash';
 
 interface SMTPConfig {
 
@@ -63,16 +64,18 @@ class Mailer {
     this.transport.sendMail(message, function(err) {
       if(err) {
         console.log(err);
-      }  
-    }); 
+      }
+    });
   }
 
   private finishReport(report: any, price: any) {
     let finalReport = Object.assign(report, price);
-    finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost'])).toFixed(2);
+    finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost']));
+    _.each(finalReport, (value, key) => {
+      if(_.isNumber(value) && key != 'year') finalReport[key] = Number(value).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+    });
     return finalReport;
   }
-
 }
 
 export { Mailer };
