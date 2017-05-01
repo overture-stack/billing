@@ -125,10 +125,10 @@ class BillingApi {
       cpu: _.sumBy(entries, e => e.cpu) || 0,
       volume: _.sumBy(entries, e => e.volume) || 0,
       image: _.sumBy(entries, e => e.image) || 0,
-      cpuCost: _.sumBy(entries, e => e.cpuCost).toFixed(2) || '0.00',
-      volumeCost: _.sumBy(entries, e => e.volumeCost).toFixed(2) || '0.00',
-      imageCost: _.sumBy(entries, e => e.imageCost).toFixed(2) || '0.00'
-    };    
+      cpuCost: _.sumBy(entries, e => e.cpuCost) || '0.00',
+      volumeCost: _.sumBy(entries, e => e.volumeCost) || '0.00',
+      imageCost: _.sumBy(entries, e => e.imageCost) || '0.00'
+    };
   }
 
 }
