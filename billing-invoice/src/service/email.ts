@@ -54,7 +54,7 @@ class Mailer {
       from: this.config.emailConfig.fromAddress,
       replyTo: this.config.emailConfig.replyTo,
       to: email,
-      subject: this.config.emailConfig.subject,
+      subject: `${this.config.emailConfig.subject} - ${report.project_name}`,
       headers: {
         'Reply-To': this.config.emailConfig.replyTo
       },
@@ -72,7 +72,7 @@ class Mailer {
     let finalReport = Object.assign(report, price);
     finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost'])).toFixed(2);
     _.each(finalReport, (value, key) => {
-      if(key != 'year') finalReport[key] = value.toString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+      if(key != 'year') finalReport[key] = value.toLocaleString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
     });
     return finalReport;
   }
