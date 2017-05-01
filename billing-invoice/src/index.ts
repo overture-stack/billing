@@ -59,7 +59,7 @@ let projectsPromise = billing.login().then(() => billing.projects());
 Promise.all([pricePromise, projectsPromise]).then(results => {
   let price = results[0];
   _.each(price, (value, key) => {
-    price[key] = value*100;
+    price[key] = (value*100).toFixed(4);
   });
   let projects = _.filter(results[1], r => allProjects || projectList.indexOf(r.project_name) >= 0);
   return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
