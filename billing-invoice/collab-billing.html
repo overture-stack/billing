@@ -135,41 +135,41 @@
                           <thead>
                             <tr>
                               <th style="padding-left:20px;"><b>Item</b></th>
-                              <th style="text-align: center;"><b>Amount</b></th>
-                              <th style="text-align: center;"><b>Rate (¢) / Hour</b></th>
-                              <th style="text-align: center;"><b>Cost</b></th>
+                              <th style="text-align: right;"><b>Amount</b></th>
+                              <th style="text-align: right;"><b>Rate (¢) / Hour</b></th>
+                              <th style="padding-right:20px; text-align: right;"><b>Cost (<small>$</small>)</b></th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
                               <td style="padding: 10px 0 10px 20px;">CPU (Core Hours):</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ cpu }}</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ cpuPrice }}</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ cpuCost }}</td>
+                              <td style="padding: 10px 0;text-align: right;">{{ cpu }}</td>
+                              <td style="padding: 10px 0;text-align: right;">{{ cpuPrice }}</td>
+                              <td style="padding: 10px 20px 0 0;text-align: right;">{{ cpuCost }}</td>
                             </tr>
                             <tr>
                               <td style="padding: 10px 0 10px 20px;">Volume (Volume Hours):</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ volume }}</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ volumePrice }}</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ volumeCost }}</td>
+                              <td style="padding: 10px 0;text-align: right;">{{ volume }}</td>
+                              <td style="padding: 10px 0;text-align: right;">{{ volumePrice }}</td>
+                              <td style="padding: 10px 20px 0 0;text-align: right;">{{ volumeCost }}</td>
                             </tr>
                             <tr>
                               <td style="padding: 10px 0 10px 20px;">Image (Image Hours):</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ image }}</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ imagePrice }}</td>
-                              <td style="padding: 10px 0;text-align: center;">{{ imageCost }}</td>
+                              <td style="padding: 10px 0;text-align: right;">{{ image }}</td>
+                              <td style="padding: 10px 0;text-align: right;">{{ imagePrice }}</td>
+                              <td style="padding: 10px 20px 0 0;text-align: right;">{{ imageCost }}</td>
                             </tr>
                             <tr style="background-color: #F3F3F3">
                               <td style="padding: 10px 0 10px 20px;" colspan="3"><b>Total:</b></td>
-                              <td style="padding: 10px 0;text-align: center;">{{ total }}</td>
+                              <td style="padding: 10px 20px 0 0;text-align: right;">$ {{ total }}</td>
                             </tr>
                             <tr>
                               <td style="padding: 10px 0 10px 20px;" colspan="3"><b>Costs Covered By OICR:</b></td>
-                              <td style="padding: 10px 0;text-align: center;">({{ total }})</td>
+                              <td style="padding: 10px 20px 0 0;text-align: right;">$ ({{ total }})</td>
                             </tr>
                             <tr style="background-color: #F3F3F3">
                               <td style="padding: 10px 0 10px 20px;" colspan="3"><b>Total Amount Due:</b></td>
-                              <td style="padding: 10px 0;text-align: center;">$ 0.00</td>
+                              <td style="padding: 10px 20px 0 0;text-align: right;">$ 0.00</td>
                             </tr>
                           </tbody>
                         </table>
