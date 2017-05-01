@@ -74,7 +74,6 @@ class Mailer {
     _.each(finalReport, (value, key) => {
       if(key != 'year') finalReport[key] = value.toString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
     });
-    console.log(finalReport);
     return finalReport;
   }
 }
