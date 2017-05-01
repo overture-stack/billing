@@ -70,9 +70,9 @@ class Mailer {
 
   private finishReport(report: any, price: any) {
     let finalReport = Object.assign(report, price);
-    finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost']));
+    finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost'])).toFixed(2);
     _.each(finalReport, (value, key) => {
-      if(_.isNumber(value) && key != 'year') finalReport[key] = Number(value).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+      if(key != 'year') finalReport[key] = value.toString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
     });
     return finalReport;
   }
