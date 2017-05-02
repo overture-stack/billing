@@ -117,10 +117,13 @@
                   <th>
                     <center>
                       <div>
-                        <h1 style="text-align:center; margin: 20px 0">Hello,</h1>
-                        <p style="padding:0 20px 20px 20px;">
-                          Enclosed in this email is a usage statement for your use of the Cancer Genome Collaboratory 
-                          (Collab) resources during the period of {{ month }}, {{ year }} for project {{ project_name }}. At this point in time your costs are covered
+                        <h1 style="text-align:center; margin: 20px 0">Usage Report</h1>
+                        <p style="padding:0 20px 0px 20px;">
+                          Hello, enclosed in this email is a usage statement for your use of the Cancer Genome Collaboratory 
+                          (Collab) resources during the period of {{ month }}, {{ year }} for project {{ project_name }}.
+                        </p>
+                        <p style="padding:0 20px 20px 20px;"> 
+                          At this point in time your costs are covered
                           and we do not expect payment. However, as we move towards cost sharing in an effort to maintain 
                           and grow our Collab services, this email should serve as an indicator of your expected monthly cost
                           based on your current usage.
@@ -129,26 +132,26 @@
                           <thead>
                             <tr>
                               <th style="padding-left:20px;"><b>Item</b></th>
-                              <th style="text-align: right;"><b>Usage</b></th>
+                              <th style="text-align: right;"><b>Usage / Hour</b></th>
                               <th style="text-align: right;"><b>Rate (¢) / Hour</b></th>
                               <th style="padding-right:20px; text-align: right;"><b>Cost (<small>$</small>)</b></th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style="padding: 10px 0 10px 20px;">CPU (Core Hours):</td>
+                              <td style="padding: 10px 0 10px 20px;">CPU (Core):</td>
                               <td style="padding: 10px 0;text-align: right;">{{ cpu }}</td>
                               <td style="padding: 10px 0;text-align: right;">{{ cpuPrice }}</td>
                               <td style="padding: 10px 20px 0 0;text-align: right;">{{ cpuCost }}</td>
                             </tr>
                             <tr>
-                              <td style="padding: 10px 0 10px 20px;">Volume (Volume Hours):</td>
+                              <td style="padding: 10px 0 10px 20px;">Volume (GB):</td>
                               <td style="padding: 10px 0;text-align: right;">{{ volume }}</td>
                               <td style="padding: 10px 0;text-align: right;">{{ volumePrice }}</td>
                               <td style="padding: 10px 20px 0 0;text-align: right;">{{ volumeCost }}</td>
                             </tr>
                             <tr>
-                              <td style="padding: 10px 0 10px 20px;">Image (Image Hours):</td>
+                              <td style="padding: 10px 0 10px 20px;">Image (GB):</td>
                               <td style="padding: 10px 0;text-align: right;">{{ image }}</td>
                               <td style="padding: 10px 0;text-align: right;">{{ imagePrice }}</td>
                               <td style="padding: 10px 20px 0 0;text-align: right;">{{ imageCost }}</td>
