@@ -146,6 +146,20 @@ class extends Component {
     return n ? `$${n.toLocaleString(undefined, {minimumFractionDigits: 2})}` : '';
   }
 
+  updatePeriod = (period) => {
+    this.filters.bucketSize = period;
+    if(period === TIME_PERIODS.MONTHLY) {
+      this.handleFromDateFilterChange(moment(this.filters.fromDate).startOf('month'));
+      this.handleToDateFilterChange(moment(this.filters.toDate).endOf('month'));
+    } else if(period === TIME_PERIODS.YEARLY) {
+      this.handleFromDateFilterChange(moment(this.filters.fromDate).startOf('year'));
+      this.handleToDateFilterChange(moment(this.filters.toDate).endOf('year'));
+    } else {
+      this.handleFromDateFilterChange(this.filters.fromDate);
+      this.handleToDateFilterChange(this.filters.toDate);
+    }
+  }
+
   updateChart = async () => {
     this.isLoading = true;
     const report = await fetchReport({
@@ -230,7 +244,7 @@ class extends Component {
                 this.filters.bucketSize === TIME_PERIODS.MONTHLY && <MonthPicker
                   format="MMMM, YYYY"
                   onChange={this.handleFromDateFilterChange}
-                  defaultValue={this.filters.fromDate}
+                  defaultValue={moment(this.filters.fromDate).startOf('month')}
                 />
               }
 
@@ -265,7 +279,7 @@ class extends Component {
               {
                 this.filters.bucketSize === TIME_PERIODS.MONTHLY && <MonthPicker
                   format="MMMM, YYYY"
-                  onChange={this.handleFromDateFilterChange}
+                  onChange={this.handleToDateFilterChange}
                   defaultValue={moment(this.filters.toDate).endOf('month')}
                 />
               }
@@ -274,7 +288,7 @@ class extends Component {
                 this.filters.bucketSize === TIME_PERIODS.YEARLY && <AntdSelect
                   showSearch={false}
                   defaultValue={moment(this.filters.toDate).endOf('year').format('YYYY')}
-                  onChange={this.handleFromDateFilterChange}
+                  onChange={this.handleToDateFilterChange}
                 >
                   {
                     getYearsSinceStart().map(year => (
@@ -294,22 +308,22 @@ class extends Component {
               <RadioGroup>
                 <RadioButton
                   checked={this.filters.bucketSize === TIME_PERIODS.DAILY}
-                  onClick={() => this.filters.bucketSize = TIME_PERIODS.DAILY}
+                  onClick={() => this.updatePeriod(TIME_PERIODS.DAILY)}
                   value={TIME_PERIODS.DAILY}
                 >Daily</RadioButton>
                 <RadioButton
                   checked={this.filters.bucketSize === TIME_PERIODS.WEEKLY}
-                  onClick={() => this.filters.bucketSize = TIME_PERIODS.WEEKLY}
+                  onClick={() => this.updatePeriod(TIME_PERIODS.WEEKLY)}
                   value={TIME_PERIODS.WEEKLY}
                 >Weekly</RadioButton>
                 <RadioButton
                   checked={this.filters.bucketSize === TIME_PERIODS.MONTHLY}
-                  onClick={() => this.filters.bucketSize = TIME_PERIODS.MONTHLY}
+                  onClick={() => this.updatePeriod(TIME_PERIODS.MONTHLY)}
                   value={TIME_PERIODS.MONTHLY}
                 >Monthly</RadioButton>
                 <RadioButton
                   checked={this.filters.bucketSize === TIME_PERIODS.YEARLY}
-                  onClick={() => this.filters.bucketSize = TIME_PERIODS.YEARLY}
+                  onClick={() => this.updatePeriod(TIME_PERIODS.YEARLY)}
                   value={TIME_PERIODS.YEARLY}
                 >Yearly</RadioButton>
               </RadioGroup>
