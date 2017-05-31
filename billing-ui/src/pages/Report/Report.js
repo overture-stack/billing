@@ -180,7 +180,7 @@ class extends Component {
         new Date(this.report.toDate || this.filters.toDate.toISOString()).toDateString());
     chart.setTitle(
         { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
-        { text: `${subtitle}<br/><br/>Toggle Respective Chart Areas from here` });
+        { text: `<div style="text-align:center;">${subtitle}<br/><br/>Toggle Chart Area</div>` });
     chart.yAxis[0].update({title: {text: `${this.shouldShowCost ? 'Cost ($)' : 'Usage (hrs)'}`}})
     chart.series.forEach(serie => serie.setData(newSeries.find(newSerie => newSerie.name === serie.name).data, false, false));
     chart.update({
