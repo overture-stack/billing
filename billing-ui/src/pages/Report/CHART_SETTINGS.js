@@ -25,6 +25,9 @@ export default {
   credits: {
       enabled: false
   },
+  subtitle: {
+    useHTML: true,
+  },
   title: {
     text: ''
   },
@@ -46,6 +49,11 @@ export default {
     title: {
       text: 'Cost ($)'
     },
+  },
+  legend: {
+    align: 'center',
+    verticalAlign: 'top',
+    itemMarginTop: 70,
   },
   tooltip: {
     split: false,
