@@ -2,6 +2,7 @@ import { BillingApi } from './service/billing';
 import { Mailer } from './service/email';
 import * as fs from 'fs';
 import * as _ from 'lodash';
+import {FreshbooksMailer} from "./service/freshbooks";
 
 console.log("*** Starting Email Reporting ***")
 
@@ -52,7 +53,8 @@ if(args.length === 6) {
  * Generate reports from billing api and email them to billing users
  */
 let billing = new BillingApi(config['billingConfig']);
-let mailer = new Mailer({ emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig'] }, emailPath);
+//let mailer = new Mailer({ emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig'] }, emailPath);
+let freshbooksMailer = new FreshbooksMailer(config['freshbooksConfig']);
 
 let pricePromise = billing.price(reportYear, reportMonth);
 let projectsPromise = billing.login().then(() => billing.projects());
@@ -67,6 +69,6 @@ Promise.all([pricePromise, projectsPromise]).then(results => {
     report.month = month;
     report.year = reportYear;
     report.project_name = project.project_name;
-    mailer.sendEmail(project.extra.email, report, price);
+    freshbooksMailer.sendInvoice(project.extra.email, report, price);
   }));
 });
