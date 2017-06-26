@@ -37,3 +37,38 @@ PRICING_PERIODS = [
         'image_price': 0.03
     }
 ]
+
+# each project can have different discount during differnt billing periods
+# discounts are always offered as a percentage of the total bill amount
+# discounts are stored as a dictionary with project-id (matches with Collab project-id) as identifier for each project
+# the amount in front of discount field in this config file indicates the percentage discount e.g. 90 means 90% discount
+# each project can have a list of discounts applicable to different billing periods
+# Assumptions:
+# 0. Discount amount is always a number between 0 - 100
+# 1. For each billing period; there should be max one entry per project
+# 2. We don't foresee any need of itemized discounts in the future
+# 3. For the sake of simplicity; We are not keeping any global discounts section.
+#    If; there is ever a need of a global discount;
+#    individual project's discounts will be updated (potentially using a script)
+DISCOUNTS = {
+    "admin" : [{
+        'period_start': '2013-01-01',
+        'period_end': '2016-11-03',
+        'discount': 90
+    },
+    {
+        'period_start': '2016-11-03',
+        'period_end': '2016-12-22',
+        'discount': 0
+    }],
+    "demo:" : [{
+        'period_start': '2013-01-01',
+        'period_end': '2016-11-03',
+        'discount': 80
+    },
+    {
+        'period_start': '2016-11-03',
+        'period_end': '2016-12-22',
+        'discount': 60
+    }]
+}
