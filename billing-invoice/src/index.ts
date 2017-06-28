@@ -56,19 +56,24 @@ let billing = new BillingApi(config['billingConfig']);
 //let mailer = new Mailer({ emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig'] }, emailPath);
 let freshbooksMailer = new FreshbooksMailer(config['freshbooksConfig']);
 
-let pricePromise = billing.price(reportYear, reportMonth);
+//let pricePromise = billing.price(reportYear, reportMonth);
 let projectsPromise = billing.login().then(() => billing.projects());
-Promise.all([pricePromise, projectsPromise]).then(results => {
-  let price = results[0];
-  _.each(price, (value, key) => {
-    price[key] = (value*100).toFixed(4);
+projectsPromise.then(results => {
+  let projects = _.filter(results, r => allProjects || projectList.indexOf(r.project_name) >= 0);
+  let pricePromise = billing.price(reportYear, reportMonth, projects);
+  pricePromise.then(perProjectPrices => {
+    return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
+      //console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
+      report.month = month;
+      report.year = reportYear;
+      report.project_name = project.project_name;
+      let price = perProjectPrices[project.project_name];
+      _.each(price, (value, key) => {
+        price[key] = (value*100).toFixed(4);
+      });
+      freshbooksMailer.sendInvoice(project.extra.email, report, price);
+    }));
   });
-  let projects = _.filter(results[1], r => allProjects || projectList.indexOf(r.project_name) >= 0);
-  return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
-    console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
-    report.month = month;
-    report.year = reportYear;
-    report.project_name = project.project_name;
-    freshbooksMailer.sendInvoice(project.extra.email, report, price);
-  }));
 });
+
+

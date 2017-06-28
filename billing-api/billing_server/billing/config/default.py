@@ -19,8 +19,10 @@ AUTH_URI = 'http://142.1.177.150:5000/v2.0'  # Keystone/Identity API endpoint
 MYSQL_URI = 'mysql://root:test@142.1.177.150:3306'  # Mysql URI
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
 FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
+#FLASK_LOG_FILE = './logs/billing.log'
 BILLING_ROLE = 'billing_test'
 INVOICE_ROLE = 'invoice'
+#INVOICE_ROLE = 'billing_test'
 PRICING_PERIODS = [
     {
         'period_start': '2013-01-01',
@@ -41,34 +43,32 @@ PRICING_PERIODS = [
 # each project can have different discount during differnt billing periods
 # discounts are always offered as a percentage of the total bill amount
 # discounts are stored as a dictionary with project-id (matches with Collab project-id) as identifier for each project
-# the amount in front of discount field in this config file indicates the percentage discount e.g. 90 means 90% discount
+# the amount in front of discount field in this config file indicates the percentage discount e.g. 0.9 means 90% discount
 # each project can have a list of discounts applicable to different billing periods
+# no start and end date means that discount will always be applied
+# period_start means that discounts starts at the 1st of that month;
+# period_end means that discount ends at last day of that month
 # Assumptions:
-# 0. Discount amount is always a number between 0 - 100
-# 1. For each billing period; there should be max one entry per project
+# 0. Discount amount is always a number between 0 - 1
+# 1. For each invoice period; there should be max one entry per project
 # 2. We don't foresee any need of itemized discounts in the future
 # 3. For the sake of simplicity; We are not keeping any global discounts section.
 #    If; there is ever a need of a global discount;
 #    individual project's discounts will be updated (potentially using a script)
+# 4. Discounts are only applicable to Invoice; the billing application UI will never have to show it
+# 5. Invoice periods and discount periods will always align
 DISCOUNTS = {
     "admin" : [{
-        'period_start': '2013-01-01',
-        'period_end': '2016-11-03',
-        'discount': 90
+        'period_start': '2013-01',
+        'period_end': '2016-11',
+        'discount': 0.9
     },
     {
-        'period_start': '2016-11-03',
-        'period_end': '2016-12-22',
+        'period_start': '2016-11',
+        'period_end': '2016-12',
         'discount': 0
     }],
-    "demo:" : [{
-        'period_start': '2013-01-01',
-        'period_end': '2016-11-03',
-        'discount': 80
-    },
-    {
-        'period_start': '2016-11-03',
-        'period_end': '2016-12-22',
-        'discount': 60
+    "demo" : [{
+        'discount': 0.8
     }]
 }

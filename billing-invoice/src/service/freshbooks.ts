@@ -4,8 +4,8 @@
 import axios from 'axios';
 import * as https from 'https';
 
-const INVOICE_TEXT = "This is a statement for your usage of the Cancer Genome Collaboratory (Collab) " +
-    "resources during the month of ${month}, ${year} for the project ${project_name}";
+const INVOICE_TEXT = 'This is a statement for your usage of the Cancer Genome Collaboratory (Collab) ' +
+    'resources during the month of ${month}, ${year} for the project : "';
 
 interface FreshbooksMail {
 
@@ -120,8 +120,8 @@ class FreshbooksMailer {
      */
     public async sendInvoice(collabProject: any, report: any, price: any) {
         console.log("Sending request to FreshBooks for: Refresh Token");
-        //let bearerTokenResponse = await this.getRefreshToken();
-        this.token = "c5790d0e10f5803c000024cd00978f7b0fd8180ae261f16948c4245a23c07dc8";
+        //let bearerTokenResponse = await this.getAccessToken();
+        this.token = "8948913c88f15e1cb4595650a9a553ed5520d1c520c424770750ec91245fe60c";
         console.log("Sending request to FreshBooks for: Customer ID");
         //TODO: hard coding value as of now as test collab doesn't have any email address
         this.headers["Authorization"] = "Bearer " + this.token;
@@ -134,11 +134,13 @@ class FreshbooksMailer {
 
     }
 
-    private async getRefreshToken() : Promise<any> {
+
+
+    private async getAccessToken() : Promise<any> {
         let json = {
             "grant_type": "refresh_token",
             "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-            "refresh_token": "6ada444d55e9f485709e91ba5417113059af2e3a553dd08fb7189a750fb0ce58",
+            "refresh_token": "4a8e80d48d8a34bbb2707a38a7e5b2ad5336be99a62b29626c3f87258b9c2715",
             "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
             "redirect_uri": "https://testpaymenturlforPIs.com"
         };
@@ -146,6 +148,7 @@ class FreshbooksMailer {
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
                 this.token = response.data.access_token;
+                console.log("NEW TOKEN:  " + response.data.access_token);
                 console.log("NEW REFRESH TOKEN:  " + response.data.refresh_token);
                 return response.data;
             });
@@ -175,7 +178,7 @@ class FreshbooksMailer {
     private async emailInvoice(invoiceID:string, report:any): Promise<any> {
         let json = {
             "invoice": {
-                "email_subject": "OICR Collaboratory sent an invoice for project " + report.project_name,
+                "email_subject": 'OICR Collaboratory sent an invoice for project "' + report.project_name+ '"',
                 "email_body": this.invoiceSummary,
                 "email_recipients":[this.apiConfig.oicr_finance_email,
                                     "ra.v.r.ma@gmail.com"],
@@ -198,21 +201,23 @@ class FreshbooksMailer {
         let imageCostItem = this.createImageCostItem(report, price);
         let creationDate = new Date();
         //TODO: better date formatting and text
-        let creationDateText = creationDate.getFullYear() + "-0" + creationDate.getMonth() + "-" + creationDate.getDate();
+        let monthText:any = creationDate.getMonth();
+        if(monthText < 10) monthText = "0" + monthText;
+        let creationDateText = creationDate.getFullYear() + "-" + monthText + "-" + creationDate.getDate();
         this.invoiceSummary = INVOICE_TEXT;
         this.invoiceSummary = this.invoiceSummary.replace("${month}", report.month);
         this.invoiceSummary = this.invoiceSummary.replace("${year}", report.year);
-        this.invoiceSummary = this.invoiceSummary.replace("${project_name}", report.project_name);
+        this.invoiceSummary += report.project_name + '".';
         return {"invoice": {
             create_date: creationDateText,
             currency_code: this.apiConfig.invoiceDefaults.code,
-            discount_value: 0,
+            discount_value: price.discount,
             notes: this.invoiceSummary,
             invoice_number: Math.floor((Math.random() * 1000000) + 1)+"",//TODO: Invoice id generation
             template: this.apiConfig.invoiceDefaults.template,
             terms: this.apiConfig.invoiceDefaults.terms,
             customerid: customerID+"",
-            due_offset_days:60,
+            due_offset_days:60,//TODO: check how many days later invoice is due
             lines: [cpuCostItem,volumeCostItem,imageCostItem],
             presentation:this.apiConfig.invoiceDefaults.presentation
             }
