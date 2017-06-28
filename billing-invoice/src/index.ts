@@ -77,3 +77,4 @@ projectsPromise.then(results => {
 });
 
 
+setTimeout(() => freshbooksMailer.generateInvoicesSummary(month),2000);

@@ -20,9 +20,9 @@ MYSQL_URI = 'mysql://root:test@142.1.177.150:3306'  # Mysql URI
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
 FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
 #FLASK_LOG_FILE = './logs/billing.log'
-BILLING_ROLE = 'billing_test'
+#BILLING_ROLE = 'billing_test'
 INVOICE_ROLE = 'invoice'
-#INVOICE_ROLE = 'billing_test'
+INVOICE_ROLE = 'billing_test'
 PRICING_PERIODS = [
     {
         'period_start': '2013-01-01',

@@ -3,6 +3,9 @@
  */
 import axios from 'axios';
 import * as https from 'https';
+import * as fs from 'fs';
+import * as json2csv from 'json2csv';
+import * as _ from 'lodash';
 
 const INVOICE_TEXT = 'This is a statement for your usage of the Cancer Genome Collaboratory (Collab) ' +
     'resources during the month of ${month}, ${year} for the project : "';
@@ -119,12 +122,10 @@ class FreshbooksMailer {
         4. Send Invoice using Freshbooks API
      */
     public async sendInvoice(collabProject: any, report: any, price: any) {
-        console.log("Sending request to FreshBooks for: Refresh Token");
-        //let bearerTokenResponse = await this.getAccessToken();
-        this.token = "8948913c88f15e1cb4595650a9a553ed5520d1c520c424770750ec91245fe60c";
+        if(this.token == null)
+            this.authenticate()
         console.log("Sending request to FreshBooks for: Customer ID");
         //TODO: hard coding value as of now as test collab doesn't have any email address
-        this.headers["Authorization"] = "Bearer " + this.token;
         let customerID = await this.getCustomerID("ra.vrma@gmail.com");
         console.log("Sending request to FreshBooks for: Create new Invoice");
         let newInvoiceID = await this.createInvoice(report,price,customerID);
@@ -132,9 +133,82 @@ class FreshbooksMailer {
         this.emailInvoice(newInvoiceID,report);
 
 
-    }
+    };
 
+    // generates invoices summary table for invoices created on current date
+    public async generateInvoicesSummary(month:string)  {
+        if(this.token == null)
+            this.authenticate()
+        let currentDate = new Date();
+        let pageCount = 1; let pageIdx = 1;
+        let allInvoicesForThisPeriod = [];
+        while(pageCount  >= pageIdx){
+            let invoiceResults = await this.getInvoicesListPaged(pageIdx,currentDate.toISOString().slice(0,10));
+            allInvoicesForThisPeriod = allInvoicesForThisPeriod.concat(invoiceResults.invoices);
+            //update page count as the first result tells total count of pages
+            if(pageCount == 1) pageCount = invoiceResults.pages;
+            pageIdx++;
+        }// while loop ends here
+        let flattenedInovicesJson = [];
+        let fields = [
+            {
+                label: 'Project Name',
+                value: 'current_organization'
+            },
+            {
+                label: 'CPU Cost',
+                value: 'cpu_cost'
+            },
+            {
+                label: 'Image Cost',
+                value: 'image_cost'
+            },
+            {
+                label: 'Volume Cost',
+                value: 'volume_cost'
+            },
+            {
+                label: 'Discount',
+                value: 'discount'
+            },
+            {
+                label: 'Total',
+                value: 'total'
+            },
+        ]
+        _.each(allInvoicesForThisPeriod, (item) => {
+            flattenedInovicesJson.push({
+                'current_organization' : item.current_organization,
+                'cpu_cost' : _.filter(item.lines, r => r['name'].indexOf("CPU") >= 0)[0]['amount']['amount'],
+                'image_cost' : _.filter(item.lines, r => r['name'].indexOf("Image") >= 0)[0]['amount']['amount'],
+                'volume_cost' : _.filter(item.lines, r => r['name'].indexOf("Volume") >= 0)[0]['amount']['amount'],
+                'discount' : item.discount_value,
+                'total' : item.amount.amount
+            });
+        });
+        var invoicesCSV = json2csv({ data: flattenedInovicesJson, fields: fields });
+        fs.writeFile(month + '.csv', invoicesCSV, function(err) {
+            if (err) throw err;
+            console.log(month + '.csv saved');
+        });
 
+    };
+
+    private async getInvoicesListPaged(pageNumber: number, dateString: string) : Promise<any> {
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?search[date_min]=${ dateString }&page=${ pageNumber }&include[]=lines`,
+            {headers: this.headers, httpsAgent: this.agent })
+            .then( response => {
+                console.log(response.data);
+                return response.data.response.result;
+            });
+    };
+
+    private authenticate(){
+        console.log("Sending request to FreshBooks for: Access Token");
+        //let bearerTokenResponse = await this.getAccessToken();
+        this.token = "8948913c88f15e1cb4595650a9a553ed5520d1c520c424770750ec91245fe60c";
+        this.headers["Authorization"] = "Bearer " + this.token;
+    };
 
     private async getAccessToken() : Promise<any> {
         let json = {
@@ -200,10 +274,7 @@ class FreshbooksMailer {
         let volumeCostItem = this.createVolumeCostItem(report, price);
         let imageCostItem = this.createImageCostItem(report, price);
         let creationDate = new Date();
-        //TODO: better date formatting and text
-        let monthText:any = creationDate.getMonth();
-        if(monthText < 10) monthText = "0" + monthText;
-        let creationDateText = creationDate.getFullYear() + "-" + monthText + "-" + creationDate.getDate();
+        let creationDateText = creationDate.toISOString().slice(0,10);
         this.invoiceSummary = INVOICE_TEXT;
         this.invoiceSummary = this.invoiceSummary.replace("${month}", report.month);
         this.invoiceSummary = this.invoiceSummary.replace("${year}", report.year);
