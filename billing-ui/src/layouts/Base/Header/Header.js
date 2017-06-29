@@ -15,6 +15,7 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, {Component} from 'react';
+import { Link } from 'react-router'
 import animate from 'gsap-promise';
 import user from '~/user';
 
@@ -81,20 +82,49 @@ export default class extends Component {
                   target="_blank"
               >Collaboratory Console</a>
             </div>
+            <div
+              ref="logout"
+              className="user-container"
+            >
+              <span
+                className="glyphicon glyphicon-user user-icon">
+              </span>
+              <span
+                className="user-logout"
+                onClick={() => user.logout()}
+              >Logout</span>
+            </div>
         </div>
-        <div  className="Header" ref="container">
-          <img
-            ref="logo"
-            className="logo"
-            src={require('~/assets/images/logo.svg')}
-            alt="Cancer Genome COLLABORATORY"
-          />
-
-          <span
-            ref="logout"
-            className="logout"
-            onClick={() => user.logout()}
-          >Logout {user.username}</span>
+        <div className="Header" ref="container">
+          <div>
+            <img
+              ref="logo"
+              className="logo"
+              src={require('~/assets/images/logo.svg')}
+              alt="Cancer Genome COLLABORATORY"
+            />
+          </div>
+          <div>
+            <ul
+              className="menu">
+              <li>
+                <Link
+                  to="/report"
+                  activeClassName="active"
+                >
+                  Report
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/invoices"
+                  activeClassName="active"
+                >
+                  Invoice
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
       </header>
     );
