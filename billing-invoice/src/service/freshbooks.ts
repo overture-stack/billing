@@ -123,7 +123,7 @@ class FreshbooksMailer {
      */
     public async sendInvoice(collabProject: any, report: any, price: any) {
         if(this.token == null)
-            this.authenticate()
+            await this.authenticate()
         console.log("Sending request to FreshBooks for: Customer ID");
         //TODO: hard coding value as of now as test collab doesn't have any email address
         let customerID = await this.getCustomerID("ra.vrma@gmail.com");
@@ -137,23 +137,15 @@ class FreshbooksMailer {
 
     // generates invoices summary table for invoices created on current date
     public async generateInvoicesSummary(month:string)  {
-        if(this.token == null)
-            this.authenticate()
-        let currentDate = new Date();
-        let pageCount = 1; let pageIdx = 1;
-        let allInvoicesForThisPeriod = [];
-        while(pageCount  >= pageIdx){
-            let invoiceResults = await this.getInvoicesListPaged(pageIdx,currentDate.toISOString().slice(0,10));
-            allInvoicesForThisPeriod = allInvoicesForThisPeriod.concat(invoiceResults.invoices);
-            //update page count as the first result tells total count of pages
-            if(pageCount == 1) pageCount = invoiceResults.pages;
-            pageIdx++;
-        }// while loop ends here
-        let flattenedInovicesJson = [];
+        let flattenedInovicesJson = await this.getInvoicesSummaryData();
         let fields = [
             {
                 label: 'Project Name',
                 value: 'current_organization'
+            },
+            {
+                label: 'Date',
+                value: 'date'
             },
             {
                 label: 'CPU Cost',
@@ -176,9 +168,34 @@ class FreshbooksMailer {
                 value: 'total'
             },
         ]
+
+        var invoicesCSV = json2csv({ data: flattenedInovicesJson, fields: fields });
+        fs.writeFile(month + '.csv', invoicesCSV, function(err) {
+            if (err) throw err;
+            console.log(month + '.csv saved');
+        });
+
+    };
+
+    public async getInvoicesSummaryData() {
+        if(this.token == null)
+            await this.authenticate()
+        let currentDate = new Date();
+        let pageCount = 1; let pageIdx = 1;
+        let allInvoicesForThisPeriod = [];
+        //TODO: how we want to do pagination
+        while(pageCount  >= pageIdx){
+            let invoiceResults = await this.getInvoicesListPaged(pageIdx,currentDate.toISOString().slice(0,10));
+            allInvoicesForThisPeriod = allInvoicesForThisPeriod.concat(invoiceResults.invoices);
+            //update page count as the first result tells total count of pages
+            if(pageCount == 1) pageCount = invoiceResults.pages;
+            pageIdx++;
+        }// while loop ends here
+        let flattenedInovicesJson = [];
         _.each(allInvoicesForThisPeriod, (item) => {
             flattenedInovicesJson.push({
                 'current_organization' : item.current_organization,
+                'date' : item.create_date,
                 'cpu_cost' : _.filter(item.lines, r => r['name'].indexOf("CPU") >= 0)[0]['amount']['amount'],
                 'image_cost' : _.filter(item.lines, r => r['name'].indexOf("Image") >= 0)[0]['amount']['amount'],
                 'volume_cost' : _.filter(item.lines, r => r['name'].indexOf("Volume") >= 0)[0]['amount']['amount'],
@@ -186,12 +203,7 @@ class FreshbooksMailer {
                 'total' : item.amount.amount
             });
         });
-        var invoicesCSV = json2csv({ data: flattenedInovicesJson, fields: fields });
-        fs.writeFile(month + '.csv', invoicesCSV, function(err) {
-            if (err) throw err;
-            console.log(month + '.csv saved');
-        });
-
+        return flattenedInovicesJson;
     };
 
     private async getInvoicesListPaged(pageNumber: number, dateString: string) : Promise<any> {
@@ -203,18 +215,20 @@ class FreshbooksMailer {
             });
     };
 
-    private authenticate(){
+    public async authenticate(){
         console.log("Sending request to FreshBooks for: Access Token");
         //let bearerTokenResponse = await this.getAccessToken();
-        this.token = "8948913c88f15e1cb4595650a9a553ed5520d1c520c424770750ec91245fe60c";
+        this.token = "efc9b0c3af8ffb5c217d58bec0a1335e3b47048a2cf5ad88234c96528823f808";
         this.headers["Authorization"] = "Bearer " + this.token;
+
+
     };
 
     private async getAccessToken() : Promise<any> {
         let json = {
             "grant_type": "refresh_token",
             "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-            "refresh_token": "4a8e80d48d8a34bbb2707a38a7e5b2ad5336be99a62b29626c3f87258b9c2715",
+            "refresh_token": "8de1d3ac3a1802a035cac07e521e2ad5feb1949ff7eff42c843d960a734427c6",
             "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
             "redirect_uri": "https://testpaymenturlforPIs.com"
         };
@@ -224,6 +238,12 @@ class FreshbooksMailer {
                 this.token = response.data.access_token;
                 console.log("NEW TOKEN:  " + response.data.access_token);
                 console.log("NEW REFRESH TOKEN:  " + response.data.refresh_token);
+                let accessTokenText = "Access token: " + this.token + "\r\n" +
+                    "Refresh token: " + response.data.refresh_token;
+                fs.writeFile('freshbooks-tokens.txt', accessTokenText, function(err) {
+                    if (err) throw err;
+                    console.log('freshbooks-tokens.txt saved');
+                });
                 return response.data;
             });
     };

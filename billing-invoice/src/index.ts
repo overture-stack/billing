@@ -62,19 +62,20 @@ projectsPromise.then(results => {
   let projects = _.filter(results, r => allProjects || projectList.indexOf(r.project_name) >= 0);
   let pricePromise = billing.price(reportYear, reportMonth, projects);
   pricePromise.then(perProjectPrices => {
-    return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
-      //console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
-      report.month = month;
-      report.year = reportYear;
-      report.project_name = project.project_name;
-      let price = perProjectPrices[project.project_name];
-      _.each(price, (value, key) => {
-        price[key] = (value*100).toFixed(4);
-      });
-      freshbooksMailer.sendInvoice(project.extra.email, report, price);
-    }));
+    freshbooksMailer.authenticate().then(() => {
+      return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
+        //console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
+        report.month = month;
+        report.year = reportYear;
+        report.project_name = project.project_name;
+        let price = perProjectPrices[project.project_name];
+        _.each(price, (value, key) => {
+          price[key] = (value*100).toFixed(4);
+        });
+        freshbooksMailer.sendInvoice(project.extra.email, report, price);
+    }))});
   });
 });
 
-
-setTimeout(() => freshbooksMailer.generateInvoicesSummary(month),2000);
+//TODO: integrate it with rest of the workflow in a better way
+setTimeout(() => freshbooksMailer.generateInvoicesSummary(month),3000);
