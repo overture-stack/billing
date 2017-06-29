@@ -2,7 +2,7 @@ import { BillingApi } from './service/billing';
 import { Mailer } from './service/email';
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import {FreshbooksMailer} from "./service/freshbooks";
+import {InvoiceServiceClient} from "./service/invoice";
 
 console.log("*** Starting Email Reporting ***")
 
@@ -54,7 +54,7 @@ if(args.length === 6) {
  */
 let billing = new BillingApi(config['billingConfig']);
 //let mailer = new Mailer({ emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig'] }, emailPath);
-let freshbooksMailer = new FreshbooksMailer(config['freshbooksConfig']);
+let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
 
 //let pricePromise = billing.price(reportYear, reportMonth);
 let projectsPromise = billing.login().then(() => billing.projects());
@@ -62,7 +62,6 @@ projectsPromise.then(results => {
   let projects = _.filter(results, r => allProjects || projectList.indexOf(r.project_name) >= 0);
   let pricePromise = billing.price(reportYear, reportMonth, projects);
   pricePromise.then(perProjectPrices => {
-    freshbooksMailer.authenticate().then(() => {
       return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
         //console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
         report.month = month;
@@ -72,10 +71,10 @@ projectsPromise.then(results => {
         _.each(price, (value, key) => {
           price[key] = (value*100).toFixed(4);
         });
-        freshbooksMailer.sendInvoice(project.extra.email, report, price);
-    }))});
+        freshbooksServiceClient.sendInvoice(project.extra.email, report, price);
+    }));
   });
 });
 
 //TODO: integrate it with rest of the workflow in a better way
-setTimeout(() => freshbooksMailer.generateInvoicesSummary(month),3000);
+setTimeout(() => freshbooksServiceClient.generateInvoicesSummary(month),3000);

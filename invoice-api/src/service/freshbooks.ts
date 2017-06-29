@@ -1,23 +1,17 @@
 /**
  * Created by rverma on 6/22/17.
+ *
+ * BECAUSE OF THE WAY FRESHBOOKS AUTHENTICATION WORKS; IF WE PLAN TO RUN MULTIPLE INSTANCES OF THIS SERVICE IN PARALLEL
+ * WE WILL HAVE TO IMPLEMENT A SYNCHRONISATION MECHANISM AMONG THESE SERVICES AS OF ALL THE SERVICES WILL USE THE SAME
+ * FRESHBOOKS APP CREDENTIALS
  */
 import axios from 'axios';
 import * as https from 'https';
 import * as fs from 'fs';
-import * as json2csv from 'json2csv';
 import * as _ from 'lodash';
 
 const INVOICE_TEXT = 'This is a statement for your usage of the Cancer Genome Collaboratory (Collab) ' +
     'resources during the month of ${month}, ${year} for the project : "';
-
-interface FreshbooksMail {
-
-    email_subject: string;
-    email_body: string;
-    email_recipients: Array<string>;
-    action_email: true
-}
-
 
 interface InvoiceLineItem {
 
@@ -88,7 +82,7 @@ interface FreshbooksConfig {
     invoiceDefaults:FreshbooksInvoiceDefaults;
 }
 
-class FreshbooksMailer {
+class FreshbooksService {
 
     /**
      * Dependencies
@@ -135,48 +129,6 @@ class FreshbooksMailer {
 
     };
 
-    // generates invoices summary table for invoices created on current date
-    public async generateInvoicesSummary(month:string)  {
-        let flattenedInovicesJson = await this.getInvoicesSummaryData();
-        let fields = [
-            {
-                label: 'Project Name',
-                value: 'current_organization'
-            },
-            {
-                label: 'Date',
-                value: 'date'
-            },
-            {
-                label: 'CPU Cost',
-                value: 'cpu_cost'
-            },
-            {
-                label: 'Image Cost',
-                value: 'image_cost'
-            },
-            {
-                label: 'Volume Cost',
-                value: 'volume_cost'
-            },
-            {
-                label: 'Discount',
-                value: 'discount'
-            },
-            {
-                label: 'Total',
-                value: 'total'
-            },
-        ]
-
-        var invoicesCSV = json2csv({ data: flattenedInovicesJson, fields: fields });
-        fs.writeFile(month + '.csv', invoicesCSV, function(err) {
-            if (err) throw err;
-            console.log(month + '.csv saved');
-        });
-
-    };
-
     public async getInvoicesSummaryData() {
         if(this.token == null)
             await this.authenticate()
@@ -196,9 +148,9 @@ class FreshbooksMailer {
             flattenedInovicesJson.push({
                 'current_organization' : item.current_organization,
                 'date' : item.create_date,
-                'cpu_cost' : _.filter(item.lines, r => r['name'].indexOf("CPU") >= 0)[0]['amount']['amount'],
-                'image_cost' : _.filter(item.lines, r => r['name'].indexOf("Image") >= 0)[0]['amount']['amount'],
-                'volume_cost' : _.filter(item.lines, r => r['name'].indexOf("Volume") >= 0)[0]['amount']['amount'],
+                'cpu_cost' : this.getLineItemValue("CPU",item.lines),
+                'image_cost' : this.getLineItemValue("Image",item.lines),
+                'volume_cost' : this.getLineItemValue("Volume",item.lines),
                 'discount' : item.discount_value,
                 'total' : item.amount.amount
             });
@@ -206,8 +158,14 @@ class FreshbooksMailer {
         return flattenedInovicesJson;
     };
 
+    private getLineItemValue(value : string, list:Array<any>) {
+        let output = _.filter(list, r => r['name'].indexOf(value) >= 0);
+        if(output.length > 0)
+            return output[0]['amount']['amount'];
+        else return 0.0;
+    }
     private async getInvoicesListPaged(pageNumber: number, dateString: string) : Promise<any> {
-        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?search[date_min]=${ dateString }&page=${ pageNumber }&include[]=lines`,
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?search[date_max]=${ dateString }&page=${ pageNumber }&include[]=lines&per_page=100`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
                 console.log(response.data);
@@ -215,10 +173,10 @@ class FreshbooksMailer {
             });
     };
 
-    public async authenticate(){
+    private async authenticate(){
         console.log("Sending request to FreshBooks for: Access Token");
         //let bearerTokenResponse = await this.getAccessToken();
-        this.token = "efc9b0c3af8ffb5c217d58bec0a1335e3b47048a2cf5ad88234c96528823f808";
+        this.token = "b35c7dd1af1b35761bd621c86fa5ad2669ed9dae06cb7a061471a5afa325cb8a";
         this.headers["Authorization"] = "Bearer " + this.token;
 
 
@@ -228,7 +186,7 @@ class FreshbooksMailer {
         let json = {
             "grant_type": "refresh_token",
             "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-            "refresh_token": "8de1d3ac3a1802a035cac07e521e2ad5feb1949ff7eff42c843d960a734427c6",
+            "refresh_token": "39386d6d8963c01736c118439a12d456d1c6209dcf4d336bda080d5358079a86",
             "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
             "redirect_uri": "https://testpaymenturlforPIs.com"
         };
@@ -382,4 +340,4 @@ class FreshbooksMailer {
 
 }
 
-export { FreshbooksMailer };
+export { FreshbooksService };
