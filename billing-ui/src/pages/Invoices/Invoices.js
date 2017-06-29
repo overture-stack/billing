@@ -59,6 +59,110 @@ class extends Component {
         volume_cost: 0.00,
         discount: 0,
         total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
+      },
+      {
+        current_organization: 'Billed Company',
+        cpu_cost: 0.00,
+        image_cost: 0.00,
+        volume_cost: 0.00,
+        discount: 0,
+        total: 0.00
       }
     ];
   }
@@ -86,7 +190,7 @@ class extends Component {
             keyField="key"
             options={{
               hideSizePerPage: true,
-              sizePerPage: 25,
+              sizePerPage: 10,
               sizePerPageList: [10, 50, 100]
             }}
             >
