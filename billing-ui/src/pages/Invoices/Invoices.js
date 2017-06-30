@@ -15,7 +15,6 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-import _ from 'lodash';
 
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
@@ -25,151 +24,26 @@ import './Invoices.scss';
 
 export default 
 class extends Component {
+  state = { invoices: [] }
 
-  dummyJSONData() {
-    return [
-      {
-        current_organization: 'Billed Company',
-        'cpu_cost': 0.00,
-        'image_cost': 0.00,
-        'volume_cost': 0.00,
-        'discount': '0',
-        'total': 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 80,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 80,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      },
-      {
-        current_organization: 'Billed Company',
-        cpu_cost: 0.00,
-        image_cost: 0.00,
-        volume_cost: 0.00,
-        discount: 0,
-        total: 0.00
-      }
-    ];
+  getInvoices = async () => {
+    const invoices = await this.fetchInvoices();
+    this.setState({ invoices })
   }
 
-  handlePeriodChange(e) {
-    console.log(e);
+  fetchInvoices = async () => {
+    const response = await fetch(`http://10.11.6.243:5000/invoice/getAllInvoices`, {
+      method: 'GET',
+    });
+
+    const data = await response.json();
+    return data;
   }
+
+  async componentDidMount() {
+    this.getInvoices();
+  }
+
   render () {
     return (
       <div className={`Invoices`}>
@@ -179,7 +53,7 @@ class extends Component {
           </h1>
         </div>
         <BootstrapTable
-            data={this.dummyJSONData()}
+            data={this.state.invoices}
             striped={true}
             condensed={true}
             search={true}
