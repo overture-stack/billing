@@ -53,16 +53,16 @@ if(args.length === 6) {
  * Generate reports from billing api and email them to billing users
  */
 let billing = new BillingApi(config['billingConfig']);
-//let mailer = new Mailer({ emailConfig: config['emailConfig'], smtpConfig: config['smtpConfig'] }, emailPath);
-let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
-
-//let pricePromise = billing.price(reportYear, reportMonth);
-let projectsPromise = billing.login().then(() => billing.projects());
-projectsPromise.then(results => {
-  let projects = _.filter(results, r => allProjects || projectList.indexOf(r.project_name) >= 0);
-  let pricePromise = billing.price(reportYear, reportMonth, projects);
-  pricePromise.then(perProjectPrices => {
-      return projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
+// generate invoices for each project
+let invoiceGeneration = new Promise((resolve, reject) => {
+  let projectsPromise = billing.login().then(() => billing.projects());
+  projectsPromise.then(results => {
+    let projects = _.filter(results, r => allProjects || projectList.indexOf(r.project_name) >= 0);
+    let pricePromise = billing.price(reportYear, reportMonth, projects);
+    pricePromise.then(perProjectPrices => {
+      let totalProjectCount = projects.length;
+      let invoicesProcessed = 0;
+      projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
         //console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
         report.month = month;
         report.year = reportYear;
@@ -71,10 +71,27 @@ projectsPromise.then(results => {
         _.each(price, (value, key) => {
           price[key] = (value*100).toFixed(4);
         });
-        freshbooksServiceClient.sendInvoice(project.extra.email, report, price);
-    }));
+        // handle invoice emailing through separate objects as each invoice email can be truly asynch then
+        let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
+        freshbooksServiceClient.sendInvoice(project.extra.email, report, price).then(() => {
+          invoicesProcessed++;
+          if(invoicesProcessed == totalProjectCount) resolve();
+        }).catch(err =>{
+          console.log("Error while processing Inovice:", err);
+          // we increment the counter regardless of an error; this makes sure that promise is always resolved
+          // and summary generation happens
+          invoicesProcessed++;
+          if(invoicesProcessed == totalProjectCount) resolve();
+        });
+      }).catch(err =>{
+        console.log("Error while processing Inovice:", err);
+      }));
+    });
   });
 });
 
-//TODO: integrate it with rest of the workflow in a better way
-setTimeout(() => freshbooksServiceClient.generateInvoicesSummary(month),3000);
+// wait till all invoices are generated and then generate the summary .csv file
+invoiceGeneration.then(() => {
+  let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
+  freshbooksServiceClient.generateInvoicesSummary(month)
+});

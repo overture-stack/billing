@@ -77,7 +77,9 @@ class InvoiceServiceClient {
     };
 
     private async getInvoicesSummaryData(){
-        return axios.get(`${ this.apiRootURL }/getAllInvoices`)
+        let currentDate = new Date();
+        let dateText = currentDate.toISOString().slice(0,10);
+        return axios.get(`${ this.apiRootURL }/getAllInvoices?date=${ dateText }`)
             .then( response => {
                 console.log(response.data);
                 return response.data;

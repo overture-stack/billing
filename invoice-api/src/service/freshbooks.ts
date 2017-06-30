@@ -129,15 +129,20 @@ class FreshbooksService {
 
     };
 
-    public async getInvoicesSummaryData() {
+    // assumes date is : null or in 'YYYY-MM-DD' format
+    public async getInvoicesSummaryData(date:string) {
         if(this.token == null)
-            await this.authenticate()
-        let currentDate = new Date();
+            await this.authenticate();
+        let minDate = null
+        let maxDate = null;
+        minDate = date;
+        maxDate = new Date();
         let pageCount = 1; let pageIdx = 1;
         let allInvoicesForThisPeriod = [];
-        //TODO: how we want to do pagination
+        console.log('Sending request to Freshbooks: For getting all invoices');
+        // currently we have decided to pull all the invoices and ship it to front end in one go
         while(pageCount  >= pageIdx){
-            let invoiceResults = await this.getInvoicesListPaged(pageIdx,currentDate.toISOString().slice(0,10));
+            let invoiceResults = await this.getInvoicesListPaged(pageIdx,minDate, maxDate.toISOString().slice(0,10));
             allInvoicesForThisPeriod = allInvoicesForThisPeriod.concat(invoiceResults.invoices);
             //update page count as the first result tells total count of pages
             if(pageCount == 1) pageCount = invoiceResults.pages;
@@ -164,19 +169,32 @@ class FreshbooksService {
             return output[0]['amount']['amount'];
         else return 0.0;
     }
-    private async getInvoicesListPaged(pageNumber: number, dateString: string) : Promise<any> {
-        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?search[date_max]=${ dateString }&page=${ pageNumber }&include[]=lines&per_page=100`,
+
+    // uses either minDate or maxDate
+    // assumes: minDate is optional; maxDate is always provided
+    private async getInvoicesListPaged(pageNumber: number, minDate: string, maxDate: string) : Promise<any> {
+        // form the search string
+        // use only one of min or max dates : if min date is provided then use it else use max date
+        let searchStr = '';
+        if(minDate != null )
+            searchStr = 'search[date_min]='+minDate;
+        else
+            searchStr = 'search[date_max]='+maxDate;
+        // Freshbooks limits the max number of responses to 100 per page; hence requesting 100
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?${ searchStr }&page=${ pageNumber }&include[]=lines&per_page=100`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
                 console.log(response.data);
                 return response.data.response.result;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
             });
     };
 
     private async authenticate(){
         console.log("Sending request to FreshBooks for: Access Token");
         //let bearerTokenResponse = await this.getAccessToken();
-        this.token = "b35c7dd1af1b35761bd621c86fa5ad2669ed9dae06cb7a061471a5afa325cb8a";
+        this.token = "5352ef1c274059acef08bdedac40c116a2a4c02786a70b5836068525f6ea6a1a";
         this.headers["Authorization"] = "Bearer " + this.token;
 
 
@@ -186,7 +204,7 @@ class FreshbooksService {
         let json = {
             "grant_type": "refresh_token",
             "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-            "refresh_token": "39386d6d8963c01736c118439a12d456d1c6209dcf4d336bda080d5358079a86",
+            "refresh_token": "b8519764ac968dbd09d44243b2d177e0c7a7350d04f76200dcc5d8915a2986c4",
             "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
             "redirect_uri": "https://testpaymenturlforPIs.com"
         };
@@ -203,6 +221,8 @@ class FreshbooksService {
                     console.log('freshbooks-tokens.txt saved');
                 });
                 return response.data;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
             });
     };
 
@@ -212,6 +232,8 @@ class FreshbooksService {
             .then( response => {
                 console.log(response.data);
                 return response.data.response.result.clients[0].id;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
             });
 
     }
@@ -224,6 +246,8 @@ class FreshbooksService {
             .then( response => {
                 console.log(response.data);
                 return response.data.response.result.invoice.id;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
             });
     }
 
@@ -243,6 +267,8 @@ class FreshbooksService {
             .then( response => {
                 console.log(response.data);
                 return response.data;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
             });
     }
     private createInvoicePayLoad(report: any, price:any, customerID:number) : Invoice {
