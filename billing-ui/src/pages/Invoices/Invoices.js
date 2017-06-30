@@ -32,7 +32,7 @@ class extends Component {
   }
 
   fetchInvoices = async () => {
-    const response = await fetch(`http://10.11.6.243:5000/invoice/getAllInvoices`, {
+    const response = await fetch(`http://localhost:4000/invoice/getAllInvoices`, {
       method: 'GET',
     });
 
@@ -59,7 +59,7 @@ class extends Component {
             search={true}
             exportCSV={true}
             hover={true}
-            pagination={true}
+            pagination={false}
             ignoreSinglePage
             keyField="key"
             options={{
@@ -72,6 +72,10 @@ class extends Component {
               dataField="current_organization"
               dataSort={true}
             >Project</TableHeaderColumn>
+            <TableHeaderColumn
+                dataField="date"
+                dataSort={true}
+            >Date</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpu_cost"
               dataSort={true}
