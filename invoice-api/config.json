@@ -29,6 +29,7 @@
     "rejectInsecure": true,
     "invoiceDefaults": {
       "terms": "Terms & Conditions from OICR",
+      "invoice_due_days":30,
       "code": "CAD",
       "template": "clean-grouped",
       "presentation": {

@@ -33,10 +33,10 @@ if (args.length >= 5) {
   let dateArgs = args[4].split('-');
   reportMonth = Number(dateArgs[1]);
   reportYear = Number(dateArgs[0]);
-  month = MONTH_NAMES[reportMonth - 1];
+  month = MONTH_NAMES[reportMonth];
 } else {
   let monthIndex = (new Date()).getMonth();
-  reportMonth = monthIndex - 1 < 0 ? 11 : monthIndex - 1;
+  reportMonth = monthIndex - 1 < 0 ? 11 : monthIndex-1;
   reportYear = monthIndex - 1 < 0 ? (new Date()).getFullYear() - 1 : (new Date()).getFullYear();
   month = MONTH_NAMES[reportMonth];
 }
@@ -57,7 +57,7 @@ let billing = new BillingApi(config['billingConfig']);
 let invoiceGeneration = new Promise((resolve, reject) => {
   let projectsPromise = billing.login().then(() => billing.projects());
   projectsPromise.then(results => {
-    let projects = _.filter(results, r => allProjects || projectList.indexOf(r.project_name) >= 0);
+    let projects = _.filter(results, r => (allProjects || projectList.indexOf(r.project_name) >= 0) && typeof  r.extra.email !== 'undefined');
     let pricePromise = billing.price(reportYear, reportMonth, projects);
     pricePromise.then(perProjectPrices => {
       let totalProjectCount = projects.length;
@@ -69,7 +69,9 @@ let invoiceGeneration = new Promise((resolve, reject) => {
         report.project_name = project.project_name;
         let price = perProjectPrices[project.project_name];
         _.each(price, (value, key) => {
-          price[key] = (value*100).toFixed(4);
+          if(key == 'discount')
+            price[key] = (value*100).toFixed(4);
+
         });
         // handle invoice emailing through separate objects as each invoice email can be truly asynch then
         let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);

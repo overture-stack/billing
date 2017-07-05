@@ -63,6 +63,7 @@ interface Invoice {
 
 interface FreshbooksInvoiceDefaults {
     terms: string;
+    invoice_due_days: number;
     code: string;
     template: string;
     presentation:InvoicePresentation;
@@ -115,17 +116,15 @@ class FreshbooksService {
         3. Create Freshbooks Invoice using the data received
         4. Send Invoice using Freshbooks API
      */
-    public async sendInvoice(collabProject: any, report: any, price: any) {
+    public async sendInvoice(customerEmail: any, report: any, price: any) {
         if(this.token == null)
             await this.authenticate()
         console.log("Sending request to FreshBooks for: Customer ID");
-        //TODO: hard coding value as of now as test collab doesn't have any email address
-        let customerID = await this.getCustomerID("ra.vrma@gmail.com");
+        let customerID = await this.getCustomerID(customerEmail);
         console.log("Sending request to FreshBooks for: Create new Invoice");
         let newInvoiceID = await this.createInvoice(report,price,customerID);
         console.log("Sending request to FreshBooks for: Send Invoice:" + newInvoiceID);
-        this.emailInvoice(newInvoiceID,report);
-
+        this.emailInvoice(newInvoiceID,report,customerEmail);
 
     };
 
@@ -153,6 +152,8 @@ class FreshbooksService {
             flattenedInovicesJson.push({
                 'current_organization' : item.current_organization,
                 'date' : item.create_date,
+                'invoice_number' : item.invoice_number,
+                'payment_status' : item.payment_status,
                 'cpu_cost' : this.getLineItemValue("CPU",item.lines),
                 'image_cost' : this.getLineItemValue("Image",item.lines),
                 'volume_cost' : this.getLineItemValue("Volume",item.lines),
@@ -194,7 +195,7 @@ class FreshbooksService {
     private async authenticate(){
         console.log("Sending request to FreshBooks for: Access Token");
         //let bearerTokenResponse = await this.getAccessToken();
-        this.token = "5352ef1c274059acef08bdedac40c116a2a4c02786a70b5836068525f6ea6a1a";
+        this.token = "5167ebc523effc9e7928f8eda996c6d1f8b56239229cb22c2acb768cfad5e241";
         this.headers["Authorization"] = "Bearer " + this.token;
 
 
@@ -204,7 +205,7 @@ class FreshbooksService {
         let json = {
             "grant_type": "refresh_token",
             "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-            "refresh_token": "b8519764ac968dbd09d44243b2d177e0c7a7350d04f76200dcc5d8915a2986c4",
+            "refresh_token": "5e190347eb6835a72451c35e07370cd4826d785aacc2f65a7df8aedbab94fccb",
             "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
             "redirect_uri": "https://testpaymenturlforPIs.com"
         };
@@ -251,13 +252,12 @@ class FreshbooksService {
             });
     }
 
-    private async emailInvoice(invoiceID:string, report:any): Promise<any> {
+    private async emailInvoice(invoiceID:string, report:any, customerEmail:string): Promise<any> {
         let json = {
             "invoice": {
                 "email_subject": 'OICR Collaboratory sent an invoice for project "' + report.project_name+ '"',
                 "email_body": this.invoiceSummary,
-                "email_recipients":[this.apiConfig.oicr_finance_email,
-                                    "ra.v.r.ma@gmail.com"],
+                "email_recipients":[this.apiConfig.oicr_finance_email, customerEmail],
                 "action_email": true
             }
         };
@@ -292,7 +292,7 @@ class FreshbooksService {
             template: this.apiConfig.invoiceDefaults.template,
             terms: this.apiConfig.invoiceDefaults.terms,
             customerid: customerID+"",
-            due_offset_days:60,//TODO: check how many days later invoice is due
+            due_offset_days:this.apiConfig.invoiceDefaults.invoice_due_days,//TODO: check how many days later invoice is due
             lines: [cpuCostItem,volumeCostItem,imageCostItem],
             presentation:this.apiConfig.invoiceDefaults.presentation
             }

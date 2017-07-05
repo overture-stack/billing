@@ -11,7 +11,6 @@ class InvoiceServiceClient {
     /**
      * Dependencies
      */
-    private apiConfig: any;
     private apiRootURL: string;
 
 
@@ -41,6 +40,10 @@ class InvoiceServiceClient {
             {
                 label: 'Project Name',
                 value: 'current_organization'
+            },
+            {
+                label: 'Invoice Number',
+                value: 'invoice_number'
             },
             {
                 label: 'Date',
@@ -81,7 +84,7 @@ class InvoiceServiceClient {
         let dateText = currentDate.toISOString().slice(0,10);
         return axios.get(`${ this.apiRootURL }/getAllInvoices?date=${ dateText }`)
             .then( response => {
-                console.log(response.data);
+                //console.log(response.data);
                 return response.data;
             });
     }

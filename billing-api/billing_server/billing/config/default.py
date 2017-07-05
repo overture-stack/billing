@@ -18,10 +18,10 @@ SECRET_KEY = 'random, secret, super duper secret key'
 AUTH_URI = 'http://142.1.177.150:5000/v2.0'  # Keystone/Identity API endpoint
 MYSQL_URI = 'mysql://root:test@142.1.177.150:3306'  # Mysql URI
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
-FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
-#FLASK_LOG_FILE = './logs/billing.log'
-#BILLING_ROLE = 'billing_test'
-INVOICE_ROLE = 'invoice'
+#FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
+FLASK_LOG_FILE = './logs/billing.log'
+BILLING_ROLE = 'billing_test'
+#INVOICE_ROLE = 'invoice'
 INVOICE_ROLE = 'billing_test'
 PRICING_PERIODS = [
     {
@@ -58,17 +58,17 @@ PRICING_PERIODS = [
 # 4. Discounts are only applicable to Invoice; the billing application UI will never have to show it
 # 5. Invoice periods and discount periods will always align
 DISCOUNTS = {
-    "admin" : [{
-        'period_start': '2013-01',
-        'period_end': '2016-11',
+    "oicr_demo_rahul" : [{
+        'period_start': '2017-05',
+        'period_end': '2017-05',
         'discount': 0.9
     },
     {
-        'period_start': '2016-11',
-        'period_end': '2016-12',
-        'discount': 0
+        'period_start': '2017-06',
+        'period_end': '2017-06',
+        'discount': 0.7
     }],
-    "demo" : [{
+    "oicr_demo_dusan" : [{
         'discount': 0.8
     }]
 }
