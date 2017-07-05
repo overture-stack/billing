@@ -77,6 +77,10 @@ class extends Component {
                 dataSort={true}
             >Date</TableHeaderColumn>
             <TableHeaderColumn
+                dataField="invoice_number"
+                dataSort={true}
+            >Invoice Number</TableHeaderColumn>
+            <TableHeaderColumn
               dataField="cpu_cost"
               dataSort={true}
             >CPU Cost</TableHeaderColumn>
@@ -92,7 +96,7 @@ class extends Component {
             <TableHeaderColumn
               dataField="discount"
               dataSort={true}
-            >Discount</TableHeaderColumn>
+            >Discount%</TableHeaderColumn>
             <TableHeaderColumn
               dataField="total"
               dataAlign="right"

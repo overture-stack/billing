@@ -120,7 +120,7 @@ export default class extends Component {
                   to="/invoices"
                   activeClassName="active"
                 >
-                  Invoice
+                  Invoices
                 </Link>
               </li>
             </ul>
