@@ -81,6 +81,14 @@ class extends Component {
                 dataSort={true}
             >Invoice Number</TableHeaderColumn>
             <TableHeaderColumn
+                dataField="payment_status"
+                dataSort={true}
+            >Payment Status</TableHeaderColumn>
+            <TableHeaderColumn
+                dataField="invoice_status"
+                dataSort={true}
+            >Invoice Status</TableHeaderColumn>
+            <TableHeaderColumn
               dataField="cpu_cost"
               dataSort={true}
             >CPU Cost</TableHeaderColumn>
