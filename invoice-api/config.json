@@ -20,9 +20,9 @@
   "freshbooksConfig": {
     "api": "https://api.freshbooks.com",
     "grant_type": "refresh_token",
-    "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-    "refresh_token": "689c1802e6d0dac9aac4360e4d0d65100fb25eb4510920462e6037e4791ef59c",
-    "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
+    "client_secret": "52c073fbdcd32f69e81362676852b9acff491adbc9760870a0a3ffc0e6e08194",
+    "refresh_token": "433d8ec548a4ed1eec4a5971c398a5dd238fb1a658e7b51f539d3c7f9fdd4fba",
+    "client_id": "08468f71c9cff0bb2b97c6a09a903e1f1113f486eaa0a33285160051b8a8d449",
     "redirect_uri": "https://testpaymenturlforPIs.com",
     "account_id":"4JWqo",
     "oicr_finance_email":"Rahul.verma@oicr.on.ca",

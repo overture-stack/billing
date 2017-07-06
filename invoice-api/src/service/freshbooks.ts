@@ -7,7 +7,6 @@
  */
 import axios from 'axios';
 import * as https from 'https';
-import * as fs from 'fs';
 import * as _ from 'lodash';
 
 const INVOICE_TEXT = 'This is a statement for your usage of the Cancer Genome Collaboratory (Collab) ' +
@@ -83,6 +82,7 @@ interface FreshbooksConfig {
     invoiceDefaults:FreshbooksInvoiceDefaults;
 }
 
+
 class FreshbooksService {
 
     /**
@@ -94,6 +94,7 @@ class FreshbooksService {
      * State
      */
     private token: string;
+    private authenticator: any;
     private agent: https.Agent;
     private headers = {
         "Api-Version": `alpha`,
@@ -101,24 +102,24 @@ class FreshbooksService {
     };
     private invoiceSummary :string;
 
-    constructor(config: FreshbooksConfig) {
+    constructor(config: FreshbooksConfig, authenticator:any) {
         this.apiConfig = config;
         this.agent = new https.Agent({
             rejectUnauthorized: config.rejectInsecure
         });
+        this.authenticator = authenticator;
     }
 
 
     /*
     Steps to send Invoice:
-        1. Get bearer token using the refresh token//TODO: where to store refresh token
-        2. Get customer id using the email address from project //TODO
+        1. Get bearer token using the refresh token
+        2. Get customer id using the email address from project
         3. Create Freshbooks Invoice using the data received
         4. Send Invoice using Freshbooks API
      */
     public async sendInvoice(customerEmail: any, report: any, price: any) {
-        if(this.token == null)
-            await this.authenticate()
+        await this.authenticate()
         console.log("Sending request to FreshBooks for: Customer ID");
         let customerID = await this.getCustomerID(customerEmail);
         console.log("Sending request to FreshBooks for: Create new Invoice");
@@ -130,9 +131,8 @@ class FreshbooksService {
 
     // assumes date is : null or in 'YYYY-MM-DD' format
     public async getInvoicesSummaryData(date:string) {
-        if(this.token == null)
-            await this.authenticate();
-        let minDate = null
+        await this.authenticate();
+        let minDate = null;
         let maxDate = null;
         minDate = date;
         maxDate = new Date();
@@ -154,6 +154,7 @@ class FreshbooksService {
                 'date' : item.create_date,
                 'invoice_number' : item.invoice_number,
                 'payment_status' : item.payment_status,
+                'invoice_status' : item.v3_status,
                 'cpu_cost' : this.getLineItemValue("CPU",item.lines),
                 'image_cost' : this.getLineItemValue("Image",item.lines),
                 'volume_cost' : this.getLineItemValue("Volume",item.lines),
@@ -192,35 +193,28 @@ class FreshbooksService {
             });
     };
 
+
     private async authenticate(){
-        console.log("Sending request to FreshBooks for: Access Token");
-        //let bearerTokenResponse = await this.getAccessToken();
-        this.token = "5167ebc523effc9e7928f8eda996c6d1f8b56239229cb22c2acb768cfad5e241";
-        this.headers["Authorization"] = "Bearer " + this.token;
-
-
+        if(this.authenticator != null){
+            this.token =  await this.authenticator.getLatestAccessToken();
+            this.headers["Authorization"] = "Bearer " + this.token;
+        } else {
+            throw new Error("No authenticator provided.");
+        }
     };
 
-    private async getAccessToken() : Promise<any> {
+    public async getAccessToken(refreshToken:string) : Promise<any> {
+        console.log("Sending request to FreshBooks for: Access Token");
         let json = {
-            "grant_type": "refresh_token",
-            "client_secret": "7ac2208c9df4486869a25685623c1125c38707984e05cee546a233b0d12b3469",
-            "refresh_token": "5e190347eb6835a72451c35e07370cd4826d785aacc2f65a7df8aedbab94fccb",
-            "client_id": "56eedeed6a08385e1ff3414c5dcce50c03b7eb68a095c8172b0a5cf1974b9374",
-            "redirect_uri": "https://testpaymenturlforPIs.com"
+            "grant_type": this.apiConfig.grant_type,
+            "client_secret": this.apiConfig.client_secret,
+            "refresh_token": refreshToken,
+            "client_id": this.apiConfig.client_id,
+            "redirect_uri": this.apiConfig.redirect_uri
         };
         return axios.post(`${ this.apiConfig.api }/auth/oauth/token`, json,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                this.token = response.data.access_token;
-                console.log("NEW TOKEN:  " + response.data.access_token);
-                console.log("NEW REFRESH TOKEN:  " + response.data.refresh_token);
-                let accessTokenText = "Access token: " + this.token + "\r\n" +
-                    "Refresh token: " + response.data.refresh_token;
-                fs.writeFile('freshbooks-tokens.txt', accessTokenText, function(err) {
-                    if (err) throw err;
-                    console.log('freshbooks-tokens.txt saved');
-                });
                 return response.data;
             }).catch(err => {
                 throw new Error(err.response.statusText);
@@ -366,4 +360,4 @@ class FreshbooksService {
 
 }
 
-export { FreshbooksService };
+export { FreshbooksService, FreshbooksConfig };

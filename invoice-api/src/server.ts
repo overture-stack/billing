@@ -4,11 +4,12 @@ import * as bodyParser from "body-parser";
 import * as express from "express";
 import * as fs from 'fs';
 import {FreshbooksService} from "./service/freshbooks";
+import {FreshBooksAuth} from "./global/freshbooks-auth";
 import * as cors from 'cors';
 
 let app: express.Application;
 let config : any;
-let freshbooksService : FreshbooksService;
+let freshbooksAuth : FreshBooksAuth;
 
 
 
@@ -21,16 +22,30 @@ app.use(cors());
 
 let port = process.env.PORT || 4000;
 
+
+/**
+ * Argument Parsing for Config Path and auth file path
+ */
 let args = process.argv;
+if (args.length < 4) {
+    console.log('Missing arguments');
+    process.exit(1);
+}
 let configPath = args[2];
 config = JSON.parse(fs.readFileSync(configPath).toString());
-// TODO: refactor authentication so that all requests are not using same Freshbooks instance
-freshbooksService = new FreshbooksService(config['freshbooksConfig']);
+let authFilePath = args[3];
+
+// create freshbooks authentication module instance;
+// this instance will be used for authentication with freshbooks throughout application lifecycle
+freshbooksAuth = new FreshBooksAuth(config['freshbooksConfig'], authFilePath);
+
+// make authenticator available globally
+app.set('settings', {authenticator: freshbooksAuth});
 
 //configure routes
 routes();
 app.listen(port);
-console.log("Application started");
+console.log("Invoice Service started");
 
 
 /**
@@ -48,7 +63,8 @@ function routes() {
         let email = req.body['email'];
         let report = req.body['report'];
         let price = req.body['price'];
-        freshbooksService.sendInvoice(email, report, price).then(() => {
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
+        fbService.sendInvoice(email, report, price).then(() => {
             res.send("Invoice generated.");
         }).catch(err => {
             res.status(500).send(err);
@@ -58,6 +74,7 @@ function routes() {
 
     // get list of all invoices
     router.get("/getAllInvoices", function(req, res){
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
         if(req.query.hasOwnProperty("date")){
             // get all invoices generated on a specific date
             let queryDate = req.query.date;
@@ -67,14 +84,14 @@ function routes() {
                 res.status(500).send({ error: 'Invalid date format. Please use YYYY-MM-DD' });
                 return;
             }
-            freshbooksService.getInvoicesSummaryData(queryDate).then(invoicesData => {
+            fbService.getInvoicesSummaryData(queryDate).then(invoicesData => {
                 res.json(invoicesData);
             }).catch(err => {
                 res.status(500).send(err);
             });
         } else {
             // get all invoices generated till date
-            freshbooksService.getInvoicesSummaryData(null).then(invoicesData => {
+            fbService.getInvoicesSummaryData(null).then(invoicesData => {
                 res.json(invoicesData);
             }).catch(err => {
                 res.status(500).send(err);
