@@ -20,20 +20,24 @@ from functools import wraps
 
 from dateutil.parser import parse
 from dateutil.relativedelta import *
-from flask import Flask, request, Response, abort
+from flask import Flask, request, Response, abort,Blueprint
 
 from auth import sessions
 from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 from service import projects
+from service.invoicing import invoice_router
 from copy import deepcopy
+
 import calendar
 
 import logging
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
+
+
 app.config.from_object(default)
 
 app.secret_key = app.config['SECRET_KEY']
@@ -48,6 +52,8 @@ if app.config['DEBUG']:
 else:
     handler.setLevel(logging.info)
 app.logger.addHandler(handler)
+
+app.register_blueprint(invoice_router, url_prefix='/invoice')
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:
