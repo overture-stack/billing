@@ -15,7 +15,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 DEBUG = True  # Debug mode for flask
 SECRET_KEY = 'random, secret, super duper secret key'
-AUTH_URI = 'http://142.1.177.150:5000/v2.0'  # Keystone/Identity API endpoint
+AUTH_URI = 'http://142.1.177.54:5000/v2.0'  # Keystone/Identity API endpoint
 MYSQL_URI = 'mysql://root:test@142.1.177.150:3306'  # Mysql URI
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
 FLASK_LOG_FILE = '/tmp/billing.log'

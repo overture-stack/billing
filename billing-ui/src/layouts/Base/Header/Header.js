@@ -83,7 +83,6 @@ export default class extends Component {
               >Collaboratory Console</a>
             </div>
             <div
-              ref="logout"
               className="user-container"
             >
               <span
@@ -95,10 +94,9 @@ export default class extends Component {
               >Logout</span>
             </div>
         </div>
-        <div className="Header" ref="container">
+        <div className="Header">
           <div>
             <img
-              ref="logo"
               className="logo"
               src={require('~/assets/images/logo.svg')}
               alt="Cancer Genome COLLABORATORY"

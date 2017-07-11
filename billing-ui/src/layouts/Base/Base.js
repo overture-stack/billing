@@ -78,7 +78,7 @@ class extends Component {
     const key = pathname.split('/')[2] || 'root';
 
     return (
-      <div ref="container" className="Base" style={{height: '100%'}}>
+      <div className="Base" style={{height: '100%'}}>
         <Header ref="header"/>
         <TransitionGroup ref="childContainer" transitionMode="out-in" className="BaseChildContainer" style={{position: 'relative'}} component="div">
           {React.cloneElement(this.props.children || <div />, { key: key })}
