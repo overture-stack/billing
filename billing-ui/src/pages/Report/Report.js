@@ -39,7 +39,7 @@ import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 
 import {fetchReport} from '~/services/reports'; 
-import {fetchProjects} from '~/services/projects'; 
+import {fetchProjects} from '~/services/projects';
 import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 const ReactHighcharts = require('react-highcharts').withHighcharts(require('highcharts'));
@@ -104,7 +104,6 @@ class extends Component {
   }
 
   handleFromDateFilterChange = (date) => {
-    console.log(date);
     this.filters.fromDate = date;
   }
 

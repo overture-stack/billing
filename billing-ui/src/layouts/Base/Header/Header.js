@@ -105,22 +105,26 @@ export default class extends Component {
           <div>
             <ul
               className="menu">
-              <li>
-                <Link
-                  to="/report"
-                  activeClassName="active"
-                >
-                  Report
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/invoices"
-                  activeClassName="active"
-                >
-                  Invoices
-                </Link>
-              </li>
+              { user.report &&
+                <li>
+                  <Link
+                    to="/report"
+                    activeClassName="active"
+                  >
+                    Report
+                  </Link>
+                </li>
+              }
+              { user.invoices &&
+                <li>
+                  <Link 
+                    to="/invoices"
+                    activeClassName="active"
+                  >
+                    Invoices
+                  </Link>
+                </li>
+              }
             </ul>
           </div>
         </div>

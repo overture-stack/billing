@@ -15,7 +15,10 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import {observable, action, autorun} from 'mobx';
+import _ from 'lodash';
+
 import {fetchHeaders} from '~/utils';
+import {fetchProjects} from '~/services/projects'; 
 
 const user = observable({
   username: '',
@@ -39,6 +42,7 @@ const user = observable({
       this.username = username;
       this.token = response.headers.get('authorization');
       window.sessionStorage.setItem('username', user.username);
+      this.roles();
       this.isLoggedIn = true;
     } else if (response.status === 401) {
       throw new Error('Incorrect username or password');
@@ -55,6 +59,12 @@ const user = observable({
     user.token = '';
     this.isLoggedIn = false;
     return await Promise.resolve();
+  }),
+
+  roles: action(async function() {
+    this.projects = await fetchProjects();
+    this.report = !!_.find(this.projects, (e) => _.includes(e.roles, 'billing_test'));
+    this.invoices = !!_.find(this.projects, (e) => _.includes(e.roles, 'invoice_test'));
   })
 });
 
