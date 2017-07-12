@@ -16,5 +16,8 @@
     "username": "admin",
     "password": "test",
     "rejectInsecure": true
+  },
+  "invoiceConfig": {
+    "api": "http://localhost:5000/invoice"
   }
 }

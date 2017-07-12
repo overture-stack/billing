@@ -1,6 +1,10 @@
-BILLING_ROLE_ID = '9999999999999'
-NORMAL_ROLE_ID = '0000000000000'
+#BILLING_ROLE_ID = '9999999999999'
+#NORMAL_ROLE_ID = '0000000000000'
 
+import uuid
+
+BILLING_ROLE_ID = '81ab2b06f0104e9a93fee991e61d7ac8'
+NORMAL_ROLE_ID = '52d376dce28e4c70b2929c265ad1c4c0'
 
 def initialize_database(database):
     database.database.query('CREATE DATABASE IF NOT EXISTS nova;')
@@ -109,6 +113,7 @@ def create_instance(database, user_id, project_id, vcpus, created_at, deleted_at
         INSERT INTO
           nova.instances
           (
+            uuid,
             user_id,
             project_id,
             vcpus,
@@ -119,6 +124,7 @@ def create_instance(database, user_id, project_id, vcpus, created_at, deleted_at
 
         VALUES
           (
+            :uuid_val,
             :user_id,
             :project_id,
             :vcpus,
@@ -127,6 +133,7 @@ def create_instance(database, user_id, project_id, vcpus, created_at, deleted_at
             'active'
           );
         ''',
+        uuid_val=uuid.uuid4().hex,
         user_id=user_id,
         project_id=project_id,
         vcpus=vcpus,

@@ -1,0 +1,47 @@
+{
+  "smtpConfig": {
+    "host": "<fill in smtp hostname>",
+    "port": "25",
+    "secure": false,
+    "ignoreTLS": true,
+    "auth": null
+  },
+  "emailConfig": {
+    "fromAddress": "foo@bar.org",
+    "subject": "Usage Report",
+    "replyTo": "reply@bar.org"
+  },
+  "billingConfig": {
+    "api": "http://localhost:5000",
+    "username": "admin",
+    "password": "test",
+    "rejectInsecure": true
+  },
+  "freshbooksConfig": {
+    "api": "https://api.freshbooks.com",
+    "grant_type": "refresh_token",
+    "client_secret": "52c073fbdcd32f69e81362676852b9acff491adbc9760870a0a3ffc0e6e08194",
+    "refresh_token": "433d8ec548a4ed1eec4a5971c398a5dd238fb1a658e7b51f539d3c7f9fdd4fba",
+    "client_id": "08468f71c9cff0bb2b97c6a09a903e1f1113f486eaa0a33285160051b8a8d449",
+    "redirect_uri": "https://testpaymenturlforPIs.com",
+    "account_id":"4JWqo",
+    "oicr_finance_email":"Rahul.verma@oicr.on.ca",
+    "rejectInsecure": true,
+    "invoiceDefaults": {
+      "terms": "Terms & Conditions from OICR",
+      "invoice_due_days":30,
+      "code": "CAD",
+      "template": "clean-grouped",
+      "presentation": {
+        "id": "74990",
+        "theme_font_name": "modern",
+        "theme_primary_color": "#663399",
+        "theme_layout": "simple",
+        "date_format": "mm/dd/yyyy",
+        "image_banner_position_y": 0,
+        "image_logo_src": "/service/uploads/images/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoyOTYxMDY4LCJidWNrZXQiOiJ1cGxvYWRzIiwia2V5IjoiJ2RvY3MtJy0yOTYxMDY4L3VwbG9hZC1lMDQzMGMyNDI1MDAxNDFkZjRiYjI2NmYzMjQzMjc4YzkyZDIyNzk5IiwiZmlsZW5hbWUiOiJ1cGxvYWQtZTA0MzBjMjQyNTAwMTQxZGY0YmIyNjZmMzI0MzI3OGM5MmQyMjc5OSJ9.hIZbNGcgCggBQ5AhyRApR0qoysU_cs9ps8rCGdI_T_0",
+        "image_banner_src": null
+      }
+    }
+  }
+}

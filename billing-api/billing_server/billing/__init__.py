@@ -20,24 +20,31 @@ from functools import wraps
 
 from dateutil.parser import parse
 from dateutil.relativedelta import *
-from flask import Flask, request, Response, abort
+from flask import Flask, request, Response, abort,Blueprint
 
 from auth import sessions
 from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 from service import projects
+from service.invoicing import invoice_router
+from copy import deepcopy
+
+import calendar
 
 import logging
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
+
+
 app.config.from_object(default)
 
 app.secret_key = app.config['SECRET_KEY']
 
 app.valid_bucket_sizes = app.config['VALID_BUCKET_SIZES']
 app.pricing_periods = app.config['PRICING_PERIODS']
+app.discounts = app.config['DISCOUNTS']
 
 handler = RotatingFileHandler(app.config['FLASK_LOG_FILE'], maxBytes=100000, backupCount=3)
 if app.config['DEBUG']:
@@ -45,6 +52,8 @@ if app.config['DEBUG']:
 else:
     handler.setLevel(logging.info)
 app.logger.addHandler(handler)
+
+app.register_blueprint(invoice_router, url_prefix='/invoice')
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:
@@ -118,7 +127,11 @@ def get_billing_projects(client, user_id, database):
 @app.route('/price', methods=['GET'])
 def get_price():
     date = parse(request.args.get('date'), ignoretz=True)
-    return get_price_period(date)
+    if request.args.get('projects') is not None:
+        projects = request.args.get('projects').split(",")
+        return get_per_project_price(date, projects)
+    else:
+        return get_price_period(date)
 
 
 @app.route('/reports', methods=['GET'])
@@ -365,6 +378,17 @@ def get_bucket_functions(bucket_size):
 
     return same_bucket, next_bucket, start_of_bucket
 
+def get_per_project_price(date, projects):
+    # get price for all projects as price is independent of projects
+    all_projects_pricing = get_price_period(date)
+    all_projects_pricing = json.loads(all_projects_pricing)
+    # get discounts specific to the projects
+    output = dict()
+    for project_name in projects:
+            output[project_name] = add_project_discount(project_name, deepcopy(all_projects_pricing), date)
+    # return output
+    return json.dumps(output)
+
 
 def get_price_period(date):
     pricing_periods = iter(app.pricing_periods)
@@ -378,3 +402,39 @@ def get_price_period(date):
     return json.dumps({'cpuPrice': retval['cpu_price'],
                        'volumePrice': retval['volume_price'],
                        'imagePrice': retval['image_price']})
+
+
+def add_project_discount(project_name, price, date):
+    price['discount'] = 0 # default discount amount
+    if project_name not in app.discounts.keys(): return price
+    # get discount value from config
+    project_discounts = app.discounts[project_name]
+    if len(project_discounts) == 1 and 'period_start' not in project_discounts[0].keys():
+        # this means that there is a discount value that is always applicable regardless of the dates
+        price['discount'] = project_discounts[0]['discount']
+        return price
+    # compute discount value based on the dates
+    discount_periods = iter(project_discounts)
+    next_period = next(discount_periods, None)
+    retval = next_period
+    while next_period is not None:
+        if 'period_end' not in next_period.keys():
+            # if we find a discount without any period; set that as target discount
+            # this will get overriden in the loop below if there is a discount specific to a period
+            price['discount'] = next_period['discount']
+            next_period = next(discount_periods, None)
+            if next_period is not None: retval = next_period
+        elif date <= parse_period_end(retval['period_end']):
+            # this is time period specific discount; no need to iterate further
+            price['discount'] = next_period['discount']
+            break
+        else:
+            next_period = next(discount_periods, None)
+            if next_period is not None: retval = next_period
+
+    return price
+
+def parse_period_end(period_end_str):
+    period_end = period_end_str.split("-")
+    month_range = calendar.monthrange(int(period_end[0]), int(period_end[1]))
+    return parse(period_end_str+"-"+str(month_range[1]))

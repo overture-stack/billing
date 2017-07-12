@@ -64,13 +64,17 @@ class BillingApi {
       });
   }
 
-  public async price(year: number, month: number) : Promise<Price> {
+  public async price(year: number, month: number, projects : Array<any>) : Promise<Price> {
     let firstDay = new Date(year, month - 1, 1);
 
     // Bill based on first price at first day of the month
     let isoDate = firstDay.toISOString();
+    let projectNames = [];
+    _.each(projects, (project) => {
+      projectNames.push(project.project_name);
+    });
     console.log(`Getting Price for Date: ${ isoDate }`);
-    return axios.get(`${ this.config.api }/price?date=${ isoDate }`, { httpsAgent: this.agent })
+    return axios.get(`${ this.config.api }/price?date=${ isoDate }&projects=${ projectNames }`, { httpsAgent: this.agent })
       .then( response => {
         return response.data;
       });
