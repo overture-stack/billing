@@ -17,8 +17,9 @@
 import React, { Component } from 'react';
 
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
-import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
+import {fetchHeaders} from '~/utils';
 
+import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 import './Invoices.scss';
 
 
@@ -32,8 +33,9 @@ class extends Component {
   }
 
   fetchInvoices = async () => {
-    const response = await fetch(`http://localhost:4000/invoice/getAllInvoices`, {
+    const response = await fetch(`/api/invoice/getAllInvoices`, {
       method: 'GET',
+      headers: fetchHeaders.get(),
     });
 
     const data = await response.json();
