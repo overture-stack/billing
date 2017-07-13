@@ -18,6 +18,9 @@ import React, {Component} from 'react';
 import { Link } from 'react-router'
 import animate from 'gsap-promise';
 import user from '~/user';
+import {fetchProjects} from '~/services/projects';
+import _ from 'lodash';
+
 
 import './Header.scss';
 
@@ -42,8 +45,23 @@ const elementAnimationStates = {
 };
 
 export default class extends Component {
+  state = { roles: {} }
+
   componentDidMount () {
     this.initUIState();  
+    this.setRoles();
+  }
+
+  async setRoles() {
+    const projects = await fetchProjects();
+    const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing_test'));
+    const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice_test'));
+    this.setState({
+      roles: {
+        report,
+        invoices
+      }
+    });
   }
 
   initUIState() {
@@ -105,7 +123,7 @@ export default class extends Component {
           <div>
             <ul
               className="menu">
-              { user.report &&
+              {this.state.roles.report && 
                 <li>
                   <Link
                     to="/report"
@@ -115,7 +133,7 @@ export default class extends Component {
                   </Link>
                 </li>
               }
-              { user.invoices &&
+              {this.state.roles.invoices &&
                 <li>
                   <Link 
                     to="/invoices"

@@ -201,7 +201,7 @@ class extends Component {
 
   render () {
     return (
-      <div className={`Report ${this.isLoading ? 'is-loading' : ''}`}>
+      <div className="Report">
         <h1 className="page-heading">
           {
             this.isLoading
@@ -340,7 +340,7 @@ class extends Component {
           </div>
 
         </div>
-          <h2 className="section-heading">Summary</h2>
+        <h2 className="section-heading">Summary</h2>
         <div className="summary">
           <RadioGroup>
             <RadioButton

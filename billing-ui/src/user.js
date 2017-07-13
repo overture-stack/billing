@@ -15,10 +15,8 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import {observable, action, autorun} from 'mobx';
-import _ from 'lodash';
 
 import {fetchHeaders} from '~/utils';
-import {fetchProjects} from '~/services/projects'; 
 
 const user = observable({
   username: '',
@@ -30,19 +28,18 @@ const user = observable({
     this.isLoggedIn = false;
     this.isLoggingIn = true;
     const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: fetchHeaders.get(),
-        body: JSON.stringify({
-          username,
-          password,
-        })
-      });
+      method: 'POST',
+      headers: fetchHeaders.get(),
+      body: JSON.stringify({
+        username,
+        password,
+      })
+    });
     if (response.status === 200) {
       this.isLoggingIn = false;
       this.username = username;
       this.token = response.headers.get('authorization');
       window.sessionStorage.setItem('username', user.username);
-      this.roles();
       this.isLoggedIn = true;
     } else if (response.status === 401) {
       throw new Error('Incorrect username or password');
@@ -60,12 +57,6 @@ const user = observable({
     this.isLoggedIn = false;
     return await Promise.resolve();
   }),
-
-  roles: action(async function() {
-    this.projects = await fetchProjects();
-    this.report = !!_.find(this.projects, (e) => _.includes(e.roles, 'billing_test'));
-    this.invoices = !!_.find(this.projects, (e) => _.includes(e.roles, 'invoice_test'));
-  })
 });
 
 user.token = window.sessionStorage.getItem('token');
