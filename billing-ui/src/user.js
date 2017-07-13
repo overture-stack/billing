@@ -64,8 +64,8 @@ const user = observable({
 
   setRoles: action(async function() {
     const projects = await fetchProjects();
-    const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing_test'));
-    const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice'));
+    const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing'));
+    const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice_test'));
     this.roles = {
       report,
       invoices
@@ -78,7 +78,6 @@ user.token = window.sessionStorage.getItem('token');
 user.username = window.sessionStorage.getItem('username');
 user.roles = JSON.parse(window.localStorage.getItem('roles')) || {};
 user.isLoggedIn = !!user.token;
-autorun(() => window.sessionStorage.setItem('token', user.token));
 window.user = user;
 
 export default user;
