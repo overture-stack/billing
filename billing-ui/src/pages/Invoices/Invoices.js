@@ -42,6 +42,15 @@ class extends Component {
     return data;
   }
 
+  setEmailLink = (cell, row) => (
+    <span className="glyphicon glyphicon-envelope" onClick={() => this.sendEmail(1)}></span>
+  );
+
+  sendEmail = (invoice) => {
+    console.error('In Send Email');
+    console.error(invoice);
+  }
+
   async componentDidMount() {
     this.getInvoices();
   }
@@ -100,7 +109,6 @@ class extends Component {
             >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume_cost"
-              dataAlign="right"
               dataSort={true}
             >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
@@ -109,9 +117,13 @@ class extends Component {
             >Discount%</TableHeaderColumn>
             <TableHeaderColumn
               dataField="total"
-              dataAlign="right"
               dataSort={true}
             >Total Cost</TableHeaderColumn>
+            <TableHeaderColumn
+              dataAlign="center"
+              dataField="email"
+              dataFormat={this.setEmailLink}
+            >Email</TableHeaderColumn>
           </BootstrapTable>
       </div>
     );
