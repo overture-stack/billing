@@ -43,7 +43,7 @@ class extends Component {
   }
 
   setEmailLink = (cell, row) => (
-    <span className="glyphicon glyphicon-envelope" onClick={() => this.sendEmail(1)}></span>
+    <span className="glyphicon glyphicon-envelope" onClick={() => this.sendEmail(row.invoice_number)}></span>
   );
 
   sendEmail = (invoice) => {
