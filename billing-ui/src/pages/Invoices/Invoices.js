@@ -33,7 +33,7 @@ class extends Component {
   }
 
   fetchInvoices = async () => {
-    const response = await fetch(`/api/invoice/getAllInvoices`, {
+    const response = await fetch('/api/invoice/getAllInvoices', {
       method: 'GET',
       headers: fetchHeaders.get(),
     });
@@ -49,6 +49,13 @@ class extends Component {
   sendEmail = (invoice) => {
     console.error('In Send Email');
     console.error(invoice);
+    fetch('/api/invoice/email', {
+      method: 'POST',
+      headers: fetchHeaders.get(),
+      data: {
+        invoice
+      }
+    });
   }
 
   async componentDidMount() {
