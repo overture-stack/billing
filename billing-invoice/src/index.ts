@@ -14,13 +14,13 @@ const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
  * Argument Parsing for Config Path
  */
 let args = process.argv;
-if (args.length < 4) {
+if (args.length < 3) {
   console.log('Missing arguments');
   process.exit(1);
 }
 let configPath = args[2];
 let config = JSON.parse(fs.readFileSync(configPath).toString());
-let emailPath = args[3];
+//let emailPath = args[3];
 
 
 /**
@@ -29,8 +29,8 @@ let emailPath = args[3];
 let reportMonth : number;
 let reportYear : number;
 let month: string;
-if (args.length >= 5) {
-  let dateArgs = args[4].split('-');
+if (args.length >= 4) {
+  let dateArgs = args[3].split('-');
   reportMonth = Number(dateArgs[1]);
   reportYear = Number(dateArgs[0]);
   month = MONTH_NAMES[reportMonth];
@@ -42,10 +42,10 @@ if (args.length >= 5) {
 }
 var allProjects = true;
 var projectList : Array<string>;
-if(args.length === 6) {
-  if (args[5] !== 'ALL') {
+if(args.length === 5) {
+  if (args[4] !== 'ALL') {
     allProjects = false;
-    projectList = args[5].split(",")
+    projectList = args[4].split(",")
   }
 }
 
@@ -68,6 +68,7 @@ let invoiceGeneration = new Promise((resolve, reject) => {
         report.year = reportYear;
         report.project_name = project.project_name;
         let price = perProjectPrices[project.project_name];
+        if(typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
         _.each(price, (value, key) => {
           if(key == 'discount')
             price[key] = (value*100).toFixed(4);

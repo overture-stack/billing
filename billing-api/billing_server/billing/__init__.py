@@ -27,8 +27,9 @@ from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 from service import projects
-from service.invoicing import invoice_router
+#from service import invoicing
 from copy import deepcopy
+import requests
 
 import calendar
 
@@ -53,7 +54,15 @@ else:
     handler.setLevel(logging.info)
 app.logger.addHandler(handler)
 
-app.register_blueprint(invoice_router, url_prefix='/invoice')
+# defaults
+#INVOICE_API_PREFIX = '/invoice'
+INVOICE_API_PREFIX = ''
+EMAIL_NEW_INVOICE_PATH = INVOICE_API_PREFIX + '/emailNewInvoice'
+GET_ALL_INVOICES = INVOICE_API_PREFIX + '/getAllInvoices'
+EMAIL_INVOICE_PATH = INVOICE_API_PREFIX + '/emailInvoice'
+
+
+#app.register_blueprint(invoice_router, url_prefix='/invoice')
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:
@@ -115,13 +124,35 @@ def login():
 @app.route('/projects', methods=['GET'])
 @authenticate
 def get_projects(client, user_id, database):
-    return projects.get_tenants(user_id, database, sessions.list_projects(client))
+    role_map = projects.get_tenants(user_id, database, sessions.list_projects(client))
+    update_role_map_for_nonpi(role_map,user_id,database)
+    return role_map
+
+
+def update_role_map_for_nonpi(role_map, user_id, database):
+    if is_admin_user(user_id, database):
+        for elem in role_map:
+            elem['roles'].append(app.config['INVOICE_ROLE'])
+        return
+
+
+def is_admin_user(user_id, database):
+    #is user admin
+    user_email = projects.get_user_email(user_id, database)
+    # add invoice role if user is admin
+    if database.get_username(user_id) in app.config['OICR_ADMINS'] or user_email in app.config['OICR_ADMINS']:
+        return True
+    else: return False
 
 
 @app.route('/billingprojects', methods=['GET'])
 @authenticate
 def get_billing_projects(client, user_id, database):
-    return projects.get_billing_info(user_id, app.config['INVOICE_ROLE'], database)
+    # only admin can use this feature
+    if is_admin_user(user_id, database):
+        return projects.get_billing_info(user_id, app.config['INVOICE_ROLE'],database, True)
+    else:
+        abort(403)
 
 
 @app.route('/price', methods=['GET'])
@@ -275,6 +306,59 @@ def generate_report_data(client, user_id, database):
             'toDate': original_end_date.isoformat(' '),
             'bucket': bucket_size,
             'entries': report}
+
+
+@app.route('/emailNewInvoice', methods=['POST'])
+@authenticate
+def email_new_invoice(client, user_id, database):
+    url = app.config['INVOICE_API']  + EMAIL_NEW_INVOICE_PATH
+    user_name = database.get_username(user_id)
+    user_email = projects.get_user_email(user_id, database)
+    # only admin can use this feature
+    if is_admin_user(user_id, database):
+        retval = requests.post(url, json=request.json,
+                               params=json.dumps({"user":{'username':user_name,"email":user_email}}))
+        if retval.content.find("error") >= 0:
+            raise StandardError(retval.content)
+        return retval.content
+    else:
+        abort(403)
+
+
+@app.route('/getAllInvoices', methods=['GET'])
+@authenticate
+def get_all_invoices(client, user_id, database):
+    url = app.config['INVOICE_API']  + GET_ALL_INVOICES
+    user_info = dict()
+    # check projects where user has invoice role
+    user_info["email"] = projects.get_user_email(user_id, database)
+    user_info["username"] = database.get_username(user_id)
+    # get user's role map
+    role_map = database.get_user_roles(user_id)
+    role_flatmap = [role for role_list in role_map.values() for role in role_list]
+
+    # abort if user is neither admin nor user has invoice role on any project
+    if (not is_admin_user(user_id, database)) and (app.config['INVOICE_ROLE'] not in role_flatmap):
+            abort(403)
+            return
+
+    retval = requests.post(url, json={"user":user_info}, params=request.args)
+    if retval.content.find("error") >= 0:
+        raise StandardError(retval.content)
+    return json.loads(retval.content)
+
+
+@app.route('/email', methods=['GET'])
+@authenticate
+def email_me_invoice(client, user_id, database):
+    url = app.config['INVOICE_API']  + EMAIL_INVOICE_PATH
+    user_email = projects.get_user_email(user_id, database)
+    retval = requests.get(url,
+                          params={'email':user_email,
+                                  'invoice':request.args.get('invoice')})
+    if retval.content.find("error") >= 0:
+        raise StandardError(retval.content)
+    return retval.content
 
 
 def divide_time_range(start_date, end_date, bucket_size):
@@ -438,3 +522,5 @@ def parse_period_end(period_end_str):
     period_end = period_end_str.split("-")
     month_range = calendar.monthrange(int(period_end[0]), int(period_end[1]))
     return parse(period_end_str+"-"+str(month_range[1]))
+
+

@@ -47,6 +47,17 @@ routes();
 app.listen(port);
 console.log("Invoice Service started");
 
+function isAdminUser(user:any, adminUsers:Array<any>): boolean {
+    let userEmail = (user.email == null || user.email == "") ?  "":user.email.toLowerCase();
+    let username = (user.username == null || user.username == "") ?  "":user.username.toLowerCase();
+    let lowerCaseList = [];
+    adminUsers.forEach((item) => {
+            let output = (item == null || item == "") ?  "":item.toLowerCase();
+            lowerCaseList.push(output);}
+        );
+    return (lowerCaseList.indexOf(userEmail) >= 0 || lowerCaseList.indexOf(username) >= 0);
+
+};
 
 /**
  * Configure routes
@@ -60,6 +71,18 @@ function routes() {
     //create routes
     // create and email new invoice
     router.post("/emailNewInvoice", function(req, res){
+        // only admin user can email a new invoice
+        if(req.query.hasOwnProperty("username")){
+            let username=req.query.username;
+            if(username != config['adminUser']) {
+                res.status(500).send({error: 'This user is not authorized to create a new invoice'});
+                return;
+            }
+        } else {
+            res.status(500).send({ error: 'Only admin user can create a new invoice' });
+            return;
+        }
+
         let email = req.body['email'];
         let report = req.body['report'];
         let price = req.body['price'];
@@ -73,7 +96,7 @@ function routes() {
     });
 
     // get list of all invoices
-    router.get("/getAllInvoices", function(req, res){
+    router.post("/getAllInvoices", function(req, res){
         let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
         if(req.query.hasOwnProperty("date")){
             // get all invoices generated on a specific date
@@ -84,19 +107,42 @@ function routes() {
                 res.status(500).send({ error: 'Invalid date format. Please use YYYY-MM-DD' });
                 return;
             }
-            fbService.getInvoicesSummaryData(queryDate).then(invoicesData => {
+            fbService.getInvoicesSummaryData(queryDate, req.body['user'],
+                isAdminUser(req.body['user'],config['oicr_admins'])).then(invoicesData => {
                 res.json(invoicesData);
             }).catch(err => {
                 res.status(500).send(err);
             });
         } else {
             // get all invoices generated till date
-            fbService.getInvoicesSummaryData(null).then(invoicesData => {
+            fbService.getInvoicesSummaryData(null, req.body['user'],
+                isAdminUser(req.body['user'],config['oicr_admins'])).then(invoicesData => {
                 res.json(invoicesData);
             }).catch(err => {
                 res.status(500).send(err);
             });
         }
+    });
+
+    // get list of all invoices
+    router.get("/emailInvoice", function(req, res){
+
+        let email = req.query.email;
+        let invoiceNumber = req.query.invoice;
+        if(email == null || email == ''){
+            res.status(500).send({error: 'Invalid user email.'});
+            return;
+        }
+        if(invoiceNumber == null || invoiceNumber == ''){
+            res.status(500).send({error: 'Invalid Invoice number'});
+            return;
+        }
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
+        fbService.emailExistingInvoice(email,invoiceNumber).then({} = () => {
+            res.send("Invoice emailed.");
+        }).catch(err => {
+            res.status(500).send(err);
+        });
     });
 
 

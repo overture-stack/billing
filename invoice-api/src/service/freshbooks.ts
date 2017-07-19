@@ -119,18 +119,19 @@ class FreshbooksService {
         4. Send Invoice using Freshbooks API
      */
     public async sendInvoice(customerEmail: any, report: any, price: any) {
-        await this.authenticate()
+        await this.authenticate();
         console.log("Sending request to FreshBooks for: Customer ID");
         let customerID = await this.getCustomerID(customerEmail);
         console.log("Sending request to FreshBooks for: Create new Invoice");
         let newInvoiceID = await this.createInvoice(report,price,customerID);
         console.log("Sending request to FreshBooks for: Send Invoice:" + newInvoiceID);
-        this.emailInvoice(newInvoiceID,report,customerEmail);
+        let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmail);
+        this.emailInvoice(newInvoiceID,emailInfoJson);
 
     };
 
     // assumes date is : null or in 'YYYY-MM-DD' format
-    public async getInvoicesSummaryData(date:string) {
+    public async getInvoicesSummaryData(date:string, user:any, admin:boolean) {
         await this.authenticate();
         let minDate = null;
         let maxDate = null;
@@ -138,10 +139,18 @@ class FreshbooksService {
         maxDate = new Date();
         let pageCount = 1; let pageIdx = 1;
         let allInvoicesForThisPeriod = [];
-        console.log('Sending request to Freshbooks: For getting all invoices');
+        let allCustomerIDs = null;
+        if(!admin){
+            console.log('Sending request to Freshbooks: For getting Customers');
+            let customersInfo = await this.getAllCustomers(user.email);
+            allCustomerIDs = this.getCustomerIDs(customersInfo);
+            if(allCustomerIDs.length == 0) throw Error("error: No account found for this user account: "+ user.email)
+        }
+
         // currently we have decided to pull all the invoices and ship it to front end in one go
         while(pageCount  >= pageIdx){
-            let invoiceResults = await this.getInvoicesListPaged(pageIdx,minDate, maxDate.toISOString().slice(0,10));
+            let invoiceResults =
+                await this.getInvoicesListPaged(pageIdx,minDate, maxDate.toISOString().slice(0,10), allCustomerIDs);
             allInvoicesForThisPeriod = allInvoicesForThisPeriod.concat(invoiceResults.invoices);
             //update page count as the first result tells total count of pages
             if(pageCount == 1) pageCount = invoiceResults.pages;
@@ -165,6 +174,86 @@ class FreshbooksService {
         return flattenedInovicesJson;
     };
 
+    private async getAllCustomers(userEmail:string): Promise<any>{
+        userEmail = (userEmail == null || userEmail == "") ?  "":userEmail;
+        let pageCount = 1; let pageIdx = 1;
+        let allCustomersData = [];
+        while(pageCount  >= pageIdx){
+            let pagedCustomerResults =
+                await this.getAllCustomersPaged(pageIdx, userEmail);
+            allCustomersData = allCustomersData.concat(pagedCustomerResults.clients);
+            //update page count as the first result tells total count of pages
+            if(pageCount == 1) pageCount = pagedCustomerResults.pages;
+            pageIdx++;
+        }// while loop ends here
+       return allCustomersData;
+    }
+
+    private async getAllCustomersPaged(pageNumber: number, email:string): Promise<any> {
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/users/clients?include[]=recent_contacts&search[email_like]=${ email }&page=${ pageNumber }&per_page=100`,
+            {headers: this.headers, httpsAgent: this.agent })
+            .then( response => {
+                console.log(response.data);
+                return response.data.response.result;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
+            });
+    }
+    private getCustomerIDs(customersInfo:any): any{
+        let output = [];
+        customersInfo.forEach((customerInfo) => {output.push(customerInfo.id)}, customersInfo);
+        return output;
+    }
+
+    public async emailExistingInvoice(customerEmail:string, invoiceNumber: string): Promise<any> {
+        await this.authenticate();
+        let invoiceInfo = await this.findInvoice(invoiceNumber);
+        let customerInfo = await this.getCustomerInfo(invoiceInfo.customerid);
+        // email if customerEmail exists in one of the contacts
+        if(!this.validEmailForCustomer(customerEmail,customerInfo))
+            throw Error("error: User account: "+ customerEmail +" does not have access to this Invoice: "+invoiceNumber );
+        let emailInfoJson = this.getExistingInvoiceEmailInfo(customerEmail,invoiceNumber);
+        return this.emailInvoice(invoiceInfo.id,emailInfoJson);
+    }
+
+    private validEmailForCustomer(email:string, customerInfo:any): boolean{
+        let lowerCasedEmail = email.toLowerCase();
+        if(customerInfo.email != ''){
+            if(customerInfo.email.toLowerCase() == lowerCasedEmail) return true;
+        }
+        // seach for email in secondary contacts
+        let contact:any;
+        for(let contactIdx in customerInfo.recent_contacts){
+            contact = customerInfo.recent_contacts[contactIdx];
+            if(contact.email != ''){
+                if(contact.email.toLowerCase() == lowerCasedEmail) return true;
+            }
+        } // contacts iteration ends here
+        return false;
+    }
+
+    private async findInvoice(invoiceNumber:string): Promise<any> {
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?search[invoice_number]=${invoiceNumber}`,
+            {headers: this.headers, httpsAgent: this.agent })
+            .then( response => {
+                console.log(response.data);
+                return response.data.response.result.invoices[0];
+            }).catch(err => {
+                throw new Error(err.response.statusText);
+            })
+    }
+
+    private async getCustomerInfo(customerId:string){
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/users/clients?search[userid]=${customerId}&include[]=recent_contacts`,
+            {headers: this.headers, httpsAgent: this.agent })
+            .then( response => {
+                console.log(response.data);
+                return response.data.response.result.clients[0];
+            }).catch(err => {
+                throw new Error(err.response.statusText);
+            });
+    }
+
     private getLineItemValue(value : string, list:Array<any>) {
         let output = _.filter(list, r => r['name'].indexOf(value) >= 0);
         if(output.length > 0)
@@ -174,7 +263,7 @@ class FreshbooksService {
 
     // uses either minDate or maxDate
     // assumes: minDate is optional; maxDate is always provided
-    private async getInvoicesListPaged(pageNumber: number, minDate: string, maxDate: string) : Promise<any> {
+    private async getInvoicesListPaged(pageNumber: number, minDate: string, maxDate: string, customerIDs:Array<string>) : Promise<any> {
         // form the search string
         // use only one of min or max dates : if min date is provided then use it else use max date
         let searchStr = '';
@@ -182,6 +271,12 @@ class FreshbooksService {
             searchStr = 'search[date_min]='+minDate;
         else
             searchStr = 'search[date_max]='+maxDate;
+        if(customerIDs != null){
+            // form search string for customer ids
+            for(let idx in customerIDs){
+                searchStr += '&search[customerids][]='+customerIDs[idx]
+            }
+        }
         // Freshbooks limits the max number of responses to 100 per page; hence requesting 100
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?${ searchStr }&page=${ pageNumber }&include[]=lines&per_page=100`,
             {headers: this.headers, httpsAgent: this.agent })
@@ -199,7 +294,7 @@ class FreshbooksService {
             this.token =  await this.authenticator.getLatestAccessToken();
             this.headers["Authorization"] = "Bearer " + this.token;
         } else {
-            throw new Error("No authenticator provided.");
+            throw new Error("error: No authenticator provided.");
         }
     };
 
@@ -246,7 +341,7 @@ class FreshbooksService {
             });
     }
 
-    private async emailInvoice(invoiceID:string, report:any, customerEmail:string): Promise<any> {
+    private getNewInvoiceEmailInfo(invoiceID:string, report:any, customerEmail:string){
         let json = {
             "invoice": {
                 "email_subject": 'OICR Collaboratory sent an invoice for project "' + report.project_name+ '"',
@@ -255,6 +350,21 @@ class FreshbooksService {
                 "action_email": true
             }
         };
+        return json;
+    }
+
+    private getExistingInvoiceEmailInfo(customerEmail:string, invoiceNumber:string){
+        let json = {
+            "invoice": {
+                "email_subject": 'OICR Collaboratory sent requested invoice: "' + invoiceNumber+ '"',
+                "email_recipients":[customerEmail],
+                "action_email": true
+            }
+        };
+        return json;
+    }
+
+    private async emailInvoice(invoiceID:string, json:any): Promise<any> {
         return axios.put(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices/${ invoiceID }`,
             json,
             {headers: this.headers, httpsAgent: this.agent })
@@ -265,6 +375,7 @@ class FreshbooksService {
                 throw new Error(err.response.statusText);
             });
     }
+
     private createInvoicePayLoad(report: any, price:any, customerID:number) : Invoice {
 
         // create line items for cpu, volume and image
@@ -304,7 +415,7 @@ class FreshbooksService {
             description: "",
             taxName1: "",
             taxAmount1: null,
-            name: "CPU (Core):",
+            name: "CPU (Core) / Hour:",
             qty: report.cpu,
             taxName2: null,
             taxAmount2: null,
@@ -325,7 +436,7 @@ class FreshbooksService {
             description: "",
             taxName1: "",
             taxAmount1: null,
-            name: "Volume (GB):",
+            name: "Volume (GB) / Hour:",
             qty: report.volume,
             taxName2: null,
             taxAmount2: null,
@@ -346,7 +457,7 @@ class FreshbooksService {
             description: "",
             taxName1: "",
             taxAmount1: null,
-            name: "Image (GB):",
+            name: "Image (GB) / Hour:",
             qty: report.image,
             taxName2: null,
             taxAmount2: null,

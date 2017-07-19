@@ -27,10 +27,9 @@ def get_tenants(user_id, database, project_list):
     return tenants
 
 
-def get_billing_info(user_id, invoice_role, database):
-    role_map = database.get_user_roles(user_id)
-    role_flatmap = [role for role_list in role_map.values() for role in role_list]
-    if invoice_role in role_flatmap:
+def get_billing_info(user_id, invoice_role, database, admin=False):
+    # admin gets access to all projects's billing info
+    if admin:
         return get_billing_map(database)
     else:
         abort(403)
@@ -58,3 +57,11 @@ def get_project_name_map(database):
 def get_project_billing_map(database):
     project_map = database.get_project_billing_map()
     return map(lambda r: {'project_id': r.project_id, 'user_id': r.user_id}, project_map)
+
+def get_user_email(user_id,database):
+    user_email = database.get_user_extras(user_id).get('extra')
+    if user_email is None or user_email == "": return user_email
+    user_email = json.loads(user_email)
+    if "email" in user_email.keys():
+        user_email = user_email["email"]
+    return user_email
