@@ -118,17 +118,46 @@ class FreshbooksService {
         3. Create Freshbooks Invoice using the data received
         4. Send Invoice using Freshbooks API
      */
-    public async sendInvoice(customerEmail: any, report: any, price: any) {
+    public async sendInvoice(customerEmails: any, report: any, price: any, adminUsers:Array<any>, emailRecipients:any) {
         await this.authenticate();
         console.log("Sending request to FreshBooks for: Customer ID");
-        let customerID = await this.getCustomerID(customerEmail);
+        let nonOICREmails = this.stripAdminEmails(customerEmails,adminUsers);
+        let customerID : number;
+        // collab has PI and PI's admin staff listed for each project but only PI is primary contact in Freshbooks
+        // we need to iterate over all project emails to get customer id as only one email will belong to PI
+        for(var idx in nonOICREmails){
+            let output : any;
+            output = await this.getCustomerID(nonOICREmails[idx]);
+            if(output.length != 0) {
+                customerID = output[0].id;
+                break;
+            }
+        }
+        // abort if no customer id could be found
+        if(customerID == null || typeof customerID == 'undefined' ){
+            let flatEmailString = "";
+            customerEmails.forEach((email) => flatEmailString = flatEmailString + email + ",");
+            throw Error("error: Customer account not found:" + flatEmailString);
+        }
         console.log("Sending request to FreshBooks for: Create new Invoice");
         let newInvoiceID = await this.createInvoice(report,price,customerID);
         console.log("Sending request to FreshBooks for: Send Invoice:" + newInvoiceID);
-        let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmail);
+        let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmails,emailRecipients);
         this.emailInvoice(newInvoiceID,emailInfoJson);
 
     };
+
+    private stripAdminEmails(emails:Array<any>, adminEmails:Array<any>): Array<string> {
+        let output = [];
+        // any email that is not an oicr admin is a valid customer email
+        for(var idx in emails){
+            if(adminEmails.indexOf(emails[idx].toLowerCase()) <0){
+                output.push(emails[idx]);
+            }
+        }
+        return output;
+
+    }
 
     // assumes date is : null or in 'YYYY-MM-DD' format
     public async getInvoicesSummaryData(date:string, user:any, admin:boolean) {
@@ -316,12 +345,12 @@ class FreshbooksService {
             });
     };
 
-    private async getCustomerID(email:string) : Promise<number> {
+    private async getCustomerID(email:string) : Promise<any> {
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/users/clients?search[email]=${email}`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
                 console.log(response.data);
-                return response.data.response.result.clients[0].id;
+                return response.data.response.result.clients;
             }).catch(err => {
                 throw new Error(err.response.statusText);
             });
@@ -341,12 +370,12 @@ class FreshbooksService {
             });
     }
 
-    private getNewInvoiceEmailInfo(invoiceID:string, report:any, customerEmail:string){
+    private getNewInvoiceEmailInfo(invoiceID:string, report:any, customerEmails:Array<string>,emailRecipients:any){
         let json = {
             "invoice": {
                 "email_subject": 'OICR Collaboratory sent an invoice for project "' + report.project_name+ '"',
                 "email_body": this.invoiceSummary,
-                "email_recipients":[this.apiConfig.oicr_finance_email, customerEmail],
+                "email_recipients":emailRecipients.oicr_finance_email.concat(customerEmails).concat(emailRecipients.invoice_recipients),
                 "action_email": true
             }
         };

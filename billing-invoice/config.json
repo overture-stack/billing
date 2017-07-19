@@ -18,6 +18,6 @@
     "rejectInsecure": true
   },
   "invoiceConfig": {
-    "api": "http://localhost:5000/invoice"
+    "api": "http://localhost:5000"
   }
 }

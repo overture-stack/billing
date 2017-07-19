@@ -50,15 +50,19 @@ console.log("Invoice Service started");
 function isAdminUser(user:any, adminUsers:Array<any>): boolean {
     let userEmail = (user.email == null || user.email == "") ?  "":user.email.toLowerCase();
     let username = (user.username == null || user.username == "") ?  "":user.username.toLowerCase();
-    let lowerCaseList = [];
-    adminUsers.forEach((item) => {
-            let output = (item == null || item == "") ?  "":item.toLowerCase();
-            lowerCaseList.push(output);}
-        );
+    let lowerCaseList = listLowerCase(adminUsers);
     return (lowerCaseList.indexOf(userEmail) >= 0 || lowerCaseList.indexOf(username) >= 0);
 
 };
 
+function listLowerCase(list: Array<any>){
+    let lowerCaseList = [];
+    list.forEach((item) => {
+        let output = (item == null || item == "") ?  "":item.toLowerCase();
+        lowerCaseList.push(output);}
+    );
+    return lowerCaseList;
+}
 /**
  * Configure routes
  */
@@ -72,9 +76,8 @@ function routes() {
     // create and email new invoice
     router.post("/emailNewInvoice", function(req, res){
         // only admin user can email a new invoice
-        if(req.query.hasOwnProperty("username")){
-            let username=req.query.username;
-            if(username != config['adminUser']) {
+        if(req.body.hasOwnProperty("user")){
+            if(!isAdminUser(req.body['user'],config['oicr_admins'])) {
                 res.status(500).send({error: 'This user is not authorized to create a new invoice'});
                 return;
             }
@@ -83,11 +86,11 @@ function routes() {
             return;
         }
 
-        let email = req.body['email'];
+        let emails = req.body['emails'];
         let report = req.body['report'];
         let price = req.body['price'];
         let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
-        fbService.sendInvoice(email, report, price).then(() => {
+        fbService.sendInvoice(emails, report, price,listLowerCase(config['oicr_admins']), config['emailRecipients']).then(() => {
             res.send("Invoice generated.");
         }).catch(err => {
             res.status(500).send(err);
@@ -135,6 +138,12 @@ function routes() {
         }
         if(invoiceNumber == null || invoiceNumber == ''){
             res.status(500).send({error: 'Invalid Invoice number'});
+            return;
+        }
+        try{
+             Number(invoiceNumber)
+        } catch(ex){
+            res.status(500).send({error: 'Invalid Invoice number.'});
             return;
         }
         let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);

@@ -5,7 +5,9 @@ import axios from 'axios';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as json2csv from 'json2csv';
-
+/*
+* REDUNTANT CODE
+* */
 class InvoiceServiceClient {
 
     /**
@@ -19,9 +21,9 @@ class InvoiceServiceClient {
 
     }
 
-    public async sendInvoice(projectEmail: any, report: any, price: any) {
+    public async sendInvoice(projectEmails: any, report: any, price: any) {
         let invoicePayload = {
-            'email':projectEmail,
+            'emails':projectEmails,
             'report' : report,
             'price' : price
         };
@@ -92,4 +94,4 @@ class InvoiceServiceClient {
 
 }
 
-export { InvoiceServiceClient };
+//export { InvoiceServiceClient };

@@ -2,7 +2,6 @@ import { BillingApi } from './service/billing';
 import { Mailer } from './service/email';
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import {InvoiceServiceClient} from "./service/invoice";
 
 console.log("*** Starting Email Reporting ***")
 
@@ -57,7 +56,9 @@ let billing = new BillingApi(config['billingConfig']);
 let invoiceGeneration = new Promise((resolve, reject) => {
   let projectsPromise = billing.login().then(() => billing.projects());
   projectsPromise.then(results => {
-    let projects = _.filter(results, r => (allProjects || projectList.indexOf(r.project_name) >= 0) && typeof  r.extra.email !== 'undefined');
+    let projects : any;
+    projects = _.filter(results, r => (allProjects || projectList.indexOf(r.project_name) >= 0) && typeof  r.extra.email !== 'undefined');
+    projects = combineProjectUsers(projects);
     let pricePromise = billing.price(reportYear, reportMonth, projects);
     pricePromise.then(perProjectPrices => {
       let totalProjectCount = projects.length;
@@ -75,8 +76,8 @@ let invoiceGeneration = new Promise((resolve, reject) => {
 
         });
         // handle invoice emailing through separate objects as each invoice email can be truly asynch then
-        let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
-        freshbooksServiceClient.sendInvoice(project.extra.email, report, price).then(() => {
+        //let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
+          billing.sendInvoice(project.emails, report, price).then(() => {
           invoicesProcessed++;
           if(invoicesProcessed == totalProjectCount) resolve();
         }).catch(err =>{
@@ -93,8 +94,27 @@ let invoiceGeneration = new Promise((resolve, reject) => {
   });
 });
 
+function combineProjectUsers(projects:Array<any>): Array<any> {
+    let output = {};
+    projects.map(project => {
+        if (output.hasOwnProperty(project.project_id)) {
+            if (project.extra.hasOwnProperty("email"))
+                output[project.project_id].emails.push(project.extra.email);
+        } else {
+            output[project.project_id] = {
+                "project_id": project.project_id,
+                "project_name": project.project_name,
+                "user_id": project.user_id,
+                "emails": project.extra.hasOwnProperty("email") ? [project.extra.email] : []
+            };
+        }
+
+    });// project iteration ends here
+    return _.values(output);
+}
+
 // wait till all invoices are generated and then generate the summary .csv file
 invoiceGeneration.then(() => {
-  let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
-  freshbooksServiceClient.generateInvoicesSummary(month)
+  //let freshbooksServiceClient = new InvoiceServiceClient(config['invoiceConfig']);
+    billing.generateInvoicesSummary(month)
 });
