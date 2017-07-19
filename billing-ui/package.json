@@ -68,6 +68,7 @@
     "react-bootstrap-table": "2.5.5",
     "react-dom": "^15.2.1",
     "react-highcharts": "10.0.0",
+    "react-notification-system": "^0.2.14",
     "react-router": "2.7.0",
     "react-select": "1.0.0-rc.2",
     "react-transition-group-plus": "0.3.3",

@@ -15,8 +15,9 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import NotificationSystem from 'react-notification-system';
+
 import {fetchHeaders} from '~/utils';
 
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
@@ -26,6 +27,8 @@ import './Invoices.scss';
 export default 
 class extends Component {
   state = { invoices: [] }
+
+  notificationSystem = null
 
   getInvoices = async () => {
     const invoices = await this.fetchInvoices();
@@ -47,19 +50,34 @@ class extends Component {
   );
 
   sendEmail = (invoice) => {
-    console.error('In Send Email');
-    console.error(invoice);
-    fetch('/api/email', {
+    this.notificationSystem.addNotification({
+      message: 'Sending Email',
+      level: 'info'
+    });
+    fetch(`/api/email?invoice=${invoice}`, {
       method: 'GET',
       headers: fetchHeaders.get(),
-      params: {
-        invoice
+    }).then((response) => {
+      this.notificationSystem.clearNotifications();
+      if(response.status === 200) {
+        this.notificationSystem.addNotification({
+          message: 'Email Sent!',
+          level: 'success',
+          autoDismiss: 3,
+        });
+      } else {
+        this.notificationSystem.addNotification({
+          message: 'There was a problem sending email.<br/> Please try again.',
+          level: 'error',
+          autoDismiss: 3,
+        });
       }
     });
   }
 
   async componentDidMount() {
     this.getInvoices();
+    this.notificationSystem = this.refs.notificationSystem;
   }
 
   render () {
@@ -132,6 +150,7 @@ class extends Component {
               dataFormat={this.setEmailLink}
             >Email</TableHeaderColumn>
           </BootstrapTable>
+          <NotificationSystem ref="notificationSystem" allowHTML={true}/>
       </div>
     );
   }
