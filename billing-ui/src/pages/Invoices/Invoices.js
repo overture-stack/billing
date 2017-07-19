@@ -17,6 +17,7 @@
 import React, { Component } from 'react';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import NotificationSystem from 'react-notification-system';
+import ReactTooltip from 'react-tooltip';
 
 import {fetchInvoices} from '~/services/invoices'; 
 import {sendEmail} from '~/services/email'; 
@@ -33,7 +34,13 @@ class extends Component {
   notification = null
 
   setEmailLink = (cell, row) => (
-    <span className="glyphicon glyphicon-envelope" onClick={() => sendEmail(row.invoice_number, this.notification)}></span>
+    <span
+      className="glyphicon glyphicon-envelope"
+      onClick={() => sendEmail(row.invoice_number, this.notification)}
+      style={{ cursor:'pointer' }}
+      title="Email me this Invoice"
+      data-tip="Email me this Invoice">
+    </span>
   );
 
   async componentDidMount() {
@@ -46,7 +53,7 @@ class extends Component {
     return (
       <div className={`Invoices`}>
         <div>
-          <h1 className="page-heading">
+          <h1 className="page-heading" data-tip="Invoices">
             Invoices
           </h1>
         </div>
@@ -113,6 +120,7 @@ class extends Component {
             >Email</TableHeaderColumn>
           </BootstrapTable>
           <NotificationSystem ref="notification" allowHTML={true}/>
+          <ReactTooltip />
       </div>
     );
   }

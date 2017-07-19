@@ -63,7 +63,6 @@
     "mobx-react": "3.5.5",
     "moment": "2.14.1",
     "normalize.css": "4.2.0",
-    "rc-tooltip": "3.4.2",
     "react": "^15.2.1",
     "react-bootstrap-table": "2.5.5",
     "react-dom": "^15.2.1",
@@ -71,6 +70,7 @@
     "react-notification-system": "^0.2.14",
     "react-router": "2.7.0",
     "react-select": "1.0.0-rc.2",
+    "react-tooltip": "^3.3.0",
     "react-transition-group-plus": "0.3.3",
     "whatwg-fetch": "1.0.0"
   },
