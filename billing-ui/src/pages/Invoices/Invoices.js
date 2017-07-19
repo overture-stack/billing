@@ -38,8 +38,7 @@ class extends Component {
       className="glyphicon glyphicon-envelope"
       onClick={() => sendEmail(row.invoice_number, this.notification)}
       style={{ cursor:'pointer' }}
-      title="Email me this Invoice"
-      data-tip="Email me this Invoice">
+    >
     </span>
   );
 
@@ -53,7 +52,7 @@ class extends Component {
     return (
       <div className={`Invoices`}>
         <div>
-          <h1 className="page-heading" data-tip="Invoices">
+          <h1 className="page-heading">
             Invoices
           </h1>
         </div>
@@ -117,10 +116,19 @@ class extends Component {
               dataAlign="center"
               dataField="email"
               dataFormat={this.setEmailLink}
-            >Email</TableHeaderColumn>
+            >
+              <span
+                data-tip
+                data-for='email'
+                style={{ borderBottom: '1px dashed red'}}>
+                Email
+              </span>
+            </TableHeaderColumn>
           </BootstrapTable>
           <NotificationSystem ref="notification" allowHTML={true}/>
-          <ReactTooltip />
+          <ReactTooltip id='email' effect='solid'>
+            <span>Email the Invoice</span>
+          </ReactTooltip>
       </div>
     );
   }
