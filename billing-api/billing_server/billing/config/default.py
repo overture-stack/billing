@@ -24,6 +24,9 @@ FLASK_LOG_FILE = './logs/billing.log'
 BILLING_ROLE = 'billing_test'
 #INVOICE_ROLE = 'invoice'
 INVOICE_ROLE = 'invoice_test'
+OICR_ADMIN = 'oicr_admin'
+#OICR Admin user ids or email addresses
+OICR_ADMINS = ['Rahul.Verma@oicr.on.ca', 'Sid.Joshi@oicr.on.ca']
 PRICING_PERIODS = [
     {
         'period_start': '2013-01-01',
