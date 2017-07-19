@@ -18,7 +18,9 @@ import React, { Component } from 'react';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import NotificationSystem from 'react-notification-system';
 
-import {fetchHeaders} from '~/utils';
+import {fetchInvoices} from '~/services/invoices'; 
+import {sendEmail} from '~/services/email'; 
+
 
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 import './Invoices.scss';
@@ -28,56 +30,16 @@ export default
 class extends Component {
   state = { invoices: [] }
 
-  notificationSystem = null
-
-  getInvoices = async () => {
-    const invoices = await this.fetchInvoices();
-    this.setState({ invoices })
-  }
-
-  fetchInvoices = async () => {
-    const response = await fetch('/api/getAllInvoices', {
-      method: 'GET',
-      headers: fetchHeaders.get(),
-    });
-
-    const data = await response.json();
-    return data;
-  }
+  notification = null
 
   setEmailLink = (cell, row) => (
-    <span className="glyphicon glyphicon-envelope" onClick={() => this.sendEmail(row.invoice_number)}></span>
+    <span className="glyphicon glyphicon-envelope" onClick={() => sendEmail(row.invoice_number, this.notification)}></span>
   );
 
-  sendEmail = (invoice) => {
-    this.notificationSystem.addNotification({
-      message: 'Sending Email',
-      level: 'info'
-    });
-    fetch(`/api/email?invoice=${invoice}`, {
-      method: 'GET',
-      headers: fetchHeaders.get(),
-    }).then((response) => {
-      this.notificationSystem.clearNotifications();
-      if(response.status === 200) {
-        this.notificationSystem.addNotification({
-          message: 'Email Sent!',
-          level: 'success',
-          autoDismiss: 3,
-        });
-      } else {
-        this.notificationSystem.addNotification({
-          message: 'There was a problem sending email.<br/> Please try again.',
-          level: 'error',
-          autoDismiss: 3,
-        });
-      }
-    });
-  }
-
   async componentDidMount() {
-    this.getInvoices();
-    this.notificationSystem = this.refs.notificationSystem;
+    const invoices = await fetchInvoices();
+    this.setState({ invoices });
+    this.notification = this.refs.notification;
   }
 
   render () {
@@ -150,7 +112,7 @@ class extends Component {
               dataFormat={this.setEmailLink}
             >Email</TableHeaderColumn>
           </BootstrapTable>
-          <NotificationSystem ref="notificationSystem" allowHTML={true}/>
+          <NotificationSystem ref="notification" allowHTML={true}/>
       </div>
     );
   }
