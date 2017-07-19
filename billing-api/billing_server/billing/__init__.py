@@ -316,8 +316,9 @@ def email_new_invoice(client, user_id, database):
     user_email = projects.get_user_email(user_id, database)
     # only admin can use this feature
     if is_admin_user(user_id, database):
-        retval = requests.post(url, json=request.json,
-                               params=json.dumps({"user":{'username':user_name,"email":user_email}}))
+        request_payload = request.json;
+        request_payload["user"] = {'username': user_name, "email": user_email};
+        retval = requests.post(url, json=request_payload)
         if retval.content.find("error") >= 0:
             raise StandardError(retval.content)
         return retval.content

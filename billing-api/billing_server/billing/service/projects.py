@@ -29,7 +29,14 @@ def get_tenants(user_id, database, project_list):
 
 def get_billing_info(user_id, invoice_role, database, admin=False):
     # admin gets access to all projects's billing info
-    if admin:
+    if not admin:
+        abort(403)
+
+    # TODO: remove this limitation?
+    # admin users should only get access to the projects where they have invoice role
+    role_map = database.get_user_roles(user_id)
+    role_flatmap = [role for role_list in role_map.values() for role in role_list]
+    if invoice_role in role_flatmap:
         return get_billing_map(database)
     else:
         abort(403)
