@@ -20,14 +20,13 @@ from functools import wraps
 
 from dateutil.parser import parse
 from dateutil.relativedelta import *
-from flask import Flask, request, Response, abort,Blueprint
+from flask import Flask, request, Response, abort
 
 from auth import sessions
 from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 from service import projects
-#from service import invoicing
 from copy import deepcopy
 import requests
 
@@ -55,14 +54,11 @@ else:
 app.logger.addHandler(handler)
 
 # defaults
-#INVOICE_API_PREFIX = '/invoice'
 INVOICE_API_PREFIX = ''
 EMAIL_NEW_INVOICE_PATH = INVOICE_API_PREFIX + '/emailNewInvoice'
 GET_ALL_INVOICES = INVOICE_API_PREFIX + '/getAllInvoices'
 EMAIL_INVOICE_PATH = INVOICE_API_PREFIX + '/emailInvoice'
 
-
-#app.register_blueprint(invoice_router, url_prefix='/invoice')
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:
@@ -316,8 +312,8 @@ def email_new_invoice(client, user_id, database):
     user_email = projects.get_user_email(user_id, database)
     # only admin can use this feature
     if is_admin_user(user_id, database):
-        request_payload = request.json;
-        request_payload["user"] = {'username': user_name, "email": user_email};
+        request_payload = request.json
+        request_payload["user"] = {'username': user_name, "email": user_email}
         retval = requests.post(url, json=request_payload)
         if retval.content.find("error") >= 0:
             raise StandardError(retval.content)
@@ -337,7 +333,6 @@ def get_all_invoices(client, user_id, database):
     # get user's role map
     role_map = database.get_user_roles(user_id)
     role_flatmap = [role for role_list in role_map.values() for role in role_list]
-
     # abort if user is neither admin nor user has invoice role on any project
     if (not is_admin_user(user_id, database)) and (app.config['INVOICE_ROLE'] not in role_flatmap):
             abort(403)
@@ -462,6 +457,7 @@ def get_bucket_functions(bucket_size):
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
 
     return same_bucket, next_bucket, start_of_bucket
+
 
 def get_per_project_price(date, projects):
     # get price for all projects as price is independent of projects
