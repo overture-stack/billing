@@ -58,7 +58,7 @@ INVOICE_API_PREFIX = ''
 EMAIL_NEW_INVOICE_PATH = INVOICE_API_PREFIX + '/emailNewInvoice'
 GET_ALL_INVOICES = INVOICE_API_PREFIX + '/getAllInvoices'
 EMAIL_INVOICE_PATH = INVOICE_API_PREFIX + '/emailInvoice'
-
+LAST_INVOICE_PATH = INVOICE_API_PREFIX + '/getLastInvoiceNumber'
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:
@@ -355,6 +355,24 @@ def email_me_invoice(client, user_id, database):
     if retval.content.find("error") >= 0:
         raise StandardError(retval.content)
     return retval.content
+
+
+@app.route('/getLastInvoiceNumber', methods=['GET'])
+@authenticate
+def get_last_invoice_number(client, user_id, database):
+    url = app.config['INVOICE_API']  + LAST_INVOICE_PATH
+    user_name = database.get_username(user_id)
+    user_email = projects.get_user_email(user_id, database)
+    # only admin can use this feature
+    if is_admin_user(user_id, database):
+        request_payload = dict()
+        if(request.json is not None): request_payload = request.json
+        retval = requests.get(url, params={'username':user_name, 'email':user_email})
+        if retval.content.find("error") >= 0:
+            raise StandardError(retval.content)
+        return retval.content
+    else:
+        abort(403)
 
 
 def divide_time_range(start_date, end_date, bucket_size):

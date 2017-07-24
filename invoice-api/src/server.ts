@@ -25,6 +25,8 @@ import * as fs from 'fs';
 import {FreshbooksService} from "./service/freshbooks";
 import {FreshBooksAuth} from "./global/freshbooks-auth";
 import * as cors from 'cors';
+import * as morgan from 'morgan';
+import * as winston from 'winston';
 
 let app: express.Application;
 let config : any;
@@ -36,6 +38,18 @@ app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
+app.use(morgan('combined'));
+
+/*
+ Configure logger
+ */
+const tsFormat = () => ( new Date() ).toLocaleDateString() + '  ' + ( new Date() ).toLocaleTimeString();
+
+let logger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.Console)({'timestamp':tsFormat,colorize: true})
+    ]
+});
 
 let port = process.env.PORT || 4000;
 
@@ -54,7 +68,7 @@ let authFilePath = args[3];
 
 // create freshbooks authentication module instance;
 // this instance will be used for authentication with freshbooks throughout application lifecycle
-freshbooksAuth = new FreshBooksAuth(config['freshbooksConfig'], authFilePath);
+freshbooksAuth = new FreshBooksAuth(config['freshbooksConfig'], authFilePath, logger);
 
 // make authenticator available globally
 app.set('settings', {authenticator: freshbooksAuth});
@@ -62,7 +76,7 @@ app.set('settings', {authenticator: freshbooksAuth});
 //configure routes
 routes();
 app.listen(port);
-console.log("Invoice Service started");
+logger.info("Invoice Service started");
 
 function isAdminUser(user:any, adminUsers:Array<any>): boolean {
     let userEmail = (user.email == null || user.email == "") ?  "":user.email.toLowerCase();
@@ -106,8 +120,9 @@ function routes() {
         let emails = req.body['emails'];
         let report = req.body['report'];
         let price = req.body['price'];
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
-        fbService.sendInvoice(emails, report, price,listLowerCase(config['oicr_admins']), config['emailRecipients']).then(() => {
+        let invoiceNumber = req.body['invoiceNumber'];
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
+        fbService.sendInvoice(emails, report, price,invoiceNumber,listLowerCase(config['oicr_admins']), config['emailRecipients']).then(() => {
             res.send("Invoice generated.");
         }).catch(err => {
             res.status(500).send(err);
@@ -117,7 +132,7 @@ function routes() {
 
     // get list of all invoices
     router.post("/getAllInvoices", function(req, res){
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
         if(req.query.hasOwnProperty("date")){
             // get all invoices generated on a specific date
             let queryDate = req.query.date;
@@ -144,7 +159,7 @@ function routes() {
         }
     });
 
-    // get list of all invoices
+    // email an invoice to logged in user
     router.get("/emailInvoice", function(req, res){
 
         let email = req.query.email;
@@ -163,9 +178,30 @@ function routes() {
             res.status(500).send({error: 'Invalid Invoice number.'});
             return;
         }
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator);
-        fbService.emailExistingInvoice(email,invoiceNumber).then({} = () => {
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
+        fbService.emailExistingInvoice(email,invoiceNumber).then(() => {
             res.send("Invoice emailed.");
+        }).catch(err => {
+            res.status(500).send(err);
+        });
+    });
+
+    // get inovice number of last created invoice
+    router.get("/getLastInvoiceNumber", function(req, res){
+        // only admin user can lookup all invoices details
+        if(req.query.hasOwnProperty("username") || req.query.hasOwnProperty("email")){
+            if(!isAdminUser({"username": req.query['username'], "email":req.query['email']},config['oicr_admins'])) {
+                res.status(500).send({error: 'This user is not authorized to perform this function'});
+                return;
+            }
+        } else {
+            res.status(500).send({ error: 'Only admin user can lookup last invoice details' });
+            return;
+        }
+
+        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
+        fbService.getLastInvoiceNumber().then((invoiceNumber) => {
+            res.send(invoiceNumber);
         }).catch(err => {
             res.status(500).send(err);
         });

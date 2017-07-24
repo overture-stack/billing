@@ -39,21 +39,25 @@ class FreshBooksAuth {
     private accessToken: string;
     private refreshRequired = false;
     private tokenRefresh : Promise<any>;
+    private logger:any;
 
-    constructor(config: FreshbooksConfig, authFilePath:string) {
-        this.freshbooksService = new FreshbooksService(config,null);
+    constructor(config: FreshbooksConfig, authFilePath:string, logger:any) {
+        this.freshbooksService = new FreshbooksService(config,null,logger);
         if(authFilePath == null) throw new Error("No Authentication file specified.");
         //check if read/write access is available on the file
         this.checkFilePermissions(authFilePath);
         //read auth file
         this.readAuthFile(authFilePath);
         this.authFilePath = authFilePath;
+        logger != null? this.logger = logger : this.logger = console;
+
     }
 
     public async getLatestAccessToken(): Promise<any> {
         // check if it is time to refresh the tokens
         let currentTime = (new Date()).getTime();
         if( ((currentTime - this.lastUpdatedAt)/1000) >= REFRESH_INTERVAL) {
+            this.logger.info("Getting Freshbooks access token..")
             // if there is a need to refresh and refresh flag is already true; it means a refresh is already in progress
             if(this.refreshRequired) await this.tokenRefresh;
             else{
@@ -136,6 +140,7 @@ class FreshBooksAuth {
         accessToken:<value>
     */
     private saveTokenInfoAsync(authFilePath:string) {
+        let that = this;
         //create file data
         let tokenInfo = "lastUpdatedAt:";
         tokenInfo += this.lastUpdatedAt + NEWLINE_CHAR;
@@ -143,7 +148,7 @@ class FreshBooksAuth {
         tokenInfo += "accessToken:"+this.accessToken;
         fs.writeFile(authFilePath, tokenInfo, function(err) {
             if (err) throw err;
-            console.log(authFilePath + ' saved.');
+            that.logger.info(authFilePath + ' saved.');
         });
     }
 

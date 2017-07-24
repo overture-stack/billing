@@ -37,13 +37,19 @@ interface EmailConfig {
   fromAddress: string;
   subject: string;
   replyTo: string;
+  text: string;
 
 }
 
+interface  EmailRecipients {
+  "summaryRecipients": Array<string>
+
+}
 interface MailerConfig {
   
   smtpConfig: SMTPConfig;
   emailConfig: EmailConfig;
+  emailRecipients:EmailRecipients
 
 }
 
@@ -54,19 +60,23 @@ class Mailer {
    */
   private config: MailerConfig;
   private emailPath: string;
+  private logger:any;
 
   /**
    * State
    */
   private transport: nodemailer.Transporter;
 
-  constructor(config: MailerConfig, emailPath: string) {
+  constructor(config: MailerConfig, emailPath: string, logger:any) {
     this.config = config;
     this.emailPath = emailPath;
     this.transport = nodemailer.createTransport(this.config.smtpConfig);
+    logger != null? this.logger = logger : this.logger = console;
+
   }
 
   public sendEmail(email: string, report: any, price: any) {
+    let that = this;
     let emailTemplate = fs.readFileSync(this.emailPath).toString();
     let html = handlebars.compile(emailTemplate)(this.finishReport(report, price));
     let message = {
@@ -82,7 +92,31 @@ class Mailer {
     };
     this.transport.sendMail(message, function(err) {
       if(err) {
-        console.log(err);
+        that.logger.error(err);
+      }
+    });
+  }
+
+  public sendSummaryCSVEmail(summaryCSVFilePath:string, month:string, year: number): Promise<any> {
+    let that = this;
+    let message = {
+      from: this.config.emailConfig.fromAddress,
+      replyTo: this.config.emailConfig.replyTo,
+      to: this.config.emailRecipients.summaryRecipients,
+      subject: `${this.config.emailConfig.subject} ${month} ${year}`,
+      headers: {
+        'Reply-To': this.config.emailConfig.replyTo
+      },
+      text: this.config.emailConfig.text,
+      attachments: [
+        {
+          // filename and content type is derived from path
+          path: summaryCSVFilePath
+        }]
+    };
+    return this.transport.sendMail(message, function(err) {
+      if(err) {
+        that.logger.error(err);
       }
     });
   }

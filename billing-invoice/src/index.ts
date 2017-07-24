@@ -21,24 +21,38 @@ import { BillingApi } from './service/billing';
 import { Mailer } from './service/email';
 import * as fs from 'fs';
 import * as _ from 'lodash';
+import * as winston from 'winston';
 
-console.log("*** Starting Email Reporting ***")
+
+/*
+Configure logger
+ */
+const tsFormat = () => ( new Date() ).toLocaleDateString() + '  ' + ( new Date() ).toLocaleTimeString();
+
+let logger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.Console)({'timestamp':tsFormat,colorize: true})
+    ]
+});
+
+logger.info("*** Starting Invoice Reporting ***");
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
+
+const EMAIL_MODE = "email";
 
 /**
  * Argument Parsing for Config Path
  */
 let args = process.argv;
 if (args.length < 3) {
-  console.log('Missing arguments');
+  logger.error('Missing arguments');
   process.exit(1);
 }
 let configPath = args[2];
 let config = JSON.parse(fs.readFileSync(configPath).toString());
-//let emailPath = args[3];
 
 
 /**
@@ -67,50 +81,98 @@ if(args.length === 5) {
   }
 }
 
+// default mode is to generate a csv
+let mode = config['mode'] || 'csv';
+
+logger.info("Reporting mode: %s",mode);
+logger.info("Reporting for the month of: %s", month + " " + reportYear);
+
+// used only if mode is csv
+let aggregatedInvoices = [];
+
 /**
  * Generate reports from billing api and email them to billing users
  */
-let billing = new BillingApi(config['billingConfig']);
+let billing = new BillingApi(config['billingConfig'], logger);
 // generate invoices for each project
 let invoiceGeneration = new Promise((resolve, reject) => {
   let projectsPromise = billing.login().then(() => billing.projects());
   projectsPromise.then(results => {
     let projects : any;
     projects = _.filter(results, r => (allProjects || projectList.indexOf(r.project_name) >= 0) && typeof  r.extra.email !== 'undefined');
-    projects = combineProjectUsers(projects);
-    let pricePromise = billing.price(reportYear, reportMonth, projects);
-    pricePromise.then(perProjectPrices => {
-      let totalProjectCount = projects.length;
-      let invoicesProcessed = 0;
-      projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
-        //console.log(`Sending email to ${project.extra.email} for project ${project.project_name}`);
-        report.month = month;
-        report.year = reportYear;
-        report.project_name = project.project_name;
-        let price = perProjectPrices[project.project_name];
-        if(typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
-        _.each(price, (value, key) => {
-          if(key == 'discount')
-            price[key] = (value*100).toFixed(4);
-
+    logger.info("Target list of projects:%j", projects);
+    // get last invoice number
+    billing.getLastInvoiceNumber().then((lastInvoiceNumber) => {
+        if(lastInvoiceNumber.indexOf("error") >=0) throw Error(lastInvoiceNumber);
+        projects = combineProjectUsers(projects);
+        setInvoiceNumbersForProject(projects, lastInvoiceNumber);
+        logger.info("Invoice number of last generated invoice:%s", lastInvoiceNumber);
+        let pricePromise = billing.price(reportYear, reportMonth, projects);
+        pricePromise.then(perProjectPrices => {
+          let totalProjectCount = projects.length;
+          let invoicesProcessed = 0;
+          logger.info("Retrieved price information for each project");
+          projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
+            logger.info(`Retrieved data for project ${project.project_name}`);
+            report.month = month;
+            report.year = reportYear;
+            report.project_name = project.project_name;
+            let price = perProjectPrices[project.project_name];
+            if(typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
+            _.each(price, (value, key) => {
+              if(key == 'discount')
+                price[key] = (value*100).toFixed(4);
+            });
+              if(mode != EMAIL_MODE){
+                  logger.info(`Generating Invoice data for invoice: ${ project.invoiceNumber } for project: ${ project.project_name }`);
+                  generateInvoiceDataJSON(project.emails,project.project_name, project.invoiceNumber,report, price, aggregatedInvoices);
+                  invoicesProcessed++;
+                  if(invoicesProcessed == totalProjectCount) resolve();
+              } else {
+                  logger.info(`Sending Invoice: ${ project.invoiceNumber } for project: ${ project.project_name }`);
+                  billing.sendInvoice(project.emails, report, price, project.invoiceNumber).then(() => {
+                      invoicesProcessed++;
+                      if (invoicesProcessed == totalProjectCount) resolve();
+                  }).catch(err => {
+                      logger.error(`Error while processing Inovice for project: ${project.project_name}`, err);
+                      // we increment the counter regardless of an error; this makes sure that promise is always resolved
+                      // and summary generation happens
+                      invoicesProcessed++;
+                      if (invoicesProcessed == totalProjectCount) resolve();
+                  });
+              }
+          }).catch(err =>{
+            logger.error("Error while processing Inovice:", err);
+          }));
         });
-          billing.sendInvoice(project.emails, report, price).then(() => {
-          invoicesProcessed++;
-          if(invoicesProcessed == totalProjectCount) resolve();
-        }).catch(err =>{
-          console.log("Error while processing Inovice:", err);
-          // we increment the counter regardless of an error; this makes sure that promise is always resolved
-          // and summary generation happens
-          invoicesProcessed++;
-          if(invoicesProcessed == totalProjectCount) resolve();
-        });
-      }).catch(err =>{
-        console.log("Error while processing Inovice:", err);
-      }));
-    });
+     });
   });
 });
 
+// wait till all invoices are generated and then generate the summary .csv file
+invoiceGeneration.then(() => {
+
+    if(mode != EMAIL_MODE) {
+        logger.info("CSV Mode. Generating Summary CSV file...");
+        generatePreInvoiceSummaryCSV(aggregatedInvoices).then(() =>logger.info("Finished Processing Invoices."));
+    } else {
+        logger.info("Email Mode. Generating Summary CSV file that will be emailed...");
+        billing.generateInvoicesSummary(month).then(() => {
+            let mailer = new Mailer({
+                emailConfig: config['emailConfig'],
+                smtpConfig: config['smtpConfig'],
+                emailRecipients: config['emailRecipients']
+            }, null, logger);
+            logger.info("Emailing summary csv file...");
+            mailer.sendSummaryCSVEmail(month + ".csv", month, reportYear);
+            logger.info("Finished Processing Invoices.");
+        })
+    }
+});
+
+/*
+    Helper functions
+ */
 function combineProjectUsers(projects:Array<any>): Array<any> {
     let output = {};
     projects.map(project => {
@@ -130,7 +192,105 @@ function combineProjectUsers(projects:Array<any>): Array<any> {
     return _.values(output);
 }
 
-// wait till all invoices are generated and then generate the summary .csv file
-invoiceGeneration.then(() => {
-    billing.generateInvoicesSummary(month)
-});
+function setInvoiceNumbersForProject(projects:any, lastInvoiceNumber:string){
+    let increment = 1;
+    let invoiceNumberPrefix = config['invoiceNumberPrefix'];
+    lastInvoiceNumber = lastInvoiceNumber.replace(invoiceNumberPrefix,"");
+    let lastSequence = Number(lastInvoiceNumber);
+    let leadingZeros = lastInvoiceNumber.replace(lastSequence + "","");
+    projects.map((item) => {
+        let projectSequence = lastSequence + increment;
+        increment++;
+        item["invoiceNumber"] = invoiceNumberPrefix +  leadingZeros + projectSequence;
+    });
+}
+
+function generateInvoiceDataJSON(projectEmails:Array<string>, projectName:string, invoiceNumber:string, report:any, price:any, invoicesAggregator:Array<any>){
+    let creationDate = new Date();
+    let creationDateText = creationDate.toISOString().slice(0,10);
+    let projectEmail = "";
+    projectEmails.map((item) => projectEmail = projectEmail + item + ",");
+    // generate invoice data
+    let invoiceData = {
+        'pi_email': projectEmail.substring(0,projectEmail.lastIndexOf(",")),
+        'project_name':projectName,
+        'invoice_number':invoiceNumber,
+        'date' : creationDateText,
+        'cpu_cost' : report.cpuCost,
+        'cpu_qty' : report.cpu,
+        'cpu_unit_cost' : price.cpuPrice,
+        'image_cost' : report.imageCost,
+        'image_qty' : report.image,
+        'image_unit_cost' : price.imagePrice,
+        'volume_cost' : report.volumeCost,
+        'volume_qty' : report.volume,
+        'volume_unit_cost' : price.volumePrice,
+        'discount' : price.discount
+    };
+    invoicesAggregator.push(invoiceData);
+
+}
+
+function generatePreInvoiceSummaryCSV(invoicesData:Array<any>): Promise<any>{
+    let fields = [
+        {
+            label: 'Project Name',
+            value: 'project_name'
+        },
+        {
+            label: 'Email',
+            value: 'pi_email'
+        },
+        {
+            label: 'Target Invoice Number',
+            value: 'invoice_number'
+        },
+        {
+            label: 'Date',
+            value: 'date'
+        },
+        {
+            label: 'CPU Cost',
+            value: 'cpu_cost'
+        },
+        {
+            label: 'CPU Qty',
+            value: 'cpu_qty'
+        },
+        {
+            label: 'CPU Unit Cost',
+            value: 'cpu_unit_cost'
+        },
+        {
+            label: 'Image Cost',
+            value: 'image_cost'
+        },
+        {
+            label: 'Image Qty',
+            value: 'image_qty'
+        },
+        {
+            label: 'Image Unit Cost',
+            value: 'image_unit_cost'
+        },
+        {
+            label: 'Volume Cost',
+            value: 'volume_cost'
+        },
+        {
+            label: 'Volume Qty',
+            value: 'volume_qty'
+        },
+        {
+            label: 'Volume Unit Cost',
+            value: 'volume_unit_cost'
+        },
+        {
+            label: 'Discount',
+            value: 'discount'
+        },
+
+    ];
+    return billing.writeCSVDataToFile(invoicesData,fields, config['outputDir'] + 'InvoicesSummary.csv');
+
+}

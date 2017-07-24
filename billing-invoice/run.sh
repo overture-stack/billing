@@ -10,4 +10,4 @@ if [ -z "$PROJECTS" ]; then
   PROJECTS="ALL"
 fi
 
-node /srv/billing-invoice/build/index.js /srv/billing-invoice/config.json /srv/billing-invoice/collab-billing.html $BILL_PERIOD $PROJECTS
+node /srv/billing-invoice/build/index.js /srv/billing-invoice/config.json $BILL_PERIOD $PROJECTS
