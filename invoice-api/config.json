@@ -17,7 +17,11 @@
     "password": "test",
     "rejectInsecure": true
   },
-  "invoiceConfig": {
-    "api": "http://localhost:5000"
+  "emailRecipients" : {
+    "oicr_finance_email": [],
+    "invoice_recipients" : [],
+    "summary_recipients" : []
   }
+  
+
 }

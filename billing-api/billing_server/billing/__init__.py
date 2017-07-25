@@ -27,17 +27,24 @@ from config import default
 from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 from service import projects
+from copy import deepcopy
+import requests
+
+import calendar
 
 import logging
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
+
+
 app.config.from_object(default)
 
 app.secret_key = app.config['SECRET_KEY']
 
 app.valid_bucket_sizes = app.config['VALID_BUCKET_SIZES']
 app.pricing_periods = app.config['PRICING_PERIODS']
+app.discounts = app.config['DISCOUNTS']
 
 handler = RotatingFileHandler(app.config['FLASK_LOG_FILE'], maxBytes=100000, backupCount=3)
 if app.config['DEBUG']:
@@ -45,6 +52,13 @@ if app.config['DEBUG']:
 else:
     handler.setLevel(logging.info)
 app.logger.addHandler(handler)
+
+# defaults
+INVOICE_API_PREFIX = ''
+EMAIL_NEW_INVOICE_PATH = INVOICE_API_PREFIX + '/emailNewInvoice'
+GET_ALL_INVOICES = INVOICE_API_PREFIX + '/getAllInvoices'
+EMAIL_INVOICE_PATH = INVOICE_API_PREFIX + '/emailInvoice'
+LAST_INVOICE_PATH = INVOICE_API_PREFIX + '/getLastInvoiceNumber'
 
 # Init pricing periods from strings to datetime
 for period in app.pricing_periods:
@@ -106,19 +120,45 @@ def login():
 @app.route('/projects', methods=['GET'])
 @authenticate
 def get_projects(client, user_id, database):
-    return projects.get_tenants(user_id, database, sessions.list_projects(client))
+    role_map = projects.get_tenants(user_id, database, sessions.list_projects(client))
+    update_role_map_for_nonpi(role_map,user_id,database)
+    return role_map
+
+
+def update_role_map_for_nonpi(role_map, user_id, database):
+    if is_admin_user(user_id, database):
+        for elem in role_map:
+            elem['roles'].append(app.config['INVOICE_ROLE'])
+        return
+
+
+def is_admin_user(user_id, database):
+    #is user admin
+    user_email = projects.get_user_email(user_id, database)
+    # add invoice role if user is admin
+    if database.get_username(user_id) in app.config['OICR_ADMINS'] or user_email in app.config['OICR_ADMINS']:
+        return True
+    else: return False
 
 
 @app.route('/billingprojects', methods=['GET'])
 @authenticate
 def get_billing_projects(client, user_id, database):
-    return projects.get_billing_info(user_id, app.config['INVOICE_ROLE'], database)
+    # only admin can use this feature
+    if is_admin_user(user_id, database):
+        return projects.get_billing_info(user_id, app.config['INVOICE_ROLE'],database, True)
+    else:
+        abort(403)
 
 
 @app.route('/price', methods=['GET'])
 def get_price():
     date = parse(request.args.get('date'), ignoretz=True)
-    return get_price_period(date)
+    if request.args.get('projects') is not None:
+        projects = request.args.get('projects').split(",")
+        return get_per_project_price(date, projects)
+    else:
+        return get_price_period(date)
 
 
 @app.route('/reports', methods=['GET'])
@@ -264,6 +304,77 @@ def generate_report_data(client, user_id, database):
             'entries': report}
 
 
+@app.route('/emailNewInvoice', methods=['POST'])
+@authenticate
+def email_new_invoice(client, user_id, database):
+    url = app.config['INVOICE_API']  + EMAIL_NEW_INVOICE_PATH
+    user_name = database.get_username(user_id)
+    user_email = projects.get_user_email(user_id, database)
+    # only admin can use this feature
+    if is_admin_user(user_id, database):
+        request_payload = request.json
+        request_payload["user"] = {'username': user_name, "email": user_email}
+        retval = requests.post(url, json=request_payload)
+        if retval.content.find("error") >= 0:
+            raise StandardError(retval.content)
+        return retval.content
+    else:
+        abort(403)
+
+
+@app.route('/getAllInvoices', methods=['GET'])
+@authenticate
+def get_all_invoices(client, user_id, database):
+    url = app.config['INVOICE_API']  + GET_ALL_INVOICES
+    user_info = dict()
+    # check projects where user has invoice role
+    user_info["email"] = projects.get_user_email(user_id, database)
+    user_info["username"] = database.get_username(user_id)
+    # get user's role map
+    role_map = database.get_user_roles(user_id)
+    role_flatmap = [role for role_list in role_map.values() for role in role_list]
+    # abort if user is neither admin nor user has invoice role on any project
+    if (not is_admin_user(user_id, database)) and (app.config['INVOICE_ROLE'] not in role_flatmap):
+            abort(403)
+            return
+
+    retval = requests.post(url, json={"user":user_info}, params=request.args)
+    if retval.content.find("error") >= 0:
+        raise StandardError(retval.content)
+    return json.loads(retval.content)
+
+
+@app.route('/email', methods=['GET'])
+@authenticate
+def email_me_invoice(client, user_id, database):
+    url = app.config['INVOICE_API']  + EMAIL_INVOICE_PATH
+    user_email = projects.get_user_email(user_id, database)
+    retval = requests.get(url,
+                          params={'email':user_email,
+                                  'invoice':request.args.get('invoice')})
+    if retval.content.find("error") >= 0:
+        raise StandardError(retval.content)
+    return retval.content
+
+
+@app.route('/getLastInvoiceNumber', methods=['GET'])
+@authenticate
+def get_last_invoice_number(client, user_id, database):
+    url = app.config['INVOICE_API']  + LAST_INVOICE_PATH
+    user_name = database.get_username(user_id)
+    user_email = projects.get_user_email(user_id, database)
+    # only admin can use this feature
+    if is_admin_user(user_id, database):
+        request_payload = dict()
+        if(request.json is not None): request_payload = request.json
+        retval = requests.get(url, params={'username':user_name, 'email':user_email})
+        if retval.content.find("error") >= 0:
+            raise StandardError(retval.content)
+        return retval.content
+    else:
+        abort(403)
+
+
 def divide_time_range(start_date, end_date, bucket_size):
     if bucket_size not in app.valid_bucket_sizes:
         bucket_size = 'daily'
@@ -366,6 +477,18 @@ def get_bucket_functions(bucket_size):
     return same_bucket, next_bucket, start_of_bucket
 
 
+def get_per_project_price(date, projects):
+    # get price for all projects as price is independent of projects
+    all_projects_pricing = get_price_period(date)
+    all_projects_pricing = json.loads(all_projects_pricing)
+    # get discounts specific to the projects
+    output = dict()
+    for project_name in projects:
+            output[project_name] = add_project_discount(project_name, deepcopy(all_projects_pricing), date)
+    # return output
+    return json.dumps(output)
+
+
 def get_price_period(date):
     pricing_periods = iter(app.pricing_periods)
     next_period = next(pricing_periods, None)
@@ -378,3 +501,41 @@ def get_price_period(date):
     return json.dumps({'cpuPrice': retval['cpu_price'],
                        'volumePrice': retval['volume_price'],
                        'imagePrice': retval['image_price']})
+
+
+def add_project_discount(project_name, price, date):
+    price['discount'] = 0 # default discount amount
+    if project_name not in app.discounts.keys(): return price
+    # get discount value from config
+    project_discounts = app.discounts[project_name]
+    if len(project_discounts) == 1 and 'period_start' not in project_discounts[0].keys():
+        # this means that there is a discount value that is always applicable regardless of the dates
+        price['discount'] = project_discounts[0]['discount']
+        return price
+    # compute discount value based on the dates
+    discount_periods = iter(project_discounts)
+    next_period = next(discount_periods, None)
+    retval = next_period
+    while next_period is not None:
+        if 'period_end' not in next_period.keys():
+            # if we find a discount without any period; set that as target discount
+            # this will get overriden in the loop below if there is a discount specific to a period
+            price['discount'] = next_period['discount']
+            next_period = next(discount_periods, None)
+            if next_period is not None: retval = next_period
+        elif date <= parse_period_end(retval['period_end']):
+            # this is time period specific discount; no need to iterate further
+            price['discount'] = next_period['discount']
+            break
+        else:
+            next_period = next(discount_periods, None)
+            if next_period is not None: retval = next_period
+
+    return price
+
+def parse_period_end(period_end_str):
+    period_end = period_end_str.split("-")
+    month_range = calendar.monthrange(int(period_end[0]), int(period_end[1]))
+    return parse(period_end_str+"-"+str(month_range[1]))
+
+

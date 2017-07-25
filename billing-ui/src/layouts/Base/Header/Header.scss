@@ -4,17 +4,34 @@
   border-bottom: 1px solid #ebebeb;
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: flex-end;
+  justify-content: flex-start;
+
+  .menu {
+    display: flex;
+    flex-direction: row;
+
+    li {
+      margin: 0 1rem;
+      margin: 1rem 2rem;
+
+      a {
+        font-size: 1.5rem;
+        padding: 0 0 1rem 0;
+        color: #676767;
+        font-weight: bold;
+
+        &.active {
+          color: #c1272c;
+          border-bottom: 2px solid #c1272c;
+        }
+      }
+    }
+  }
 
   .logo {
     width: 300px;
     margin: -35px $page-gutter 10px;
-  }
-
-  .logout {
-    margin: 10px $page-gutter;
-    cursor: pointer;
   }
 }
 
@@ -27,12 +44,27 @@
   background-color: #444444;
 
   .link-container {
-    margin: 5px $page-gutter;
+    margin: 5px $page-gutter/2;
 
     .links {
       font-weight: bold;
       font-size: 12px;
       color: lightsteelblue;
+    }
+  }
+
+  .user-container {
+    .user-icon {
+      padding: 5px;
+      font-size: 10px;
+      color: #FFF;
+      border-radius: 50%;
+      border: 1px solid #FFF;
+    }
+    .user-logout {
+      margin: 5px 10px;
+      color: #FFF;
+      cursor: pointer;
     }
   }
 }
