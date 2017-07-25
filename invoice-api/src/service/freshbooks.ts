@@ -265,6 +265,7 @@ class FreshbooksService {
                 throw new Error(err.response.statusText);
             });
     }
+
     private getCustomerIDs(customersInfo:any): any{
         let output = [];
         customersInfo.forEach((customerInfo) => {output.push(customerInfo.id)}, customersInfo);
