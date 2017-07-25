@@ -76,6 +76,7 @@ interface Invoice {
         due_offset_days: number;
         lines: Array<InvoiceLineItem>;
         presentation: InvoicePresentation;
+        allowed_gatewayids: Array<any>;
     }
 }
 
@@ -88,6 +89,7 @@ interface FreshbooksInvoiceDefaults {
     taxNumber1:string;
     taxName1:string;
     taxAmount1:number;
+    allowed_gatewayids:Array<any>;
 }
 
 interface FreshbooksConfig {
@@ -123,6 +125,7 @@ class FreshbooksService {
         "Api-Version": `alpha`,
         "Content-Type":`application/json`
     };
+
     private invoiceSummary :string;
 
     constructor(config: FreshbooksConfig, authenticator:any, logger:any) {
@@ -455,7 +458,8 @@ class FreshbooksService {
             customerid: customerID+"",
             due_offset_days:this.apiConfig.invoiceDefaults.invoice_due_days,
             lines: [cpuCostItem,volumeCostItem,imageCostItem],
-            presentation:this.apiConfig.invoiceDefaults.presentation
+            presentation:this.apiConfig.invoiceDefaults.presentation,
+            allowed_gatewayids:this.apiConfig.invoiceDefaults.allowed_gatewayids,
             }
         }
 
