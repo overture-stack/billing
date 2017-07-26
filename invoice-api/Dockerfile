@@ -24,5 +24,8 @@ ADD . /srv/invoice-api
 WORKDIR /srv/invoice-api
 RUN source ~/.nvm/nvm.sh && npm install && tsc -p .
 
+# SET FILE PERMISSIONS
+RUN chmod +x /srv/invoice-api/run.sh
+
 # RUN INVOICE API
 CMD ["/srv/invoice-api/run.sh"]
