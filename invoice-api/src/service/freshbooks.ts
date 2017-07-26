@@ -1,5 +1,22 @@
 /**
- * Created by rverma on 6/22/17.
+ * /**
+ *
+ * Copyright (c) 2017 The Ontario Institute for Cancer Research. All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the terms of the GNU Public License v3.0.
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  *
  * BECAUSE OF THE WAY FRESHBOOKS AUTHENTICATION WORKS; IF WE PLAN TO RUN MULTIPLE INSTANCES OF THIS SERVICE IN PARALLEL
  * WE WILL HAVE TO IMPLEMENT A SYNCHRONISATION MECHANISM AMONG THESE SERVICES AS OF ALL THE SERVICES WILL USE THE SAME
@@ -29,7 +46,9 @@ interface InvoiceLineItem {
     unit_cost: {
         amount: number;
         code: string;
-    }
+    },
+    taxNumber1:string
+
 }
 
 interface InvoicePresentation {
@@ -57,6 +76,7 @@ interface Invoice {
         due_offset_days: number;
         lines: Array<InvoiceLineItem>;
         presentation: InvoicePresentation;
+        allowed_gatewayids: Array<any>;
     }
 }
 
@@ -66,6 +86,10 @@ interface FreshbooksInvoiceDefaults {
     code: string;
     template: string;
     presentation:InvoicePresentation;
+    taxNumber1:string;
+    taxName1:string;
+    taxAmount1:number;
+    allowed_gatewayids:Array<any>;
 }
 
 interface FreshbooksConfig {
@@ -89,6 +113,7 @@ class FreshbooksService {
      * Dependencies
      */
     private apiConfig: FreshbooksConfig;
+    private logger:any;
 
     /**
      * State
@@ -100,14 +125,16 @@ class FreshbooksService {
         "Api-Version": `alpha`,
         "Content-Type":`application/json`
     };
+
     private invoiceSummary :string;
 
-    constructor(config: FreshbooksConfig, authenticator:any) {
+    constructor(config: FreshbooksConfig, authenticator:any, logger:any) {
         this.apiConfig = config;
         this.agent = new https.Agent({
             rejectUnauthorized: config.rejectInsecure
         });
         this.authenticator = authenticator;
+        logger != null? this.logger = logger : this.logger = console;
     }
 
 
@@ -118,47 +145,64 @@ class FreshbooksService {
         3. Create Freshbooks Invoice using the data received
         4. Send Invoice using Freshbooks API
      */
-    public async sendInvoice(customerEmail: any, report: any, price: any) {
+    public async sendInvoice(customerEmails: any, report: any, price: any, invoiceNumber:string, adminUsers:Array<any>, emailRecipients:any): Promise<any> {
+        this.logger.info("Authenticating...");
         await this.authenticate();
-        console.log("Sending request to FreshBooks for: Customer ID");
-        let customerID = await this.getCustomerID(customerEmail);
-        console.log("Sending request to FreshBooks for: Create new Invoice");
-        let newInvoiceID = await this.createInvoice(report,price,customerID);
-        console.log("Sending request to FreshBooks for: Send Invoice:" + newInvoiceID);
-        let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmail);
-        this.emailInvoice(newInvoiceID,emailInfoJson);
-
+        // no need to strip off admin emails as some projcts might have them as PIs
+        //let nonOICREmails = this.stripAdminEmails(customerEmails,adminUsers);
+        let customerID : number;
+        // collab has PI and PI's admin staff listed for each project but only PI is primary contact in Freshbooks
+        // we need to iterate over all project emails to get customer id as only one email will belong to PI
+        for(var idx in customerEmails){
+            let output : any;
+            this.logger.info("Requesting customerID from FreshBooks...");
+            output = await this.getCustomerID(customerEmails[idx]);
+            if(output.length != 0) {
+                customerID = output[0].id;
+                break;
+            }
+        }
+        // abort if no customer id could be found
+        if(customerID == null || typeof customerID == 'undefined' ){
+            let flatEmailString = "";
+            customerEmails.forEach((email) => flatEmailString = flatEmailString + email + ",");
+            throw Error("error: Customer account not found:" + flatEmailString);
+        }
+        this.logger.info("Creating new Invoice in FreshBooks...");
+        let newInvoiceID = await this.createInvoice(report,price,customerID, invoiceNumber);
+        let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmails,emailRecipients);
+        this.logger.info("Emailing Invoice:%s ..." , invoiceNumber, emailInfoJson );
+        return this.emailInvoice(newInvoiceID,emailInfoJson);
     };
 
-    // assumes date is : null or in 'YYYY-MM-DD' format
+    private stripAdminEmails(emails:Array<any>, adminEmails:Array<any>): Array<string> {
+        let output = [];
+        // any email that is not an oicr admin is a valid customer email
+        for(var idx in emails){
+            if(adminEmails.indexOf(emails[idx].toLowerCase()) <0){
+                output.push(emails[idx]);
+            }
+        }
+        return output;
+    }
+
+    /*
+     assumes date is : null or in 'YYYY-MM-DD' format
+      */
     public async getInvoicesSummaryData(date:string, user:any, admin:boolean) {
+        this.logger.info("Authenticating...");
         await this.authenticate();
-        let minDate = null;
-        let maxDate = null;
-        minDate = date;
-        maxDate = new Date();
-        let pageCount = 1; let pageIdx = 1;
-        let allInvoicesForThisPeriod = [];
         let allCustomerIDs = null;
         if(!admin){
-            console.log('Sending request to Freshbooks: For getting Customers');
-            let customersInfo = await this.getAllCustomers(user.email);
+            this.logger.info('Getting customers details from Freshbooks...');
+            let customersInfo = await this.getAllCustomersParallel(user.email);
             allCustomerIDs = this.getCustomerIDs(customersInfo);
             if(allCustomerIDs.length == 0) throw Error("error: No account found for this user account: "+ user.email)
         }
 
         // currently we have decided to pull all the invoices and ship it to front end in one go
-        while(pageCount  >= pageIdx){
-            let invoiceResults =
-                await this.getInvoicesListPaged(pageIdx,minDate, maxDate.toISOString().slice(0,10), allCustomerIDs);
-            allInvoicesForThisPeriod = allInvoicesForThisPeriod.concat(invoiceResults.invoices);
-            //update page count as the first result tells total count of pages
-            if(pageCount == 1) pageCount = invoiceResults.pages;
-            pageIdx++;
-        }// while loop ends here
-        let flattenedInovicesJson = [];
-        _.each(allInvoicesForThisPeriod, (item) => {
-            flattenedInovicesJson.push({
+        let allInvoicesForThisPeriod = await this.getAllInvoicesParallel(date, allCustomerIDs);
+        let flattenedInovicesJson = allInvoicesForThisPeriod.map(item => ({
                 'current_organization' : item.current_organization,
                 'date' : item.create_date,
                 'invoice_number' : item.invoice_number,
@@ -169,36 +213,62 @@ class FreshbooksService {
                 'volume_cost' : this.getLineItemValue("Volume",item.lines),
                 'discount' : item.discount_value,
                 'total' : item.amount.amount
-            });
-        });
+            })
+        );
         return flattenedInovicesJson;
     };
 
-    private async getAllCustomers(userEmail:string): Promise<any>{
-        userEmail = (userEmail == null || userEmail == "") ?  "":userEmail;
-        let pageCount = 1; let pageIdx = 1;
-        let allCustomersData = [];
-        while(pageCount  >= pageIdx){
-            let pagedCustomerResults =
-                await this.getAllCustomersPaged(pageIdx, userEmail);
-            allCustomersData = allCustomersData.concat(pagedCustomerResults.clients);
-            //update page count as the first result tells total count of pages
-            if(pageCount == 1) pageCount = pagedCustomerResults.pages;
-            pageIdx++;
-        }// while loop ends here
-       return allCustomersData;
+    public async getLastInvoiceNumber(): Promise<any>{
+        this.logger.info("Authenticating...");
+        await this.authenticate();
+        this.logger.info("Requesting last invoice number...");
+        return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?sort=invoice_date_desc&per_page=1`,
+            {headers: this.headers, httpsAgent: this.agent })
+            .then( response => {
+                return response.data.response.result.invoices[0].invoice_number;
+            }).catch(err => {
+                throw new Error(err.response.statusText);
+            })
+    }
+
+    private async getAllInvoicesParallel(date:string, allCustomerIDs:Array<any>): Promise<any>{
+        let minDate = date;
+        let maxDate = new Date().toISOString().slice(0,10);
+        let invoices = await this.getInvoicesListPaged(1,minDate, maxDate, allCustomerIDs);
+        if (invoices.pages > 1) {
+             let responses = await Promise.all(_.range(1, invoices.pages).map(i =>
+                    this.getInvoicesListPaged(i, minDate, maxDate, allCustomerIDs)))
+             invoices.invoices = invoices.invoices.concat(_.flatten(responses.map(item => item.invoices)));
+        }
+        this.logger.info("Fetched all invoices.");
+
+        return invoices.invoices;
+    }
+
+    private async getAllCustomersParallel(userEmail:string): Promise<any>{
+        let customers = await this.getAllCustomersPaged(1, userEmail || "");
+        if (customers.pages > 1) {
+            let responses = await Promise.all(_.range(1, customers.pages).map(i =>
+                    this.getAllCustomersPaged(i, userEmail || "")));
+
+            customers.clients = customers.customers.concat(_.flatten(responses.map(item => item.clients)))
+        }
+
+        this.logger.info("Fetched all customers.");
+
+        return customers.clients;
     }
 
     private async getAllCustomersPaged(pageNumber: number, email:string): Promise<any> {
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/users/clients?include[]=recent_contacts&search[email_like]=${ email }&page=${ pageNumber }&per_page=100`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
                 return response.data.response.result;
             }).catch(err => {
                 throw new Error(err.response.statusText);
             });
     }
+
     private getCustomerIDs(customersInfo:any): any{
         let output = [];
         customersInfo.forEach((customerInfo) => {output.push(customerInfo.id)}, customersInfo);
@@ -218,25 +288,17 @@ class FreshbooksService {
 
     private validEmailForCustomer(email:string, customerInfo:any): boolean{
         let lowerCasedEmail = email.toLowerCase();
-        if(customerInfo.email != ''){
-            if(customerInfo.email.toLowerCase() == lowerCasedEmail) return true;
-        }
-        // seach for email in secondary contacts
-        let contact:any;
-        for(let contactIdx in customerInfo.recent_contacts){
-            contact = customerInfo.recent_contacts[contactIdx];
-            if(contact.email != ''){
-                if(contact.email.toLowerCase() == lowerCasedEmail) return true;
-            }
-        } // contacts iteration ends here
-        return false;
+        return _.every([
+            email !== '',
+            customerInfo.email.toLowerCase() == lowerCasedEmail ||
+            !!_.find(customerInfo.recent_contacts, (contact:any) =>  contact.email && contact.email.toLowerCase() == lowerCasedEmail)
+        ]);
     }
 
     private async findInvoice(invoiceNumber:string): Promise<any> {
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?search[invoice_number]=${invoiceNumber}`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
                 return response.data.response.result.invoices[0];
             }).catch(err => {
                 throw new Error(err.response.statusText);
@@ -247,7 +309,6 @@ class FreshbooksService {
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/users/clients?search[userid]=${customerId}&include[]=recent_contacts`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
                 return response.data.response.result.clients[0];
             }).catch(err => {
                 throw new Error(err.response.statusText);
@@ -261,8 +322,10 @@ class FreshbooksService {
         else return 0.0;
     }
 
-    // uses either minDate or maxDate
-    // assumes: minDate is optional; maxDate is always provided
+    /*
+     uses either minDate or maxDate
+     assumes: minDate is optional; maxDate is always provided
+      */
     private async getInvoicesListPaged(pageNumber: number, minDate: string, maxDate: string, customerIDs:Array<string>) : Promise<any> {
         // form the search string
         // use only one of min or max dates : if min date is provided then use it else use max date
@@ -281,7 +344,6 @@ class FreshbooksService {
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices?${ searchStr }&page=${ pageNumber }&include[]=lines&per_page=100`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
                 return response.data.response.result;
             }).catch(err => {
                 throw new Error(err.response.statusText);
@@ -299,7 +361,7 @@ class FreshbooksService {
     };
 
     public async getAccessToken(refreshToken:string) : Promise<any> {
-        console.log("Sending request to FreshBooks for: Access Token");
+        this.logger.info("Requesting Access Token from FreshBooks...");
         let json = {
             "grant_type": this.apiConfig.grant_type,
             "client_secret": this.apiConfig.client_secret,
@@ -316,37 +378,35 @@ class FreshbooksService {
             });
     };
 
-    private async getCustomerID(email:string) : Promise<number> {
+    private async getCustomerID(email:string) : Promise<any> {
         return axios.get(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/users/clients?search[email]=${email}`,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
-                return response.data.response.result.clients[0].id;
+                return response.data.response.result.clients;
             }).catch(err => {
                 throw new Error(err.response.statusText);
             });
 
     }
 
-    private async createInvoice(report: any, price:any, customerID:number): Promise<string> {
-        let invoicePayload = this.createInvoicePayLoad(report,price,customerID);
+    private async createInvoice(report: any, price:any, customerID:number, invoiceNumber:string): Promise<string> {
+        let invoicePayload = this.createInvoicePayLoad(report,price,customerID, invoiceNumber);
         return axios.post(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices`,
             invoicePayload,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
                 return response.data.response.result.invoice.id;
             }).catch(err => {
                 throw new Error(err.response.statusText);
             });
     }
 
-    private getNewInvoiceEmailInfo(invoiceID:string, report:any, customerEmail:string){
+    private getNewInvoiceEmailInfo(invoiceID:string, report:any, customerEmails:Array<string>,emailRecipients:any){
         let json = {
             "invoice": {
                 "email_subject": 'OICR Collaboratory sent an invoice for project "' + report.project_name+ '"',
                 "email_body": this.invoiceSummary,
-                "email_recipients":[this.apiConfig.oicr_finance_email, customerEmail],
+                "email_recipients":emailRecipients.oicr_finance_email.concat(customerEmails).concat(emailRecipients.invoice_recipients),
                 "action_email": true
             }
         };
@@ -369,14 +429,13 @@ class FreshbooksService {
             json,
             {headers: this.headers, httpsAgent: this.agent })
             .then( response => {
-                console.log(response.data);
                 return response.data;
             }).catch(err => {
                 throw new Error(err.response.statusText);
             });
     }
 
-    private createInvoicePayLoad(report: any, price:any, customerID:number) : Invoice {
+    private createInvoicePayLoad(report: any, price:any, customerID:number, invoiceNumber:string) : Invoice {
 
         // create line items for cpu, volume and image
         let cpuCostItem = this.createCPUCostItem(report, price);
@@ -393,13 +452,14 @@ class FreshbooksService {
             currency_code: this.apiConfig.invoiceDefaults.code,
             discount_value: price.discount,
             notes: this.invoiceSummary,
-            invoice_number: Math.floor((Math.random() * 1000000) + 1)+"",//TODO: Invoice id generation
+            invoice_number: invoiceNumber,
             template: this.apiConfig.invoiceDefaults.template,
             terms: this.apiConfig.invoiceDefaults.terms,
             customerid: customerID+"",
-            due_offset_days:this.apiConfig.invoiceDefaults.invoice_due_days,//TODO: check how many days later invoice is due
+            due_offset_days:this.apiConfig.invoiceDefaults.invoice_due_days,
             lines: [cpuCostItem,volumeCostItem,imageCostItem],
-            presentation:this.apiConfig.invoiceDefaults.presentation
+            presentation:this.apiConfig.invoiceDefaults.presentation,
+            allowed_gatewayids:this.apiConfig.invoiceDefaults.allowed_gatewayids,
             }
         }
 
@@ -413,8 +473,8 @@ class FreshbooksService {
                 code: this.apiConfig.invoiceDefaults.code
             },
             description: "",
-            taxName1: "",
-            taxAmount1: null,
+            taxName1: this.apiConfig.invoiceDefaults.taxName1,
+            taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
             name: "CPU (Core) / Hour:",
             qty: report.cpu,
             taxName2: null,
@@ -423,9 +483,11 @@ class FreshbooksService {
             unit_cost: {
                 amount: price.cpuPrice,
                 code: this.apiConfig.invoiceDefaults.code
-            }
+            },
+            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
         };
     }
+
     private createVolumeCostItem(report:any, price:any): InvoiceLineItem {
         return  {
 
@@ -433,20 +495,23 @@ class FreshbooksService {
                 amount: report.volumeCost,
                 code: this.apiConfig.invoiceDefaults.code
             },
-            description: "",
-            taxName1: "",
-            taxAmount1: null,
-            name: "Volume (GB) / Hour:",
-            qty: report.volume,
+            description: `Calculated based on: Total Usage/Hour this month: ${report.volume} x ${price.volumePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
+            taxName1: this.apiConfig.invoiceDefaults.taxName1,
+            taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
+            name: "Volume Storage:",
+            qty: 1,//report.volume : Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
             taxName2: null,
             taxAmount2: null,
             type: 0,
             unit_cost: {
-                amount: price.volumePrice,
+                amount: report.volumeCost,//price.volumePrice,
                 code: this.apiConfig.invoiceDefaults.code
-            }
+            },
+            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
+
         };
     }
+
     private createImageCostItem(report:any, price:any): InvoiceLineItem {
         return  {
 
@@ -454,18 +519,19 @@ class FreshbooksService {
                 amount: report.imageCost,
                 code: this.apiConfig.invoiceDefaults.code
             },
-            description: "",
-            taxName1: "",
-            taxAmount1: null,
-            name: "Image (GB) / Hour:",
-            qty: report.image,
+            description: `Calculated based on: Total Usage/Hour this month: ${report.image} x ${price.imagePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,            taxName1: this.apiConfig.invoiceDefaults.taxName1,
+            taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
+            name: "Image Storage:",
+            qty: 1,// Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
             taxName2: null,
             taxAmount2: null,
             type: 0,
             unit_cost: {
-                amount: price.imagePrice,
+                amount: report.imageCost,//price.imagePrice,
                 code: this.apiConfig.invoiceDefaults.code
-            }
+            },
+            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
+
         };
     }
 
