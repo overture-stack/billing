@@ -157,14 +157,14 @@ invoiceGeneration.then(() => {
         generatePreInvoiceSummaryCSV(aggregatedInvoices).then(() =>logger.info("Finished Processing Invoices."));
     } else {
         logger.info("Email Mode. Generating Summary CSV file that will be emailed...");
-        billing.generateInvoicesSummary(month).then(() => {
+        billing.generateInvoicesSummary(month,config['outputDir']).then(() => {
             let mailer = new Mailer({
                 emailConfig: config['emailConfig'],
                 smtpConfig: config['smtpConfig'],
                 emailRecipients: config['emailRecipients']
             }, null, logger);
             logger.info("Emailing summary csv file...");
-            mailer.sendSummaryCSVEmail(month + ".csv", month, reportYear);
+            mailer.sendSummaryCSVEmail( config['outputDir'] + month + ".csv", month, reportYear);
             logger.info("Finished Processing Invoices.");
         })
     }

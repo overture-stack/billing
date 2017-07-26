@@ -97,7 +97,7 @@ class Mailer {
     });
   }
 
-  public sendSummaryCSVEmail(summaryCSVFilePath:string, month:string, year: number): Promise<any> {
+  public sendSummaryCSVEmail(summaryCSVFilePath:string, month:string, year: number) {
     let that = this;
     let message = {
       from: this.config.emailConfig.fromAddress,
@@ -112,9 +112,10 @@ class Mailer {
         {
           // filename and content type is derived from path
           path: summaryCSVFilePath
+
         }]
     };
-    return this.transport.sendMail(message, function(err) {
+    this.transport.sendMail(message, function(err) {
       if(err) {
         that.logger.error(err);
       }
