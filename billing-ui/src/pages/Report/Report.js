@@ -39,7 +39,7 @@ import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 
 import {fetchReport} from '~/services/reports'; 
-import {fetchProjects} from '~/services/projects'; 
+import {fetchProjects} from '~/services/projects';
 import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 const ReactHighcharts = require('react-highcharts').withHighcharts(require('highcharts'));
@@ -104,7 +104,6 @@ class extends Component {
   }
 
   handleFromDateFilterChange = (date) => {
-    console.log(date);
     this.filters.fromDate = date;
   }
 
@@ -202,7 +201,7 @@ class extends Component {
 
   render () {
     return (
-      <div className={`Report ${this.isLoading ? 'is-loading' : ''}`}>
+      <div className="Report">
         <h1 className="page-heading">
           {
             this.isLoading
@@ -341,7 +340,7 @@ class extends Component {
           </div>
 
         </div>
-          <h2 className="section-heading">Summary</h2>
+        <h2 className="section-heading">Summary</h2>
         <div className="summary">
           <RadioGroup>
             <RadioButton

@@ -15,10 +15,15 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
-import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
+import NotificationSystem from 'react-notification-system';
+import ReactTooltip from 'react-tooltip';
 
+import {fetchInvoices} from '~/services/invoices'; 
+import {sendEmail} from '~/services/email'; 
+
+
+import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 import './Invoices.scss';
 
 
@@ -26,22 +31,21 @@ export default
 class extends Component {
   state = { invoices: [] }
 
-  getInvoices = async () => {
-    const invoices = await this.fetchInvoices();
-    this.setState({ invoices })
-  }
+  notification = null
 
-  fetchInvoices = async () => {
-    const response = await fetch(`http://localhost:4000/invoice/getAllInvoices`, {
-      method: 'GET',
-    });
-
-    const data = await response.json();
-    return data;
-  }
+  setEmailLink = (cell, row) => (
+    <span
+      className="glyphicon glyphicon-envelope"
+      onClick={() => sendEmail(row.invoice_number, this.notification)}
+      style={{ cursor:'pointer' }}
+    >
+    </span>
+  );
 
   async componentDidMount() {
-    this.getInvoices();
+    const invoices = await fetchInvoices();
+    this.setState({ invoices });
+    this.notification = this.refs.notification;
   }
 
   render () {
@@ -98,7 +102,6 @@ class extends Component {
             >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume_cost"
-              dataAlign="right"
               dataSort={true}
             >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
@@ -107,10 +110,25 @@ class extends Component {
             >Discount%</TableHeaderColumn>
             <TableHeaderColumn
               dataField="total"
-              dataAlign="right"
               dataSort={true}
             >Total Cost</TableHeaderColumn>
+            <TableHeaderColumn
+              dataAlign="center"
+              dataField="email"
+              dataFormat={this.setEmailLink}
+            >
+              <span
+                data-tip
+                data-for='email'
+                style={{ borderBottom: '1px dashed red'}}>
+                Email
+              </span>
+            </TableHeaderColumn>
           </BootstrapTable>
+          <NotificationSystem ref="notification" allowHTML={true}/>
+          <ReactTooltip id='email' effect='solid'>
+            <span>Email the Invoice</span>
+          </ReactTooltip>
       </div>
     );
   }

@@ -15,7 +15,10 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import {observable, action, autorun} from 'mobx';
+import _ from 'lodash';
+
 import {fetchHeaders} from '~/utils';
+import {fetchProjects} from '~/services/projects'; 
 
 const user = observable({
   username: '',
@@ -27,18 +30,19 @@ const user = observable({
     this.isLoggedIn = false;
     this.isLoggingIn = true;
     const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: fetchHeaders.get(),
-        body: JSON.stringify({
-          username,
-          password,
-        })
-      });
+      method: 'POST',
+      headers: fetchHeaders.get(),
+      body: JSON.stringify({
+        username,
+        password,
+      })
+    });
     if (response.status === 200) {
       this.isLoggingIn = false;
       this.username = username;
       this.token = response.headers.get('authorization');
       window.sessionStorage.setItem('username', user.username);
+      this.setRoles();
       this.isLoggedIn = true;
     } else if (response.status === 401) {
       throw new Error('Incorrect username or password');
@@ -53,13 +57,26 @@ const user = observable({
   logout: action(async function () {
     console.log('logout');
     user.token = '';
+    localStorage.clear();
     this.isLoggedIn = false;
     return await Promise.resolve();
+  }),
+
+  setRoles: action(async function() {
+    const projects = await fetchProjects();
+    const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing'));
+    const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice'));
+    this.roles = {
+      report,
+      invoices
+    };
+    window.localStorage.setItem('roles', JSON.stringify(user.roles));
   })
 });
 
 user.token = window.sessionStorage.getItem('token');
 user.username = window.sessionStorage.getItem('username');
+user.roles = JSON.parse(window.localStorage.getItem('roles')) || {};
 user.isLoggedIn = !!user.token;
 autorun(() => window.sessionStorage.setItem('token', user.token));
 window.user = user;

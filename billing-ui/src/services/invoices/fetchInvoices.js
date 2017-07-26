@@ -14,21 +14,19 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import _ from 'lodash';
+import {fetchHeaders} from '~/utils';
+import user from '~/user';
 
-export function aggregateEntries(entries, groupByIteratee) {
-  return _(entries)
-    .groupBy(groupByIteratee)
-    .map((items, key) => items.reduce((acc, entry) => ({
-      ...acc,
-      ...entry,
-      cpu: (acc.cpu || 0) + (entry.cpu || 0),
-      volume: (acc.volume || 0) + (entry.volume || 0),
-      image: (acc.image || 0) + (entry.image || 0),
-      cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
-      volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
-      imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
-      key,
-    })))
-    .value();
+export async function fetchInvoices() {
+
+  const response = await fetch('/api/getAllInvoices', {
+    method: 'GET',
+    headers: fetchHeaders.get(),
+  });
+
+  const data = await response.json();
+  user.token = response.headers.get('authorization');
+  if (response.status === 401) user.logout();
+    
+  return data;
 }

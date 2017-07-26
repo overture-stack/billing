@@ -190,5 +190,8 @@ ENV/
 ### VisualStudioCode template
 .vscode
 
+#Invoice API Service
+invoice-api/node_modules/
 
 *.db
+*.auth
