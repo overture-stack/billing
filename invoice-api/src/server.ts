@@ -38,18 +38,7 @@ app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
-app.use(morgan('combined'));
 
-/*
- Configure logger
- */
-const tsFormat = () => ( new Date() ).toLocaleDateString() + '  ' + ( new Date() ).toLocaleTimeString();
-
-let logger = new (winston.Logger)({
-    transports: [
-        new (winston.transports.Console)({'timestamp':tsFormat,colorize: true})
-    ]
-});
 
 let port = process.env.PORT || 4000;
 
@@ -64,6 +53,22 @@ if (args.length < 4) {
 }
 let configPath = args[2];
 config = JSON.parse(fs.readFileSync(configPath).toString());
+/*
+ Configure logger
+ */
+const tsFormat = () => ( new Date() ).toLocaleDateString() + '  ' + ( new Date() ).toLocaleTimeString();
+let logFolder = config['logs'];
+let logger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.File)({filename: logFolder + 'invoice.log', 'timestamp':tsFormat,colorize: true})
+    ]
+});
+
+
+// create a write stream (in append mode)
+var accessLogStream = fs.createWriteStream(logFolder + 'invoiceAccess.log', {flags: 'a'});
+app.use(morgan('combined', {stream: accessLogStream}));
+
 let authFilePath = args[3];
 
 // create freshbooks authentication module instance;

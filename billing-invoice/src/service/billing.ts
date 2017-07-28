@@ -185,7 +185,7 @@ class BillingApi {
   /*
    generates invoices summary table for invoices created on current date
     */
-  public async generateInvoicesSummary(month:string): Promise<any>  {
+  public async generateInvoicesSummary(month:string, outputFolder:string): Promise<any>  {
 
     let flattenedInovicesJson = await this.getInvoicesSummaryData();
     let fields = [
@@ -223,7 +223,7 @@ class BillingApi {
       },
     ];
 
-    return this.writeCSVDataToFile(flattenedInovicesJson,fields, month +".csv");
+    return this.writeCSVDataToFile(flattenedInovicesJson,fields, outputFolder+ month +".csv");
 
   };
 
