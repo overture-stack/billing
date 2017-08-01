@@ -1,5 +1,5 @@
 {
-  "name": "dcc-submission-ui-new",
+  "name": "billing-ui",
   "version": "0.0.1",
   "private": true,
   "devDependencies": {
@@ -54,11 +54,11 @@
     "whatwg-fetch": "1.0.0"
   },
   "dependencies": {
-    "antd": "^2.6.4",
+    "antd": "^2.12.3",
     "bootstrap": "3.3.7",
     "encode-uri-query": "^1.0.1",
     "gsap-promise": "2.0.0",
-    "highcharts": "5",
+    "highcharts": "^5.0.14",
     "mobx": "2.4.4",
     "mobx-react": "3.5.5",
     "moment": "2.14.1",

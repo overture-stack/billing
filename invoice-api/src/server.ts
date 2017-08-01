@@ -177,12 +177,6 @@ function routes() {
             res.status(500).send({error: 'Invalid Invoice number'});
             return;
         }
-        try{
-             Number(invoiceNumber)
-        } catch(ex){
-            res.status(500).send({error: 'Invalid Invoice number.'});
-            return;
-        }
         let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
         fbService.emailExistingInvoice(email,invoiceNumber).then(() => {
             res.send("Invoice emailed.");
