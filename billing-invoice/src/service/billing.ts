@@ -190,7 +190,7 @@ class BillingApi {
     let flattenedInovicesJson = await this.getInvoicesSummaryData();
     let fields = [
       {
-        label: 'PI Name',
+        label: 'Organization',
         value: 'current_organization'
       },
       {
