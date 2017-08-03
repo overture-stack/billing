@@ -48,6 +48,22 @@ class extends Component {
     this.notification = this.refs.notification;
   }
 
+  formatNumber = (n) => {
+    return n ? n.toLocaleString() : '';
+  }
+
+  formatCurrency = (n) => {
+    return n ? `$${n.toLocaleString(undefined, {minimumFractionDigits: 2})}` : '';
+  }
+
+  customNumberSort = (a, b, order, field) => {
+    if(order === 'desc') {
+      return a[field] - b[field];      
+    } else {
+      return b[field] - a[field];
+    }  
+  }
+
   render () {
     return (
       <div className={`Invoices`}>
@@ -94,23 +110,36 @@ class extends Component {
             >Invoice Status</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpu_cost"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >CPU Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="image_cost"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume_cost"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="discount"
+              dataAlign="right"
               dataSort={true}
             >Discount%</TableHeaderColumn>
             <TableHeaderColumn
               dataField="total"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >Total Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataAlign="center"
