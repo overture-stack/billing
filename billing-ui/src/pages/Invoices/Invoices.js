@@ -48,10 +48,6 @@ class extends Component {
     this.notification = this.refs.notification;
   }
 
-  formatNumber = (n) => {
-    return n ? n.toLocaleString() : '';
-  }
-
   formatCurrency = (n) => {
     return n ? `$${n.toLocaleString(undefined, {minimumFractionDigits: 2})}` : '';
   }
