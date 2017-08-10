@@ -42,7 +42,8 @@ const user = observable({
       this.username = username;
       this.token = response.headers.get('authorization');
       window.sessionStorage.setItem('username', user.username);
-      this.setRoles();
+      this.roles = await this.setRoles();
+      window.sessionStorage.setItem('roles', JSON.stringify(user.roles));
       this.isLoggedIn = true;
     } else if (response.status === 401) {
       throw new Error('Incorrect username or password');
@@ -66,17 +67,16 @@ const user = observable({
     const projects = await fetchProjects();
     const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing'));
     const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice'));
-    this.roles = {
+    return {
       report,
       invoices
     };
-    window.localStorage.setItem('roles', JSON.stringify(user.roles));
   })
 });
 
 user.token = window.sessionStorage.getItem('token');
 user.username = window.sessionStorage.getItem('username');
-user.roles = JSON.parse(window.localStorage.getItem('roles')) || {};
+user.roles = JSON.parse(window.sessionStorage.getItem('roles')) || {};
 user.isLoggedIn = !!user.token;
 autorun(() => window.sessionStorage.setItem('token', user.token));
 window.user = user;

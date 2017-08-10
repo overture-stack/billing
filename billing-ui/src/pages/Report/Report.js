@@ -15,6 +15,7 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
+import { browserHistory } from 'react-router';
 import {observable, autorun, computed} from 'mobx';
 import {observer} from 'mobx-react';
 import _ from 'lodash';
@@ -23,6 +24,7 @@ import {aggregateEntries} from './aggregateEntries';
 import moment from 'moment';
 
 import CHART_SETTINGS from './CHART_SETTINGS';
+import user from '~/user';
 
 import { Button, DatePicker, Radio } from 'antd';
 const { MonthPicker } = DatePicker;
@@ -109,6 +111,15 @@ class extends Component {
 
   handleToDateFilterChange = (date) => {
     this.filters.toDate = date;
+  }
+
+  constructor(props) {
+    super(props);
+    if(!user.roles.report && user.roles.invoices) {
+      browserHistory.push('/invoices');
+    } else if(!user.roles.report && !user.roles.invoices) {
+      user.logout();
+    }
   }
 
   async componentDidMount() {
