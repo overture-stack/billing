@@ -43,6 +43,9 @@ const user = observable({
       this.token = response.headers.get('authorization');
       window.sessionStorage.setItem('username', user.username);
       this.roles = await this.setRoles();
+      if(!this.roles.report && !this.roles.invoices) {
+        throw new Error('You are not Authorized to view this Application');
+      }
       window.sessionStorage.setItem('roles', JSON.stringify(user.roles));
       this.isLoggedIn = true;
     } else if (response.status === 401) {
