@@ -25,6 +25,10 @@
     margin: 1em 0;
   }
 
+  .Select-menu-outer {
+    z-index: 100;
+  }
+
   .form-controls {
     display: flex;
     flex-direction: row;
