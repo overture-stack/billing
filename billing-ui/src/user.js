@@ -40,12 +40,15 @@ const user = observable({
     if (response.status === 200) {
       this.isLoggingIn = false;
       this.username = username;
-      this.token = response.headers.get('authorization');
-      window.sessionStorage.setItem('username', user.username);
       this.roles = await this.setRoles();
       if(!this.roles.report && !this.roles.invoices) {
-        throw new Error('You are not Authorized to view this Application');
+        throw new Error(`
+          Please contact your PI to get access to this application. <br/>
+          If you are a PI and having trouble accessing this page, Please 
+          <a href="https://cancercollaboratory.org/contact-us" target="_blank">Contact Us</a>.`);
       }
+      this.token = response.headers.get('authorization');
+      window.sessionStorage.setItem('username', user.username);
       window.sessionStorage.setItem('roles', JSON.stringify(user.roles));
       this.isLoggedIn = true;
     } else if (response.status === 401) {
