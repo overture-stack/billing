@@ -194,7 +194,9 @@ class FreshbooksService {
         let responses : Array<any>;
         responses = await Promise.all(customerEmails.map(email => this.getCustomerID(email)));
         let filteredResponses = _.filter(responses, (item) =>  item.length != 0);
-        return _.intersectionBy(_.chunk(_.flatten(filteredResponses),1),'id');
+        let flattenedChunks = _.flatten(_.chunk(_.flatten(filteredResponses),1));
+        return _.intersectionBy(flattenedChunks,'id');
+        //return _.flatten(filteredResponses);
     }
 
     private stripAdminEmails(emails:Array<any>, adminEmails:Array<any>): Array<string> {
