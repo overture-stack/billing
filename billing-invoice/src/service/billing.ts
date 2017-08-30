@@ -190,7 +190,7 @@ class BillingApi {
     let flattenedInovicesJson = await this.getInvoicesSummaryData();
     let fields = [
       {
-        label: 'Project Name',
+        label: 'Organization',
         value: 'current_organization'
       },
       {
@@ -214,7 +214,7 @@ class BillingApi {
         value: 'volume_cost'
       },
       {
-        label: 'Discount',
+        label: 'Discount %',
         value: 'discount'
       },
       {

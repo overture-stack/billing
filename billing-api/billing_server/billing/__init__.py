@@ -137,8 +137,9 @@ def update_role_map_for_nonpi(role_map, user_id, database):
 def is_admin_user(user_id, database):
     #is user admin
     user_email = projects.get_user_email(user_id, database)
+    if user_email is None: user_email=""
     # add invoice role if user is admin
-    if database.get_username(user_id) in app.config['OICR_ADMINS'] or user_email in app.config['OICR_ADMINS']:
+    if database.get_username(user_id).lower() in app.config['OICR_ADMINS'] or user_email.lower() in app.config['OICR_ADMINS']:
         return True
     else: return False
 

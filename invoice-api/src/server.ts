@@ -182,12 +182,6 @@ function routes() {
             res.status(500).send({error: 'Invalid Invoice number'});
             return;
         }
-        try{
-             Number(invoiceNumber)
-        } catch(ex){
-            res.status(500).send({error: 'Invalid Invoice number.'});
-            return;
-        }
         let fbService = createFBServiceObject(req.app.get('settings'));
         fbService.emailExistingInvoice(email,invoiceNumber,
             isAdminUser({"username": req.query['username'], "email":req.query['email']},config['oicr_admins'])).then(() => {

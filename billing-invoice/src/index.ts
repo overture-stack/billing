@@ -65,7 +65,7 @@ if (args.length >= 4) {
   let dateArgs = args[3].split('-');
   reportMonth = Number(dateArgs[1]);
   reportYear = Number(dateArgs[0]);
-  month = MONTH_NAMES[reportMonth];
+  month = MONTH_NAMES[reportMonth - 1];
 } else {
   let monthIndex = (new Date()).getMonth();
   reportMonth = monthIndex - 1 < 0 ? 11 : monthIndex-1;
