@@ -97,7 +97,7 @@ class extends Component {
             <TableHeaderColumn
               dataField="current_organization"
               dataSort={true}
-            >Project</TableHeaderColumn>
+            >Organization</TableHeaderColumn>
             <TableHeaderColumn
                 dataField="date"
                 dataSort={true}
@@ -106,10 +106,6 @@ class extends Component {
                 dataField="invoice_number"
                 dataSort={true}
             >Invoice Number</TableHeaderColumn>
-            <TableHeaderColumn
-                dataField="payment_status"
-                dataSort={true}
-            >Payment Status</TableHeaderColumn>
             <TableHeaderColumn
                 dataField="invoice_status"
                 dataSort={true}
