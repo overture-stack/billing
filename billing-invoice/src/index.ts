@@ -42,6 +42,7 @@ const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
 ];
 
 const EMAIL_MODE = "email";
+const DICOUNT_TEXT = "discount";
 
 /**
  * Argument Parsing for Config Path
@@ -119,7 +120,7 @@ let invoiceGeneration = new Promise((resolve, reject) => {
             report.project_name = project.project_name;
             let price = perProjectPrices[project.project_name];
             if(typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
-            _.each(price, (value, key) => {
+            _.each(price, (value:number, key:string) => {
               if(key == 'discount')
                 price[key] = (value*100).toFixed(4);
             });

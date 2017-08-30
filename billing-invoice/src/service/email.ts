@@ -125,7 +125,7 @@ class Mailer {
   private finishReport(report: any, price: any) {
     let finalReport = Object.assign(report, price);
     finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost'])).toFixed(2);
-    _.each(finalReport, (value, key) => {
+    _.each(finalReport, (value, key:string) => {
       if(key != 'year') finalReport[key] = value.toLocaleString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
     });
     return finalReport;
