@@ -53,6 +53,7 @@ else:
     handler.setLevel(logging.info)
 app.logger.addHandler(handler)
 
+
 # defaults
 INVOICE_API_PREFIX = ''
 EMAIL_NEW_INVOICE_PATH = INVOICE_API_PREFIX + '/emailNewInvoice'
@@ -104,6 +105,7 @@ def api_error_handler(e):
 
 @app.route('/login', methods=['POST'])
 def login():
+    app.logger.info('Credentials used: %s', request.get_data())
     database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
     if 'username' not in request.json or 'password' not in request.json:
         raise BadRequestError('Please provide username and password in the body of your request')

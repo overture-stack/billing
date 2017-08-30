@@ -99,6 +99,11 @@ function listLowerCase(list: Array<any>){
     );
     return lowerCaseList;
 }
+
+function createFBServiceObject(settings:any): FreshbooksService{
+    return new FreshbooksService(config['freshbooksConfig'], settings.authenticator,
+        logger, config['extra_billing_items']);
+}
 /**
  * Configure routes
  */
@@ -126,7 +131,7 @@ function routes() {
         let report = req.body['report'];
         let price = req.body['price'];
         let invoiceNumber = req.body['invoiceNumber'];
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
+        let fbService = createFBServiceObject(req.app.get('settings'));
         fbService.sendInvoice(emails, report, price,invoiceNumber,listLowerCase(config['oicr_admins']), config['emailRecipients']).then(() => {
             res.send("Invoice generated.");
         }).catch(err => {
@@ -137,7 +142,7 @@ function routes() {
 
     // get list of all invoices
     router.post("/getAllInvoices", function(req, res){
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
+        let fbService = createFBServiceObject(req.app.get('settings'));
         if(req.query.hasOwnProperty("date")){
             // get all invoices generated on a specific date
             let queryDate = req.query.date;
@@ -183,8 +188,9 @@ function routes() {
             res.status(500).send({error: 'Invalid Invoice number.'});
             return;
         }
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
-        fbService.emailExistingInvoice(email,invoiceNumber).then(() => {
+        let fbService = createFBServiceObject(req.app.get('settings'));
+        fbService.emailExistingInvoice(email,invoiceNumber,
+            isAdminUser({"username": req.query['username'], "email":req.query['email']},config['oicr_admins'])).then(() => {
             res.send("Invoice emailed.");
         }).catch(err => {
             res.status(500).send(err);
@@ -204,7 +210,7 @@ function routes() {
             return;
         }
 
-        let fbService = new FreshbooksService(config['freshbooksConfig'], req.app.get('settings').authenticator, logger);
+        let fbService = createFBServiceObject(req.app.get('settings'));
         fbService.getLastInvoiceNumber().then((invoiceNumber) => {
             res.send(invoiceNumber);
         }).catch(err => {

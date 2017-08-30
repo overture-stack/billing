@@ -42,7 +42,7 @@ class FreshBooksAuth {
     private logger:any;
 
     constructor(config: FreshbooksConfig, authFilePath:string, logger:any) {
-        this.freshbooksService = new FreshbooksService(config,null,logger);
+        this.freshbooksService = new FreshbooksService(config,null,logger,null);
         if(authFilePath == null) throw new Error("No Authentication file specified.");
         //check if read/write access is available on the file
         this.checkFilePermissions(authFilePath);

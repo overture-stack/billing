@@ -51,6 +51,14 @@ interface InvoiceLineItem {
 
 }
 
+interface BillingLineItem {
+    name:string;
+    unit_cost: number;
+    qty: number;
+    total_cost: number;
+    desc: string
+}
+
 interface InvoicePresentation {
     id: number;
     theme_font_name: string;
@@ -82,6 +90,9 @@ interface Invoice {
 
 interface FreshbooksInvoiceDefaults {
     terms: string;
+    notesprefix: string;
+    notessuffix: string;
+    cash_only_accounts: Array<string>;
     invoice_due_days: number;
     code: string;
     template: string;
@@ -113,6 +124,7 @@ class FreshbooksService {
      * Dependencies
      */
     private apiConfig: FreshbooksConfig;
+    private extras: any;
     private logger:any;
 
     /**
@@ -128,13 +140,14 @@ class FreshbooksService {
 
     private invoiceSummary :string;
 
-    constructor(config: FreshbooksConfig, authenticator:any, logger:any) {
+    constructor(config: FreshbooksConfig, authenticator:any, logger:any, extras:any) {
         this.apiConfig = config;
         this.agent = new https.Agent({
             rejectUnauthorized: config.rejectInsecure
         });
         this.authenticator = authenticator;
         logger != null? this.logger = logger : this.logger = console;
+        this.extras = extras;
     }
 
 
@@ -153,15 +166,8 @@ class FreshbooksService {
         let customerID : number;
         // collab has PI and PI's admin staff listed for each project but only PI is primary contact in Freshbooks
         // we need to iterate over all project emails to get customer id as only one email will belong to PI
-        for(var idx in customerEmails){
-            let output : any;
-            this.logger.info("Requesting customerID from FreshBooks...");
-            output = await this.getCustomerID(customerEmails[idx]);
-            if(output.length != 0) {
-                customerID = output[0].id;
-                break;
-            }
-        }
+        let custInfo = await this.findCustomerIDParallel(customerEmails);
+        custInfo.length != 0 ? customerID = custInfo[0].id : customerID = null;
         // abort if no customer id could be found
         if(customerID == null || typeof customerID == 'undefined' ){
             let flatEmailString = "";
@@ -169,11 +175,27 @@ class FreshbooksService {
             throw Error("error: Customer account not found:" + flatEmailString);
         }
         this.logger.info("Creating new Invoice in FreshBooks...");
-        let newInvoiceID = await this.createInvoice(report,price,customerID, invoiceNumber);
+        // check if customer is cash only
+        let cashOnly = false; // default to both cash and credit
+        if(custInfo[0].email.indexOf('@') >= 0){
+            // customer is cash only if email domain name is mentioned in the cash only configuration
+            cashOnly =
+                (this.apiConfig.invoiceDefaults.cash_only_accounts.indexOf(
+                    custInfo[0].email.substring(custInfo[0].email.indexOf('@') + 1).toLowerCase()) >= 0);
+        }
+        let newInvoiceID = await this.createInvoice(report,price,customerID, invoiceNumber, cashOnly);
         let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmails,emailRecipients);
         this.logger.info("Emailing Invoice:%s ..." , invoiceNumber, emailInfoJson );
         return this.emailInvoice(newInvoiceID,emailInfoJson);
     };
+
+    // gets customer IDs belonging to each email and returns a customer ID that is common to all email addresses if any
+    private async findCustomerIDParallel(customerEmails:any): Promise<any> {
+        let responses : Array<any>;
+        responses = await Promise.all(customerEmails.map(email => this.getCustomerID(email)));
+        let filteredResponses = _.filter(responses, (item) =>  item.length != 0);
+        return _.intersectionBy(_.chunk(_.flatten(filteredResponses),1),'id');
+    }
 
     private stripAdminEmails(emails:Array<any>, adminEmails:Array<any>): Array<string> {
         let output = [];
@@ -275,12 +297,12 @@ class FreshbooksService {
         return output;
     }
 
-    public async emailExistingInvoice(customerEmail:string, invoiceNumber: string): Promise<any> {
+    public async emailExistingInvoice(customerEmail:string, invoiceNumber: string, admin:boolean): Promise<any> {
         await this.authenticate();
         let invoiceInfo = await this.findInvoice(invoiceNumber);
         let customerInfo = await this.getCustomerInfo(invoiceInfo.customerid);
-        // email if customerEmail exists in one of the contacts
-        if(!this.validEmailForCustomer(customerEmail,customerInfo))
+        // email if customerEmail exists in one of the contacts or user is admin
+        if(!admin && !this.validEmailForCustomer(customerEmail,customerInfo))
             throw Error("error: User account: "+ customerEmail +" does not have access to this Invoice: "+invoiceNumber );
         let emailInfoJson = this.getExistingInvoiceEmailInfo(customerEmail,invoiceNumber);
         return this.emailInvoice(invoiceInfo.id,emailInfoJson);
@@ -389,8 +411,8 @@ class FreshbooksService {
 
     }
 
-    private async createInvoice(report: any, price:any, customerID:number, invoiceNumber:string): Promise<string> {
-        let invoicePayload = this.createInvoicePayLoad(report,price,customerID, invoiceNumber);
+    private async createInvoice(report: any, price:any, customerID:number, invoiceNumber:string, cashOnly: boolean): Promise<string> {
+        let invoicePayload = this.createInvoicePayLoad(report,price,customerID, invoiceNumber,cashOnly);
         return axios.post(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices`,
             invoicePayload,
             {headers: this.headers, httpsAgent: this.agent })
@@ -435,19 +457,24 @@ class FreshbooksService {
             });
     }
 
-    private createInvoicePayLoad(report: any, price:any, customerID:number, invoiceNumber:string) : Invoice {
+    private createInvoicePayLoad(report: any, price:any, customerID:number, invoiceNumber:string, cashOnly:boolean) : Invoice {
 
         // create line items for cpu, volume and image
         let cpuCostItem = this.createCPUCostItem(report, price);
         let volumeCostItem = this.createVolumeCostItem(report, price);
         let imageCostItem = this.createImageCostItem(report, price);
+        let invoiceLines = [cpuCostItem,volumeCostItem,imageCostItem];
+        // check if there extra billing items for this project
+        invoiceLines = invoiceLines.concat(this.createExtraBillingItems(report.project_name));
         let creationDate = new Date();
         let creationDateText = creationDate.toISOString().slice(0,10);
         this.invoiceSummary = INVOICE_TEXT;
         this.invoiceSummary = this.invoiceSummary.replace("${month}", report.month);
         this.invoiceSummary = this.invoiceSummary.replace("${year}", report.year);
         this.invoiceSummary += report.project_name + '".';
-        return {"invoice": {
+        this.invoiceSummary = this.apiConfig.invoiceDefaults.notesprefix + "\n" +
+            this.invoiceSummary + "\n" + this.apiConfig.invoiceDefaults.notessuffix;
+        let output = {"invoice": {
             create_date: creationDateText,
             currency_code: this.apiConfig.invoiceDefaults.code,
             discount_value: price.discount,
@@ -457,77 +484,75 @@ class FreshbooksService {
             terms: this.apiConfig.invoiceDefaults.terms,
             customerid: customerID+"",
             due_offset_days:this.apiConfig.invoiceDefaults.invoice_due_days,
-            lines: [cpuCostItem,volumeCostItem,imageCostItem],
+            lines: invoiceLines,
             presentation:this.apiConfig.invoiceDefaults.presentation,
-            allowed_gatewayids:this.apiConfig.invoiceDefaults.allowed_gatewayids,
+            allowed_gatewayids:null,
             }
-        }
+        };
+        // allow credit cards if customer is not cash only
+        if(!cashOnly)
+            output.invoice.allowed_gatewayids = this.apiConfig.invoiceDefaults.allowed_gatewayids;
+        return output;
 
     };
 
-    private createCPUCostItem(report:any, price:any): InvoiceLineItem {
-        return  {
+    private createExtraBillingItems(projectName:string){
+        let output = [];
+        if(typeof this.extras[projectName] == 'undefined') return output;
+        let that = this;
+        return output.concat(this.extras[projectName].map(item => that.createInvoiceLineItem(item)));
+    }
 
-            amount: {
-                amount: report.cpuCost,
-                code: this.apiConfig.invoiceDefaults.code
-            },
-            description: "",
-            taxName1: this.apiConfig.invoiceDefaults.taxName1,
-            taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
+    private createCPUCostItem(report:any, price:any): InvoiceLineItem {
+
+        return this.createInvoiceLineItem({
             name: "CPU (Core) / Hour:",
+            total_cost: report.cpuCost,
+            desc: "",
             qty: report.cpu,
-            taxName2: null,
-            taxAmount2: null,
-            type: 0,
-            unit_cost: {
-                amount: price.cpuPrice,
-                code: this.apiConfig.invoiceDefaults.code
-            },
-            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
-        };
+            unit_cost:price.cpuPrice
+        });
     }
 
     private createVolumeCostItem(report:any, price:any): InvoiceLineItem {
-        return  {
-
-            amount: {
-                amount: report.volumeCost,
-                code: this.apiConfig.invoiceDefaults.code
-            },
-            description: `Calculated based on: Total Usage/Hour this month: ${report.volume} x ${price.volumePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
-            taxName1: this.apiConfig.invoiceDefaults.taxName1,
-            taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
+        return this.createInvoiceLineItem({
             name: "Volume Storage:",
-            qty: 1,//report.volume : Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
-            taxName2: null,
-            taxAmount2: null,
-            type: 0,
-            unit_cost: {
-                amount: report.volumeCost,//price.volumePrice,
-                code: this.apiConfig.invoiceDefaults.code
-            },
-            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
+            total_cost: report.volumeCost,
+            desc: `Calculated based on: Total Usage/Hour this month: ${report.volume} x ${price.volumePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
+            qty: 1,// Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
+            unit_cost:report.volumeCost,//price.imagePrice,
 
-        };
+        });
     }
 
     private createImageCostItem(report:any, price:any): InvoiceLineItem {
-        return  {
+
+        return this.createInvoiceLineItem({
+            name: "Image Storage:",
+            total_cost: report.imageCost,
+            desc: `Calculated based on: Total Usage/Hour this month: ${report.image} x ${price.imagePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
+            qty: 1,// Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
+            unit_cost:report.imageCost,//price.imagePrice,
+        });
+    }
+
+    private createInvoiceLineItem(lineItem:BillingLineItem): InvoiceLineItem{
+        return {
 
             amount: {
-                amount: report.imageCost,
+                amount: lineItem.total_cost,
                 code: this.apiConfig.invoiceDefaults.code
             },
-            description: `Calculated based on: Total Usage/Hour this month: ${report.image} x ${price.imagePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,            taxName1: this.apiConfig.invoiceDefaults.taxName1,
+            description: lineItem.desc,
+            taxName1: this.apiConfig.invoiceDefaults.taxName1,
             taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
-            name: "Image Storage:",
-            qty: 1,// Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
+            name: lineItem.name,
+            qty: lineItem.qty,
             taxName2: null,
             taxAmount2: null,
             type: 0,
             unit_cost: {
-                amount: report.imageCost,//price.imagePrice,
+                amount: lineItem.unit_cost,
                 code: this.apiConfig.invoiceDefaults.code
             },
             taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
