@@ -105,7 +105,6 @@ def api_error_handler(e):
 
 @app.route('/login', methods=['POST'])
 def login():
-    app.logger.info('Credentials used: %s', request.get_data())
     database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
     if 'username' not in request.json or 'password' not in request.json:
         app.logger.info('Username or password not found in the request')
