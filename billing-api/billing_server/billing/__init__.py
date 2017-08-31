@@ -108,11 +108,13 @@ def login():
     app.logger.info('Credentials used: %s', request.get_data())
     database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
     if 'username' not in request.json or 'password' not in request.json:
+        app.logger.info('Username or password not found in the request')
         raise BadRequestError('Please provide username and password in the body of your request')
     token = sessions.get_new_token(
         auth_url=app.config['AUTH_URI'],
         username=request.json['username'],
         password=request.json['password'])
+    app.logger.info('Username: %s', request.json['username'])
     database.refresh_user_id_map()
     response = Response(status=200, content_type='application/json')
     response.headers['Authorization'] = token['token']
