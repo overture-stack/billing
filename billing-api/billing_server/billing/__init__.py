@@ -53,6 +53,7 @@ else:
     handler.setLevel(logging.info)
 app.logger.addHandler(handler)
 
+
 # defaults
 INVOICE_API_PREFIX = ''
 EMAIL_NEW_INVOICE_PATH = INVOICE_API_PREFIX + '/emailNewInvoice'
@@ -106,11 +107,13 @@ def api_error_handler(e):
 def login():
     database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
     if 'username' not in request.json or 'password' not in request.json:
+        app.logger.info('Username or password not found in the request')
         raise BadRequestError('Please provide username and password in the body of your request')
     token = sessions.get_new_token(
         auth_url=app.config['AUTH_URI'],
         username=request.json['username'],
         password=request.json['password'])
+    app.logger.info('Username: %s', request.json['username'])
     database.refresh_user_id_map()
     response = Response(status=200, content_type='application/json')
     response.headers['Authorization'] = token['token']
@@ -135,8 +138,9 @@ def update_role_map_for_nonpi(role_map, user_id, database):
 def is_admin_user(user_id, database):
     #is user admin
     user_email = projects.get_user_email(user_id, database)
+    if len(user_email) is 0: user_email=""
     # add invoice role if user is admin
-    if database.get_username(user_id) in app.config['OICR_ADMINS'] or user_email in app.config['OICR_ADMINS']:
+    if database.get_username(user_id).lower() in app.config['OICR_ADMINS'] or user_email.lower() in app.config['OICR_ADMINS']:
         return True
     else: return False
 

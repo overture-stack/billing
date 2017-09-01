@@ -15,13 +15,14 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
+import { browserHistory } from 'react-router';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import NotificationSystem from 'react-notification-system';
 import ReactTooltip from 'react-tooltip';
 
 import {fetchInvoices} from '~/services/invoices'; 
 import {sendEmail} from '~/services/email'; 
-
+import user from '~/user';
 
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 import './Invoices.scss';
@@ -42,10 +43,31 @@ class extends Component {
     </span>
   );
 
+  constructor(props) {
+    super(props)
+    if(!user.roles.invoices && user.roles.report) {
+      browserHistory.push('/report');
+    } else if(!user.roles.invoices && !user.roles.report) {
+      user.logout();
+    }
+  }
+
   async componentDidMount() {
     const invoices = await fetchInvoices();
     this.setState({ invoices });
     this.notification = this.refs.notification;
+  }
+
+  formatCurrency = (n) => {
+    return n ? `$${n.toLocaleString(undefined, {minimumFractionDigits: 2})}` : '';
+  }
+
+  customNumberSort = (a, b, order, field) => {
+    if(order === 'desc') {
+      return a[field] - b[field];      
+    } else {
+      return b[field] - a[field];
+    }  
   }
 
   render () {
@@ -75,7 +97,7 @@ class extends Component {
             <TableHeaderColumn
               dataField="current_organization"
               dataSort={true}
-            >Project</TableHeaderColumn>
+            >Organization</TableHeaderColumn>
             <TableHeaderColumn
                 dataField="date"
                 dataSort={true}
@@ -85,32 +107,41 @@ class extends Component {
                 dataSort={true}
             >Invoice Number</TableHeaderColumn>
             <TableHeaderColumn
-                dataField="payment_status"
-                dataSort={true}
-            >Payment Status</TableHeaderColumn>
-            <TableHeaderColumn
                 dataField="invoice_status"
                 dataSort={true}
             >Invoice Status</TableHeaderColumn>
             <TableHeaderColumn
               dataField="cpu_cost"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >CPU Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="image_cost"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >Image Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="volume_cost"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >Volume Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataField="discount"
+              dataAlign="right"
               dataSort={true}
             >Discount%</TableHeaderColumn>
             <TableHeaderColumn
               dataField="total"
+              dataAlign="right"
+              dataFormat={this.formatCurrency}
               dataSort={true}
+              sortFunc={this.customNumberSort}
             >Total Cost</TableHeaderColumn>
             <TableHeaderColumn
               dataAlign="center"

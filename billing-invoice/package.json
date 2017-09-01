@@ -11,20 +11,20 @@
   "author": "",
   "license": "GPLv3",
   "devDependencies": {
-    "@types/handlebars": "^4.0.35",
-    "@types/lodash": "^4.14.71",
-    "@types/node": "^7.0.39",
+    "@types/handlebars": "^4.0.36",
+    "@types/lodash": "^4.14.74",
+    "@types/node": "^7.0.43",
     "@types/request": "0.0.45",
     "lodash": "^4.17.4",
     "tslint": "^4.5.1",
-    "typescript": "^2.4.2"
+    "typescript": "^2.5.1"
   },
   "dependencies": {
     "axios": "^0.15.3",
     "handlebars": "^4.0.6",
-    "json2csv": "^3.10.0",
+    "json2csv": "^3.11.1",
     "lodash": "^4.17.4",
-    "nodemailer": "^4.0.1",
+    "nodemailer": "^4.1.0",
     "request": "^2.79.0",
     "winston": "^2.3.1"
   }

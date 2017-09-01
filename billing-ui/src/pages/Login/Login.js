@@ -111,8 +111,7 @@ class extends Component {
           />
           
           {this.errorMessage && (
-            <div className="alert alert-danger">
-              {this.errorMessage}
+            <div className="alert alert-danger" dangerouslySetInnerHTML={{__html: this.errorMessage}}>
             </div>
           )}
 

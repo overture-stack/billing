@@ -41,8 +41,16 @@ const user = observable({
       this.isLoggingIn = false;
       this.username = username;
       this.token = response.headers.get('authorization');
+      this.roles = await this.setRoles();
+      if(!this.roles.report && !this.roles.invoices) {
+        this.token = '';
+        throw new Error(`
+          Please contact your PI to get access to this application. <br/>
+          If you are a PI and having trouble accessing this page, Please 
+          <a href="https://cancercollaboratory.org/contact-us" target="_blank">Contact Us</a>.`);
+      }
       window.sessionStorage.setItem('username', user.username);
-      this.setRoles();
+      window.sessionStorage.setItem('roles', JSON.stringify(user.roles));
       this.isLoggedIn = true;
     } else if (response.status === 401) {
       throw new Error('Incorrect username or password');
@@ -57,7 +65,7 @@ const user = observable({
   logout: action(async function () {
     console.log('logout');
     user.token = '';
-    localStorage.clear();
+    sessionStorage.clear();
     this.isLoggedIn = false;
     return await Promise.resolve();
   }),
@@ -66,17 +74,16 @@ const user = observable({
     const projects = await fetchProjects();
     const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing'));
     const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice'));
-    this.roles = {
+    return {
       report,
       invoices
     };
-    window.localStorage.setItem('roles', JSON.stringify(user.roles));
   })
 });
 
 user.token = window.sessionStorage.getItem('token');
 user.username = window.sessionStorage.getItem('username');
-user.roles = JSON.parse(window.localStorage.getItem('roles')) || {};
+user.roles = JSON.parse(window.sessionStorage.getItem('roles')) || {};
 user.isLoggedIn = !!user.token;
 autorun(() => window.sessionStorage.setItem('token', user.token));
 window.user = user;
