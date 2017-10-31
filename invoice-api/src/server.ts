@@ -132,7 +132,8 @@ function routes() {
         let price = req.body['price'];
         let invoiceNumber = req.body['invoiceNumber'];
         let fbService = createFBServiceObject(req.app.get('settings'));
-        fbService.sendInvoice(emails, report, price,invoiceNumber,listLowerCase(config['oicr_admins']), config['emailRecipients']).then(() => {
+        fbService.sendInvoice(emails, report, price,invoiceNumber,
+            listLowerCase(config['oicr_admins']), config['emailRecipients'],config['taxes']).then(() => {
             res.send("Invoice generated.");
         }).catch(err => {
             res.status(500).send(err);

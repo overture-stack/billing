@@ -144,6 +144,7 @@ let invoiceGeneration = new Promise((resolve, reject) => {
               }
           }).catch(err =>{
             logger.error("Error while processing Inovice:", err);
+            invoicesProcessed++;
           }));
         });
      });
