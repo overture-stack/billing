@@ -464,13 +464,14 @@ class FreshbooksService {
     private createInvoicePayLoad(report: any, price:any, customerID:number,
                                  invoiceNumber:string, cashOnly:boolean, taxes:any) : Invoice {
 
+        let projectTax = taxes.hasOwnProperty(report.project_name)? taxes[report.project_name] : null;
         // create line items for cpu, volume and image
-        let cpuCostItem = this.createCPUCostItem(report, price,taxes[report.project_name]);
-        let volumeCostItem = this.createVolumeCostItem(report, price,taxes[report.project_name]);
-        let imageCostItem = this.createImageCostItem(report, price,taxes[report.project_name]);
+        let cpuCostItem = this.createCPUCostItem(report, price,projectTax);
+        let volumeCostItem = this.createVolumeCostItem(report, price,projectTax);
+        let imageCostItem = this.createImageCostItem(report, price,projectTax);
         let invoiceLines = [cpuCostItem,volumeCostItem,imageCostItem];
         // check if there extra billing items for this project
-        invoiceLines = invoiceLines.concat(this.createExtraBillingItems(report.project_name,taxes[report.project_name]));
+        invoiceLines = invoiceLines.concat(this.createExtraBillingItems(report.project_name,projectTax));
         let creationDate = new Date();
         let creationDateText = creationDate.toISOString().slice(0,10);
         this.invoiceSummary = INVOICE_TEXT;
@@ -542,27 +543,36 @@ class FreshbooksService {
     }
 
     private createInvoiceLineItem(lineItem:BillingLineItem,projectTax:any): InvoiceLineItem{
-        return {
+        let output = {
 
             amount: {
                 amount: lineItem.total_cost,
                 code: this.apiConfig.invoiceDefaults.code
             },
             description: lineItem.desc,
-            taxName1: projectTax.hasOwnProperty("taxName1")? projectTax["taxName1"] : null,
-            taxAmount1: projectTax.hasOwnProperty("taxAmount1")? projectTax["taxAmount1"] : null,
             name: lineItem.name,
             qty: lineItem.qty,
-            taxName2: projectTax.hasOwnProperty("taxName2")? projectTax["taxName2"] : null,
-            taxAmount2: projectTax.hasOwnProperty("taxAmount2")? projectTax["taxAmount2"] : null,
             type: 0,
             unit_cost: {
                 amount: lineItem.unit_cost,
                 code: this.apiConfig.invoiceDefaults.code
             },
-            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
-
+            taxName1: null,
+            taxAmount1: null,
+            taxName2:null,
+            taxAmount2: null,
+            taxNumber1:null
         };
+
+        // update tax information for project
+        if(projectTax != null){
+            output["taxName1"] = projectTax.hasOwnProperty("taxName1")? projectTax["taxName1"] : null;
+            output["taxAmount1"] = projectTax.hasOwnProperty("taxAmount1")? projectTax["taxAmount1"] : null;
+            output["taxName2"] = projectTax.hasOwnProperty("taxName2")? projectTax["taxName2"] : null;
+            output["taxAmount2"] = projectTax.hasOwnProperty("taxAmount2")? projectTax["taxAmount2"] : null;
+            output["taxNumber1"] = this.apiConfig.invoiceDefaults.taxNumber1;
+        }
+        return output;
     }
 
 }
