@@ -159,8 +159,8 @@ function runDevServer(port) {
     },
     proxy: {
       '/api/**': {
-        target: 'http://142.1.177.54:6000',
-        //target: 'https://billing.cancercollaboratory.org',
+        //target: 'http://142.1.177.54:6000',
+        target: 'https://billing.cancercollaboratory.org',
         secure: false,
         pathRewrite: {'^/api' : ''},
       },
