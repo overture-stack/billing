@@ -28,6 +28,8 @@ from error import APIError, AuthenticationError, BadRequestError
 from usage_queries import Collaboratory
 from service import projects
 from copy import deepcopy
+from flask_cors import CORS
+
 import requests
 
 import calendar
@@ -36,6 +38,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
+CORS(app)
 
 
 app.config.from_object(default)
