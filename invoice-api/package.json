@@ -11,19 +11,19 @@
   "author": "",
   "license": "GPLv3",
   "devDependencies": {
-    "@types/lodash": "^4.14.68",
-    "@types/node": "^7.0.5",
+    "@types/lodash": "^4.14.80",
+    "@types/node": "^7.0.46",
     "tslint": "^4.5.1",
-    "typescript": "^2.4.1"
+    "typescript": "^2.6.1"
   },
   "dependencies": {
     "axios": "^0.15.3",
-    "body-parser": "^1.17.2",
-    "cors": "^2.8.3",
-    "express": "^4.15.3",
+    "body-parser": "^1.18.2",
+    "cors": "^2.8.4",
+    "express": "^4.16.2",
     "lodash": "^4.17.4",
-    "morgan": "^1.8.2",
-    "winston": "^2.3.1"
+    "morgan": "^1.9.0",
+    "winston": "^2.4.0"
   },
   "false": {}
 }

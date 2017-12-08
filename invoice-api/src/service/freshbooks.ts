@@ -158,7 +158,8 @@ class FreshbooksService {
         3. Create Freshbooks Invoice using the data received
         4. Send Invoice using Freshbooks API
      */
-    public async sendInvoice(customerEmails: any, report: any, price: any, invoiceNumber:string, adminUsers:Array<any>, emailRecipients:any): Promise<any> {
+    public async sendInvoice(customerEmails: any, report: any, price: any, invoiceNumber:string,
+                             adminUsers:Array<any>, emailRecipients:any, taxes:any): Promise<any> {
         this.logger.info("Authenticating...");
         await this.authenticate();
         // no need to strip off admin emails as some projcts might have them as PIs
@@ -183,7 +184,7 @@ class FreshbooksService {
                 (this.apiConfig.invoiceDefaults.cash_only_accounts.indexOf(
                     custInfo[0].email.substring(custInfo[0].email.indexOf('@') + 1).toLowerCase()) >= 0);
         }
-        let newInvoiceID = await this.createInvoice(report,price,customerID, invoiceNumber, cashOnly);
+        let newInvoiceID = await this.createInvoice(report,price,customerID, invoiceNumber, cashOnly, taxes);
         let emailInfoJson = this.getNewInvoiceEmailInfo(newInvoiceID,report,customerEmails,emailRecipients);
         this.logger.info("Emailing Invoice:%s ..." , invoiceNumber, emailInfoJson );
         return this.emailInvoice(newInvoiceID,emailInfoJson);
@@ -413,8 +414,9 @@ class FreshbooksService {
 
     }
 
-    private async createInvoice(report: any, price:any, customerID:number, invoiceNumber:string, cashOnly: boolean): Promise<string> {
-        let invoicePayload = this.createInvoicePayLoad(report,price,customerID, invoiceNumber,cashOnly);
+    private async createInvoice(report: any, price:any, customerID:number,
+                                invoiceNumber:string, cashOnly: boolean, taxes: any): Promise<string> {
+        let invoicePayload = this.createInvoicePayLoad(report,price,customerID, invoiceNumber,cashOnly, taxes);
         return axios.post(`${ this.apiConfig.api }/accounting/account/${ this.apiConfig.account_id }/invoices/invoices`,
             invoicePayload,
             {headers: this.headers, httpsAgent: this.agent })
@@ -459,15 +461,17 @@ class FreshbooksService {
             });
     }
 
-    private createInvoicePayLoad(report: any, price:any, customerID:number, invoiceNumber:string, cashOnly:boolean) : Invoice {
+    private createInvoicePayLoad(report: any, price:any, customerID:number,
+                                 invoiceNumber:string, cashOnly:boolean, taxes:any) : Invoice {
 
+        let projectTax = taxes.hasOwnProperty(report.project_name)? taxes[report.project_name] : null;
         // create line items for cpu, volume and image
-        let cpuCostItem = this.createCPUCostItem(report, price);
-        let volumeCostItem = this.createVolumeCostItem(report, price);
-        let imageCostItem = this.createImageCostItem(report, price);
+        let cpuCostItem = this.createCPUCostItem(report, price,projectTax);
+        let volumeCostItem = this.createVolumeCostItem(report, price,projectTax);
+        let imageCostItem = this.createImageCostItem(report, price,projectTax);
         let invoiceLines = [cpuCostItem,volumeCostItem,imageCostItem];
         // check if there extra billing items for this project
-        invoiceLines = invoiceLines.concat(this.createExtraBillingItems(report.project_name));
+        invoiceLines = invoiceLines.concat(this.createExtraBillingItems(report.project_name,projectTax));
         let creationDate = new Date();
         let creationDateText = creationDate.toISOString().slice(0,10);
         this.invoiceSummary = INVOICE_TEXT;
@@ -498,14 +502,14 @@ class FreshbooksService {
 
     };
 
-    private createExtraBillingItems(projectName:string){
+    private createExtraBillingItems(projectName:string,projectTax:any){
         let output = [];
         if(typeof this.extras[projectName] == 'undefined') return output;
         let that = this;
-        return output.concat(this.extras[projectName].map(item => that.createInvoiceLineItem(item)));
+        return output.concat(this.extras[projectName].map(item => that.createInvoiceLineItem(item,projectTax)));
     }
 
-    private createCPUCostItem(report:any, price:any): InvoiceLineItem {
+    private createCPUCostItem(report:any, price:any, projectTax:any): InvoiceLineItem {
 
         return this.createInvoiceLineItem({
             name: "CPU (Core) / Hour:",
@@ -513,10 +517,10 @@ class FreshbooksService {
             desc: "",
             qty: report.cpu,
             unit_cost:price.cpuPrice
-        });
+        },projectTax);
     }
 
-    private createVolumeCostItem(report:any, price:any): InvoiceLineItem {
+    private createVolumeCostItem(report:any, price:any,projectTax:any): InvoiceLineItem {
         return this.createInvoiceLineItem({
             name: "Volume Storage:",
             total_cost: report.volumeCost,
@@ -524,10 +528,10 @@ class FreshbooksService {
             qty: 1,// Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
             unit_cost:report.volumeCost,//price.imagePrice,
 
-        });
+        },projectTax);
     }
 
-    private createImageCostItem(report:any, price:any): InvoiceLineItem {
+    private createImageCostItem(report:any, price:any,projectTax:any): InvoiceLineItem {
 
         return this.createInvoiceLineItem({
             name: "Image Storage:",
@@ -535,31 +539,40 @@ class FreshbooksService {
             desc: `Calculated based on: Total Usage/Hour this month: ${report.image} x ${price.imagePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
             qty: 1,// Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
             unit_cost:report.imageCost,//price.imagePrice,
-        });
+        },projectTax);
     }
 
-    private createInvoiceLineItem(lineItem:BillingLineItem): InvoiceLineItem{
-        return {
+    private createInvoiceLineItem(lineItem:BillingLineItem,projectTax:any): InvoiceLineItem{
+        let output = {
 
             amount: {
                 amount: lineItem.total_cost,
                 code: this.apiConfig.invoiceDefaults.code
             },
             description: lineItem.desc,
-            taxName1: this.apiConfig.invoiceDefaults.taxName1,
-            taxAmount1: this.apiConfig.invoiceDefaults.taxAmount1,
             name: lineItem.name,
             qty: lineItem.qty,
-            taxName2: null,
-            taxAmount2: null,
             type: 0,
             unit_cost: {
                 amount: lineItem.unit_cost,
                 code: this.apiConfig.invoiceDefaults.code
             },
-            taxNumber1:this.apiConfig.invoiceDefaults.taxNumber1
-
+            taxName1: null,
+            taxAmount1: null,
+            taxName2:null,
+            taxAmount2: null,
+            taxNumber1:null
         };
+
+        // update tax information for project
+        if(projectTax != null){
+            output["taxName1"] = projectTax.hasOwnProperty("taxName1")? projectTax["taxName1"] : null;
+            output["taxAmount1"] = projectTax.hasOwnProperty("taxAmount1")? projectTax["taxAmount1"] : null;
+            output["taxName2"] = projectTax.hasOwnProperty("taxName2")? projectTax["taxName2"] : null;
+            output["taxAmount2"] = projectTax.hasOwnProperty("taxAmount2")? projectTax["taxAmount2"] : null;
+            output["taxNumber1"] = this.apiConfig.invoiceDefaults.taxNumber1;
+        }
+        return output;
     }
 
 }

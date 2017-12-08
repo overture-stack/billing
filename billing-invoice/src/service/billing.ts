@@ -125,7 +125,7 @@ class BillingApi {
 
     var date = new Date();
     var firstDay = (new Date(year, month - 1, 1)).toISOString();
-    var lastDay = (new Date(year, month, 0)).toISOString();
+    var lastDay = (new Date(year, month, 0,20)).toISOString();// to offset +4 of UTC time
 
     return await axios.get(
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,

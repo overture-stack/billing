@@ -157,7 +157,11 @@ def get_billing_projects(client, user_id, database):
 
 @app.route('/price', methods=['GET'])
 def get_price():
-    date = parse(request.args.get('date'), ignoretz=True)
+
+    if request.args.get('date') is None:
+        date = datetime.today()
+    else:
+        date = parse(request.args.get('date'), ignoretz=True)
     if request.args.get('projects') is not None:
         projects = request.args.get('projects').split(",")
         return get_per_project_price(date, projects)
