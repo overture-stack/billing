@@ -280,7 +280,7 @@ def generate_report_data(client, user_id, database):
                             report_item['volumeCost'] = 0
                         report_item['volume'] += item['volume']
                         report_item['volumeCost'] += round(parse_decimal(item['volume']) * item['volumePrice'], 4)
-                else:
+                elif 'image' in report_item and report_item['image'] is not None:
                     report_item['image'] += item['image']
                     report_item['imageCost'] += round(parse_decimal(item['image']) * item['imagePrice'], 4)
                 return report
