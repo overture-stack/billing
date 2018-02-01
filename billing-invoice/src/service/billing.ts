@@ -131,8 +131,6 @@ class BillingApi {
       `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,
       {headers: headers, httpsAgent: this.agent})
       .then( response => {
-				this.logger.info("Response for: "+ project.name);
-				this.logger.info(response);
         if (response.data.entries.length > 0) {
           var report = this.getTotals(response.data['entries']);
           return report;
