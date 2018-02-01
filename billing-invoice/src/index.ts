@@ -120,11 +120,12 @@ let invoiceGeneration = new Promise((resolve, reject) => {
             report.project_name = project.project_name;
             let price = perProjectPrices[project.project_name];
             if(typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
-            _.each(price, (value:number, key:string) => {
-              if(key == 'discount')
-                price[key] = (value*100).toFixed(4);
-            });
-              if(mode != EMAIL_MODE){
+						// add discount if there is a difference in total cost vs itemQty * itemRate
+						// this is applicable for scenarios such as when collab offers discounts for usage that was
+						// during the maintenance window
+						addDiscountsToReflectActualUsage(price, report);
+						price["discount"] = price["discount"] ? (price["discount"]*100).toFixed(4) : 0.0000;
+            if(mode != EMAIL_MODE){
                   logger.info(`Generating Invoice data for invoice: ${ project.invoiceNumber } for project: ${ project.project_name }`);
                   generateInvoiceDataJSON(project.emails,project.project_name, project.invoiceNumber,report, price, aggregatedInvoices);
                   invoicesProcessed++;
@@ -205,6 +206,25 @@ function setInvoiceNumbersForProject(projects:any, lastInvoiceNumber:string){
         increment++;
         item["invoiceNumber"] = invoiceNumberPrefix +  leadingZeros + projectSequence;
     });
+}
+
+function addDiscountsToReflectActualUsage(price, report){
+  // ignore if usage is already 100% discounted
+  if(price.discount && price.discount >= 1) return;
+
+  // effective total cost from report
+  let effectiveTotalCost = _.sum([Number(report.cpuCost), Number(report.imageCost), Number(report.volumeCost)]);
+  // total cost based on price and usage
+  let totalCost = _.sum([report.cpu * price.cpuPrice, report.image * price.imagePrice, report.volume * price.volumePrice]);
+  let diff = totalCost - effectiveTotalCost;
+  // adjust for javascript float precision
+  if(diff > 0.001 && totalCost > 0.00){
+    let effectiveDiscount = diff / totalCost;
+		// max discount should be 100%
+    price["discount"] =
+      price["discount"] ? _.clamp(price["discount"] + effectiveDiscount, 1) :
+                          _.clamp(effectiveDiscount, 1);
+	}
 }
 
 function generateInvoiceDataJSON(projectEmails:Array<string>, projectName:string, invoiceNumber:string, report:any, price:any, invoicesAggregator:Array<any>){
