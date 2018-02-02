@@ -144,7 +144,11 @@ class BillingApi {
             imageCost: 0,
           };
         }
-      });
+      }).catch(err =>{
+				this.logger.error("Error fetching report data for:", project.name);
+				this.logger.error("Error :",err);
+
+			});
   }
 
   public async getLastInvoiceNumber() {
