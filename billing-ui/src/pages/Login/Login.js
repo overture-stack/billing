@@ -147,6 +147,7 @@ class extends Component {
                   Login
                 </button>
             </div>
+            <div class="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
           </form>
         </div>
       </div>
