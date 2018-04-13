@@ -1,19 +1,29 @@
 # Billing for Cancer Collaboratory
 
 [![](https://images.microbadger.com/badges/image/collaboratory/billing.svg)](https://microbadger.com/images/collaboratory/billing "Get your own image badge on microbadger.com")
-[![](https://images.microbadger.com/badges/version/collaboratory/billing:1.0.0.svg)](https://microbadger.com/images/collaboratory/billing:1.0.0 "Get your own version badge on microbadger.com")
+[![](https://images.microbadger.com/badges/version/collaboratory/billing:1.0.0.svg)](https://microbadger.com/images/collaboratory/billing:1.0.0 "Get your own version badge on microbadger.com")  
+
+<h1 align="center"> Cancer Collaboratory Billing App </h1> <br>
+<p align="center">
+    <img alt="arch" title="Reporting by cost" src="/docs/billing_cost.png">
+</p>
+<p align="center">
+  Reporting by cost
+</p>  
+<br>
+<p align="center">
+    <img alt="arch" title="Reporting by usage" src="/docs/billing_usage.png">
+</p>
+<p align="center">
+  Reporting by usage
+</p>    
+<br>
 
 ## Modules
 * [billing-api](billing-api/README.md)
 * [billing-ui](billing-ui/README.md)
 
-<p align="center">
-    <img alt="arch" title="Reporting by cost" src="/docs/billing_cost.png" width="480">
-</p>
 
-<p align="center">
-    <img alt="arch" title="Reporting by cost" src="/docs/billing_usage.png" width="480">
-</p>
 
 ## Running as a Docker Container
 Pull the latest image:
