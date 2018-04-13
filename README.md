@@ -7,6 +7,14 @@
 * [billing-api](billing-api/README.md)
 * [billing-ui](billing-ui/README.md)
 
+<p align="center">
+    <img alt="arch" title="Reporting by cost" src="/docs/billing_cost.png" width="480">
+</p>
+
+<p align="center">
+    <img alt="arch" title="Reporting by cost" src="/docs/billing_usage.png" width="480">
+</p>
+
 ## Running as a Docker Container
 Pull the latest image:
 ```bash
