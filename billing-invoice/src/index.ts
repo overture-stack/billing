@@ -222,7 +222,7 @@ function addDiscountsToReflectActualUsage(price, report){
   let diff =
     Big(totalCost.minus(effectiveTotalCost).toPrecision(3));
   // adjust for javascript float precision
-  if(diff.gte(0.001) && totalCost.gt(0.00)){
+  if(diff.gt(0.01) && totalCost.gt(0.00)){
     let effectiveDiscount = Big(diff.div(totalCost).toPrecision(3));
 
 		// max discount should be 100%
