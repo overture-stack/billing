@@ -215,15 +215,17 @@ function addDiscountsToReflectActualUsage(price, report){
 
   // effective total cost from report
   let effectiveTotalCost =
-    Big(_.sum([Number(report.cpuCost), Number(report.imageCost), Number(report.volumeCost)]));
+    Big(report.cpuCost).plus(report.imageCost).plus(report.volumeCost);
   // total cost based on price and usage
   let totalCost =
-    Big(_.sum([report.cpu * price.cpuPrice, report.image * price.imagePrice, report.volume * price.volumePrice]));
+    Big(report.cpu).times(price.cpuPrice)
+      .plus(Big(report.image).times(price.imagePrice))
+      .plus(Big(report.volume).times(price.volumePrice));
   let diff =
-    Big(totalCost.minus(effectiveTotalCost).toPrecision(3));
+    totalCost.minus(effectiveTotalCost);
   // adjust for javascript float precision
   if(diff.gt(0.01) && totalCost.gt(0.00)){
-    let effectiveDiscount = Big(diff.div(totalCost).toPrecision(3));
+    let effectiveDiscount = diff.div(totalCost);
 
 		// max discount should be 100%
     price["discount"] =
