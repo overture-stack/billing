@@ -22,6 +22,7 @@ import { Mailer } from './service/email';
 import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as winston from 'winston';
+import Big from 'big.js';
 
 
 /*
@@ -213,17 +214,23 @@ function addDiscountsToReflectActualUsage(price, report){
   if(price.discount && price.discount >= 1) return;
 
   // effective total cost from report
-  let effectiveTotalCost = _.sum([Number(report.cpuCost), Number(report.imageCost), Number(report.volumeCost)]);
+  let effectiveTotalCost =
+    Big(report.cpuCost).plus(report.imageCost).plus(report.volumeCost);
   // total cost based on price and usage
-  let totalCost = _.sum([report.cpu * price.cpuPrice, report.image * price.imagePrice, report.volume * price.volumePrice]);
-  let diff = totalCost - effectiveTotalCost;
+  let totalCost =
+    Big(report.cpu).times(price.cpuPrice)
+      .plus(Big(report.image).times(price.imagePrice))
+      .plus(Big(report.volume).times(price.volumePrice));
+  let diff =
+    totalCost.minus(effectiveTotalCost);
   // adjust for javascript float precision
-  if(diff > 0.001 && totalCost > 0.00){
-    let effectiveDiscount = diff / totalCost;
+  if(diff.gt(0.01) && totalCost.gt(0.00)){
+    let effectiveDiscount = diff.div(totalCost);
+
 		// max discount should be 100%
     price["discount"] =
-      price["discount"] ? _.clamp(price["discount"] + effectiveDiscount, 1) :
-                          _.clamp(effectiveDiscount, 1);
+      price["discount"] ? _.clamp(Number(effectiveDiscount.plus(price["discount"]).toPrecision(3)), 1) :
+                          _.clamp(Number(effectiveDiscount.toPrecision(3)), 1);
 	}
 }
 
