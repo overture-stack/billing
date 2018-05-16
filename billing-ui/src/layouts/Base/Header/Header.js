@@ -78,7 +78,7 @@ export default class extends Component {
               <a
                   ref="console-link"
                   className="links"
-                  href="https://console.cancercollaboratory.org/horizon/auth/login/?next=/"
+                  href="https://console.cancercollaboratory.org/"
                   target="_blank"
               >Collaboratory Console</a>
             </div>
