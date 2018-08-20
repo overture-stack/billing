@@ -15,6 +15,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import requests
 import json
+from keystoneclient.auth.identity import v3 as auth_identity
+from keystoneclient.auth import token_endpoint
+from keystoneclient import session
+from keystoneclient.v3 import client
 from ..error import AuthenticationError, APIError
 
 
@@ -54,7 +58,7 @@ def token_request(auth_url=None, request_json=None):
     response_json = json.loads(response.content)
     if response.status_code == 401:
         raise AuthenticationError('Token expired. Please login again.')
-    elif response.status_code == 200:
+    elif response.status_code == 200 or response.status_code == 201:
         token = {'token': response.headers.get('X-Subject-Token'),
                  'user_id': response_json['token']['user']['id']}
         return token
@@ -66,7 +70,10 @@ def token_request(auth_url=None, request_json=None):
 # Returns a client
 def validate_token(auth_url=None, token=None):
     try:
-        c = client.Client(auth_url=auth_url, token=token)
+        auth = token_endpoint.Token(auth_url,
+                                    token)
+        sess = session.Session(auth=auth)
+        c = client.Client(session=sess)
         return c
     except Unauthorized:
         # Take their error and resend it as mine
@@ -74,4 +81,4 @@ def validate_token(auth_url=None, token=None):
 
 
 def list_projects(client):
-    return client.tenants.list()
+    return client.projects.list()
