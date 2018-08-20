@@ -30,11 +30,12 @@ def get_new_token(auth_url=None, username=None, password=None):
                 "password": {
                     "user": {
                         "name": username,
-                        "domain": {"id": "default"},
+                        "domain": {"name": "Default"},
                         "password": password
                     }
                 }
-            }}
+            }
+        }
     }
     return token_request(auth_url, request_json)
 
@@ -47,7 +48,8 @@ def renew_token(auth_url=None, token=None):
                 "token": {
                     "id": token
                 }
-            }
+            },
+            "scope": "unscoped"
         }
     }
     return token_request(auth_url, request_json)
@@ -70,8 +72,8 @@ def token_request(auth_url=None, request_json=None):
 # Returns a client
 def validate_token(auth_url=None, token=None):
     try:
-        auth = token_endpoint.Token(auth_url,
-                                    token)
+        auth = auth_identity.Token(
+            auth_url=auth_url, token=token, unscoped=True)
         sess = session.Session(auth=auth)
         c = client.Client(session=sess)
         return c
@@ -80,5 +82,5 @@ def validate_token(auth_url=None, token=None):
         raise AuthenticationError('Authentication required: Invalid token')
 
 
-def list_projects(client):
-    return client.projects.list()
+def list_projects(client, user_id):
+    return client.projects.list(user=user_id)

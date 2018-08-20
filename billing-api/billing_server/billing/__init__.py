@@ -126,7 +126,7 @@ def login():
 @app.route('/projects', methods=['GET'])
 @authenticate
 def get_projects(client, user_id, database):
-    role_map = projects.get_tenants(user_id, database, sessions.list_projects(client))
+    role_map = projects.get_tenants(user_id, database, sessions.list_projects(client, user_id))
     update_role_map_for_nonpi(role_map,user_id,database)
     return role_map
 
@@ -197,7 +197,7 @@ def generate_report_data(client, user_id, database):
     if projects is not None:
         project_list = projects.split(',')
     else:
-        project_list = map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client))
+        project_list = map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client,user_id))
 
     role_map = database.get_user_roles(user_id)
 
