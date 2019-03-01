@@ -222,7 +222,6 @@ function setInvoiceNumbersForProject(projects:any, lastInvoiceNumber:string){
     let invoiceNumberPrefix = config['invoiceNumberPrefix'];
     lastInvoiceNumber = lastInvoiceNumber.replace(invoiceNumberPrefix,"");
     let lastSequence = Number(lastInvoiceNumber);
-    let leadingZeros = lastInvoiceNumber.replace(lastSequence + "","");
     projects.map((item) => {
         let projectSequence = lastSequence + increment;
         increment++;
