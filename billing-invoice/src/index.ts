@@ -196,16 +196,36 @@ function combineProjectUsers(projects:Array<any>): Array<any> {
     return _.values(output);
 }
 
+function buildInvoiceNumber(prefix:string, projectSequence:number, maxChars:number) : string {
+  let separator = '-';
+  let numCharsInSequence = projectSequence.toString().length;
+  let numLeadingZeros = maxChars - separator.length - numCharsInSequence - prefix.length;
+
+  // Check for errors
+  if (numLeadingZeros < 0){
+    // how do you handle the case where you cannot make anymore invoices?
+  }
+
+  // Build the output
+  let output = prefix+separator;
+  var i;
+  for (i =0 ; i < numLeadingZeros ; i++){
+    output += '0';
+  }
+  output += projectSequence;
+  return output;
+}
+
 function setInvoiceNumbersForProject(projects:any, lastInvoiceNumber:string){
     let increment = 1;
+    let maxCharsInInvoiceNumber = 10;
     let invoiceNumberPrefix = config['invoiceNumberPrefix'];
     lastInvoiceNumber = lastInvoiceNumber.replace(invoiceNumberPrefix,"");
     let lastSequence = Number(lastInvoiceNumber);
-    let leadingZeros = lastInvoiceNumber.replace(lastSequence + "","");
     projects.map((item) => {
         let projectSequence = lastSequence + increment;
         increment++;
-        item["invoiceNumber"] = invoiceNumberPrefix +  leadingZeros + projectSequence;
+        item["invoiceNumber"] = buildInvoiceNumber(invoiceNumberPrefix, projectSequence, maxCharsInInvoiceNumber);
     });
 }
 
