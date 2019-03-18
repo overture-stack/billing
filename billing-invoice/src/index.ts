@@ -197,9 +197,8 @@ function combineProjectUsers(projects:Array<any>): Array<any> {
 }
 
 function buildInvoiceNumber(prefix:string, projectSequence:number, maxChars:number) : string {
-  let separator = '-';
   let numCharsInSequence = projectSequence.toString().length;
-  let numLeadingZeros = maxChars - separator.length - numCharsInSequence - prefix.length;
+  let numLeadingZeros = maxChars - numCharsInSequence - prefix.length;
 
   // Check for errors
   if (numLeadingZeros < 0){
@@ -207,7 +206,7 @@ function buildInvoiceNumber(prefix:string, projectSequence:number, maxChars:numb
   }
 
   // Build the output
-  let output = prefix+separator;
+  let output = prefix;
   var i;
   for (i =0 ; i < numLeadingZeros ; i++){
     output += '0';
