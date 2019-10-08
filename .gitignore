@@ -195,3 +195,9 @@ invoice-api/node_modules/
 
 *.db
 *.auth
+
+# Mac files
+.DS_Store
+
+#rsa
+rsa
