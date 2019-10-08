@@ -1,9 +1,10 @@
-# Billing for Cancer Collaboratory
+<h1 align="center">Cancer Collaboratory Billing App</h1>
+
+<p align="center"><img alt="General Availability" title="General Availability" src="http://www.overture.bio/img/progress-horizontal-GA.svg" width="320" /></p>
 
 [![](https://images.microbadger.com/badges/image/collaboratory/billing.svg)](https://microbadger.com/images/collaboratory/billing "Get your own image badge on microbadger.com")
 [![](https://images.microbadger.com/badges/version/collaboratory/billing:1.0.0.svg)](https://microbadger.com/images/collaboratory/billing:1.0.0 "Get your own version badge on microbadger.com")  
 
-<h1 align="center"> Cancer Collaboratory Billing App </h1> <br>
 <p align="center">
     <img alt="arch" title="Reporting by cost" src="/docs/billing_cost.png">
 </p>
