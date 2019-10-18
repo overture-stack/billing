@@ -26,12 +26,12 @@ class Collaboratory:
         self.database = records.Database(database_url)
         logger.info('Successfully connected to database')
         self.user_map = {}
-        if initialized:
-            self.refresh_user_id_map()
+        if (initialized):
+          self.refresh_user_id_map()
 
     def close(self):
         if hasattr(self, 'database'):
-            self.database.close()
+          self.database.close()
 
     def get_instance_core_hours(self, start_date, end_date, billing_projects, user_projects, user_id):
 

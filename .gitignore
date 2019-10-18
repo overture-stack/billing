@@ -201,3 +201,6 @@ invoice-api/node_modules/
 
 #rsa
 rsa
+
+#configuration
+globalConfig.json

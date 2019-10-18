@@ -20,16 +20,17 @@ from functools import wraps
 
 from dateutil.parser import parse
 from dateutil.relativedelta import *
-from flask import Flask, request, Response, abort
+from flask import Flask, request, Response, abort, jsonify, make_response
 
-from auth import sessions
-from config import default
-from error import APIError, AuthenticationError, BadRequestError
-from usage_queries import Collaboratory
-from service import projects
+from .auth import sessions
+from .config import default
+from .error import APIError, AuthenticationError, BadRequestError
+from .usage_queries import Collaboratory
+from .service import projects
 from copy import deepcopy
 from flask_cors import CORS
 
+from functools import reduce
 import requests
 
 import calendar
@@ -93,7 +94,7 @@ def authenticate(func):
             new_token = sessions.renew_token(app.config['AUTH_URI'], token)
             database = Collaboratory(app.config['MYSQL_URI'], app.logger, app.config['BILLING_ROLE'])
             retval = func(c, new_token['user_id'], database, *args, **kwargs)
-            response = Response(json.dumps(retval, default=parse_decimal), status=200, content_type='application/json')
+            response = make_response(jsonify(retval), 200)
             response.headers['Authorization'] = new_token['token']
             return response
         else:
@@ -127,8 +128,8 @@ def login():
 @authenticate
 def get_projects(client, user_id, database):
     role_map = projects.get_tenants(user_id, database, sessions.list_projects(client, user_id))
-    update_role_map_for_nonpi(role_map,user_id,database)
-    return role_map
+    update_role_map_for_nonpi(role_map, user_id, database)
+    return list(role_map)
 
 
 def update_role_map_for_nonpi(role_map, user_id, database):
@@ -178,7 +179,6 @@ def generate_report_data(client, user_id, database):
     projects = request.args.get('projects')
     user = request.args.get('user')
     bucket_size = request.args.get('bucket')
-
     try:
         if 'fromDate' in request.args:
             original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
