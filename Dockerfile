@@ -1,6 +1,6 @@
 # Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Install
@@ -10,25 +10,34 @@ RUN \
   apt-get -y upgrade && \
   apt-get install -y build-essential libssl-dev && \
   apt-get install -y curl git man vim wget && \
-  apt-get install -y python2.7 python2.7-dev virtualenv nginx libmysqlclient-dev
+  apt-get install -y python3 python3-dev virtualenv nginx libmysqlclient-dev
 
 # NODE & NPM
-RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash
-RUN source ~/.nvm/nvm.sh && nvm install 6.10.3 && npm install -g npm
-
-RUN mkdir -p /srv
+RUN \
+  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash && \
+  source ~/.nvm/nvm.sh && \
+  nvm install 6.10.3 && \
+  npm install -g npm && \
+  mkdir -p /srv
 
 ADD billing-api /srv/billing-api
 ADD billing-ui /srv/billing-ui
 
 # UI
 WORKDIR /srv/billing-ui
-RUN source ~/.nvm/nvm.sh && npm install && npm run build
+RUN  \
+  source ~/.nvm/nvm.sh && \
+  npm install && \
+  npm rebuild node-sass && \
+  npm run build
 
 # API
 WORKDIR /srv/billing-api
-RUN virtualenv -p python2.7 env
-RUN source env/bin/activate && pip install -r requirements.txt && pip install gunicorn
+RUN \
+  virtualenv -p python3 env && \
+  source env/bin/activate && \
+  pip install -r requirements.txt && \
+  pip install gunicorn
 
 # NGINX
 RUN rm -f /etc/nginx/sites-enabled/default

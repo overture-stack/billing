@@ -5,7 +5,6 @@
 * MySQL development libraries
 * Virtualenv
 
-A configuration file `globalConfig.json` should be created and edited in root folder first. Read this [link](../README.md#L34)
 ## Building / Running
 
 ```bash
