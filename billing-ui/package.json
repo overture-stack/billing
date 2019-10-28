@@ -58,7 +58,7 @@
     "bootstrap": "3.3.7",
     "encode-uri-query": "^1.0.1",
     "gsap-promise": "2.0.0",
-    "highcharts": "^5.0.14",
+    "highcharts": "^7.2.0",
     "mobx": "2.4.4",
     "mobx-react": "3.5.5",
     "moment": "2.14.1",
