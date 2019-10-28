@@ -21,6 +21,7 @@ def initialize_database(database):
     database.database.query(keystone_assignment_schema)
     database.database.query(keystone_role_schema)
     database.database.query(keystone_user_schema)
+    database.database.query(keystone_local_user_schema)
     database.database.query(keystone_create_role,
                             role_id=BILLING_ROLE_ID,
                             role_name='billing')
@@ -54,7 +55,6 @@ def create_user(database, user_id, username):
         ''',
         user_id=user_id,
         username=username)
-
 
 def delete_user(database, user_id):
     database.database.query(
@@ -107,7 +107,7 @@ def assign_role(database, user_id, project_id, billing=False):
         role_id=role_id)
 
 
-def create_instance(database, user_id, project_id, vcpus, created_at, deleted_at):
+def create_instance(uuid, database, user_id, project_id, vcpus, created_at, deleted_at):
     database.database.query(
         '''
         INSERT INTO
@@ -124,7 +124,7 @@ def create_instance(database, user_id, project_id, vcpus, created_at, deleted_at
 
         VALUES
           (
-            :uuid_val,
+            :uuid,
             :user_id,
             :project_id,
             :vcpus,
@@ -133,7 +133,7 @@ def create_instance(database, user_id, project_id, vcpus, created_at, deleted_at
             'active'
           );
         ''',
-        uuid_val=uuid.uuid4().hex,
+        uuid=uuid,
         user_id=user_id,
         project_id=project_id,
         vcpus=vcpus,
@@ -204,7 +204,8 @@ nova_instances_schema = '''
     user_id     VARCHAR (255),
     project_id  VARCHAR (255),
     vm_state    VARCHAR (255),
-    vcpus       INT (11)
+    vcpus       INT (11),
+    uuid        VARCHAR (255)
   );
   '''
 
@@ -251,6 +252,15 @@ keystone_user_schema = '''
   (
     id          VARCHAR (64),
     name        VARCHAR (255)
+  );
+  '''
+
+keystone_local_user_schema = '''
+  CREATE TABLE IF NOT EXISTS keystone.local_user
+  (
+    id          VARCHAR (64),
+    name        VARCHAR (255),
+    user_id     VARCHAR (64)
   );
   '''
 

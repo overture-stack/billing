@@ -4,11 +4,11 @@ import logging
 import mock
 from flask import Flask, request, Response
 
-from billing_server.billing import authenticate, login, get_projects, app, usage_queries
+from billing_server.billing import authenticate, login, get_projects, app, usage_queries, auth
 from billing_server.billing.auth import sessions
 
-from mock_openstack_database_setup import initialize_database, teardown_database
-
+from .mock_openstack_database_setup import initialize_database, teardown_database
+from billing_server.billing.config import default
 
 class MyTestCase(unittest.TestCase):
 
@@ -21,11 +21,9 @@ class MyTestCase(unittest.TestCase):
 
     def setUp(self):
         app.config['TESTING'] = True
-        app.config['MYSQL_URI'] = 'mysql://root@localhost'
+        app.config['MYSQL_URI'] = default.TEST_MYSQL_URI
         self.app = app.test_client()
-        self.database = usage_queries.Collaboratory('mysql://root@localhost',
-                                                    logging.getLogger('test_usage_queries'),
-                                                    False)
+        self.database = usage_queries.Collaboratory(default.TEST_MYSQL_URI, logging.getLogger('test_usage_queries'), 'billing', False)
         initialize_database(self.database)
 
     def tearDown(self):

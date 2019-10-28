@@ -1,14 +1,14 @@
 # Billing API
 
 ## Requirements
-* Python2.7 & pip
+* Python3 & pip
 * MySQL development libraries
 * Virtualenv
 
 ## Building / Running
 
 ```bash
-virtualenv -p python2 env
+virtualenv -p python3 env
 source env/bin/activate
 pip install -r requirements.txt
 python run.py

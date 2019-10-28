@@ -18,6 +18,7 @@ SECRET_KEY = 'random, secret, super duper secret key'
 AUTH_URI = 'http://142.1.177.54:5000/v2.0'  # Keystone/Identity API endpoint
 INVOICE_API = 'http://localhost:4000/invoice'
 MYSQL_URI = 'mysql://root:test@142.1.177.54:3306'  # Mysql URI
+TEST_MYSQL_URL =  'mysql://<user_name>:<password>@localhost:3306' # Mysql URI for test
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
 #FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
 FLASK_LOG_FILE = './logs/billing.log'

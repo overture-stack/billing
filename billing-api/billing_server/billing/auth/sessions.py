@@ -15,9 +15,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import requests
 import json
-from keystoneclient.auth.identity import v3 as auth_identity
+from keystoneauth1.identity import v3 as auth_identity
 from keystoneclient.auth import token_endpoint
-from keystoneclient import session
+from keystoneauth1 import session
 from keystoneclient.v3 import client
 from ..error import AuthenticationError, APIError
 
