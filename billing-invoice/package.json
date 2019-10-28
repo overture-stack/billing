@@ -1,6 +1,5 @@
 {
   "name": "billing-invoice",
-  "repository": "billing/billing-invoice",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,13 +9,14 @@
   },
   "keywords": [],
   "author": "",
-  "license": "GPL-3.0-or-later",
+  "license": "GPLv3",
   "devDependencies": {
+    "@types/big.js": "^4.0.4",
     "@types/handlebars": "^4.0.36",
-    "@types/lodash": "^4.14.100",
+    "@types/lodash": "^4.14.149",
     "@types/node": "^7.0.52",
     "@types/request": "0.0.45",
-    "@types/big.js": "^4.0.4",
+    "lodash": "^4.17.15",
     "tslint": "^4.5.1",
     "typescript": "^2.7.1"
   },
@@ -25,7 +25,6 @@
     "big.js": "^5.0.3",
     "handlebars": "^4.5.3",
     "json2csv": "^3.11.5",
-    "lodash": "^4.17.15",
     "nodemailer": "^4.4.2",
     "request": "^2.83.0",
     "winston": "^2.4.0"
