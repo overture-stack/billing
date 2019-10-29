@@ -14,9 +14,9 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import { Link } from 'react-router'
-import animate from 'gsap-promise';
+import animate from '@jam3/gsap-promise';
 import user from '~/user';
 
 import './Header.scss';
@@ -42,8 +42,8 @@ const elementAnimationStates = {
 };
 
 export default class extends Component {
-  componentDidMount () {
-    this.initUIState();  
+  componentDidMount() {
+    this.initUIState();
   }
 
   initUIState() {
@@ -57,7 +57,7 @@ export default class extends Component {
   async animateIn() {
     const elements = [this.refs.logo, this.refs.logout];
     await animate.to(this.refs.container, 0.1, containerAnimationStates.idle);
-    await animate.staggerTo(elements, 0.2, Object.assign(elementAnimationStates.idle, {clearProps: 'all'}), 0.1);
+    await animate.staggerTo(elements, 0.2, Object.assign(elementAnimationStates.idle, { clearProps: 'all' }), 0.1);
   }
 
   render() {
@@ -66,33 +66,33 @@ export default class extends Component {
         <div
           ref="topbar"
           className="topbar">
-            <div
-              className="link-container">
-              <a
-                  ref="website-link"
-                  className="links"
-                  href="http://www.cancercollaboratory.org"
-                  target="_blank"
-              >Collaboratory Website</a>
-              <span className="links"> | </span>
-              <a
-                  ref="console-link"
-                  className="links"
-                  href="https://console.cancercollaboratory.org/"
-                  target="_blank"
-              >Collaboratory Console</a>
-            </div>
-            <div
-              className="user-container"
-            >
-              <span
-                className="glyphicon glyphicon-user user-icon">
-              </span>
-              <span
-                className="user-logout"
-                onClick={() => user.logout()}
-              >Logout</span>
-            </div>
+          <div
+            className="link-container">
+            <a
+              ref="website-link"
+              className="links"
+              href="http://www.cancercollaboratory.org"
+              target="_blank"
+            >Collaboratory Website</a>
+            <span className="links"> | </span>
+            <a
+              ref="console-link"
+              className="links"
+              href="https://console.cancercollaboratory.org/"
+              target="_blank"
+            >Collaboratory Console</a>
+          </div>
+          <div
+            className="user-container"
+          >
+            <span
+              className="glyphicon glyphicon-user user-icon">
+            </span>
+            <span
+              className="user-logout"
+              onClick={() => user.logout()}
+            >Logout</span>
+          </div>
         </div>
         <div className="Header">
           <div>
@@ -104,7 +104,7 @@ export default class extends Component {
           </div>
           <div>
             <ul className="menu">
-              { user.roles.report &&
+              {user.roles.report &&
                 <li>
                   <Link
                     to="/report"
@@ -114,9 +114,9 @@ export default class extends Component {
                   </Link>
                 </li>
               }
-              { user.roles.invoices &&
+              {user.roles.invoices &&
                 <li>
-                  <Link 
+                  <Link
                     to="/invoices"
                     activeClassName="active"
                   >

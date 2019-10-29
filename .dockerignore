@@ -1,0 +1,12 @@
+**/.git
+**/.DS_Store
+**/node_modules
+**/env
+**/rsa
+**/.gitignore
+**/.cache
+**/.pytest_cache
+**/build
+*.md
+Dockerfile
+.dockerignore
