@@ -60,7 +60,7 @@
         "antd": "^2.13.11",
         "bootstrap": "3.4.1",
         "encode-uri-query": "^1.0.1",
-        "highcharts": "5.0.14",
+        "highcharts": "^6.1.0",
         "jquery": "^3.4.1",
         "mobx": "2.4.4",
         "mobx-react": "3.5.5",
