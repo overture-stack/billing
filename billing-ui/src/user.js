@@ -14,18 +14,18 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import {observable, action, autorun} from 'mobx';
+import { observable, action, autorun } from 'mobx';
 import _ from 'lodash';
 
-import {fetchHeaders} from '~/utils';
-import {fetchProjects} from '~/services/projects'; 
+import { fetchHeaders } from '~/utils';
+import { fetchProjects } from '~/services/projects';
 
 const user = observable({
   username: '',
   isLoggedIn: false,
   isLoggingIn: false,
   token: '',
-  
+
   login: action(async function (username, password) {
     this.isLoggedIn = false;
     this.isLoggingIn = true;
@@ -42,7 +42,8 @@ const user = observable({
       this.username = username;
       this.token = response.headers.get('authorization');
       this.roles = await this.setRoles();
-      if(!this.roles.report && !this.roles.invoices) {
+
+      if (!this.roles.report && !this.roles.invoices) {
         this.token = '';
         throw new Error(`
           Please contact your PI to get access to this application. <br/>
@@ -70,8 +71,10 @@ const user = observable({
     return await Promise.resolve();
   }),
 
-  setRoles: action(async function() {
+  setRoles: action(async function () {
     const projects = await fetchProjects();
+    console.log('projects', projects);
+
     const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing'));
     const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice'));
     return {

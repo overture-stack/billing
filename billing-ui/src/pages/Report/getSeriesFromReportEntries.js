@@ -15,19 +15,18 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import moment from 'moment';
-import _ from 'lodash';
-import {aggregateEntries} from './aggregateEntries';
+import { aggregateEntries } from './aggregateEntries';
 
 // Note: Chang's idea  - chang
 const metricNameMap = {
-    'cpuCost': 'cpu',
-    'imageCost': 'image',
-    'volumeCost': 'volume',
+  'cpuCost': 'cpu',
+  'imageCost': 'image',
+  'volumeCost': 'volume',
 };
 
-export function getSeriesFromReportEntries(entries, {shouldShowCost}={shouldShowCost: false}) {
+export function getSeriesFromReportEntries(entries, { shouldShowCost } = { shouldShowCost: false }) {
   const aggregatedEntries = aggregateEntries(entries, 'fromDate');
-  const metrics = shouldShowCost? ['cpuCost', 'imageCost', 'volumeCost']: ['cpu', 'image', 'volume'];
+  const metrics = shouldShowCost ? ['cpuCost', 'imageCost', 'volumeCost'] : ['cpu', 'image', 'volume'];
   return metrics
     .map(metric => ({
       name: metricNameMap[metric] || metric,
