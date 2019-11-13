@@ -204,3 +204,7 @@ rsa
 
 #log folder
 logs/
+
+#Customize configuration
+configs.py
+configs.js
