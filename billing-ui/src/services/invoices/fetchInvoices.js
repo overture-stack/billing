@@ -14,8 +14,8 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import {fetchHeaders} from '~/utils';
-import user from '~/user';
+import fetchHeaders from '../../utils/fetchHeaders';
+import user from '../../user';
 
 export async function fetchInvoices() {
 
@@ -27,6 +27,6 @@ export async function fetchInvoices() {
   const data = await response.json();
   user.token = response.headers.get('authorization');
   if (response.status === 401) user.logout();
-    
+
   return data;
 }

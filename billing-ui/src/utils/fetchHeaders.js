@@ -14,11 +14,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import {computed} from 'mobx';
-import user from '~/user.js';
-
-export const fetchHeaders = computed(() => ({
+import { computed } from 'mobx';
+import user from '../user';
+const fetchHeaders = computed(() => ({
   Authorization: `Bearer ${user.token}`,
   Accept: 'application/json',
   'content-type': 'application/json',
 }));
+export default fetchHeaders;

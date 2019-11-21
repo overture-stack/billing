@@ -15,9 +15,9 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-import { Link } from 'react-router'
+import { Link } from 'react-router';
 import animate from '@jam3/gsap-promise';
-import user from '~/user';
+import user from '../../../user';
 
 import './Header.scss';
 
@@ -98,7 +98,7 @@ export default class extends Component {
           <div>
             <img
               className="logo"
-              src={require('~/assets/images/logo.svg')}
+              src={require('../../../assets/images/logo.svg')}
               alt="Cancer Genome COLLABORATORY"
             />
           </div>

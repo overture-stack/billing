@@ -18,7 +18,7 @@ import React, { Component } from 'react';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import animate from '@jam3/gsap-promise';
-import user from '~/user';
+import user from '../../user';
 
 import './Login.scss';
 
@@ -106,7 +106,7 @@ class extends Component {
             ref="logo"
             alt="Cancer Genome COLLABORATORY"
             className="logo"
-            src={require('~/assets/images/logo-full.png')}
+            src={require('../../assets/images/logo-full.png')}
           />
 
           {this.errorMessage && (

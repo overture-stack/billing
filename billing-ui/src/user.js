@@ -17,8 +17,8 @@
 import { observable, action, autorun } from 'mobx';
 import _ from 'lodash';
 
-import { fetchHeaders } from '~/utils';
-import { fetchProjects } from '~/services/projects';
+import fetchHeaders from './utils/fetchHeaders';
+import fetchProjects from './services/projects/fetchProjects';
 
 const user = observable({
   username: '',

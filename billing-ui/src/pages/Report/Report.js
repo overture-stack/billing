@@ -24,7 +24,7 @@ import { aggregateEntries } from './aggregateEntries';
 import moment from 'moment';
 
 import CHART_SETTINGS from './CHART_SETTINGS';
-import user from '~/user';
+import user from '../../user';
 
 import { Button, DatePicker, Radio } from 'antd';
 const { MonthPicker } = DatePicker;
@@ -40,8 +40,8 @@ import 'react-select/dist/react-select.css';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 
-import { fetchReport } from '~/services/reports';
-import { fetchProjects } from '~/services/projects';
+import fetchReport from '../../services/reports/fetchReport';
+import fetchProjects from '../../services/projects/fetchProjects';
 import { getSeriesFromReportEntries } from './getSeriesFromReportEntries';
 
 const ReactHighcharts = require('react-highcharts').withHighcharts(require('highcharts'));
@@ -354,11 +354,13 @@ class extends Component {
               checked={this.shouldShowCost}
               onClick={() => { this.shouldShowCost = true }}
               value={true}
+              key="RadioButton1"
             >Cost</RadioButton>
             <RadioButton
               checked={!this.shouldShowCost}
               onClick={() => { this.shouldShowCost = false }}
               value={false}
+              key="RadioButton2"
             >Usage</RadioButton>
           </RadioGroup>
           <div
@@ -459,7 +461,7 @@ class extends Component {
             hover={true}
             pagination={true}
             ignoreSinglePage
-            keyField="key"
+            keyField="fromDate"
             options={{
               hideSizePerPage: true,
               sizePerPage: 25,
@@ -482,6 +484,7 @@ class extends Component {
               dataField="projectId"
               hidden={true}
               dataSort={true}
+              // isKey={true}
               export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
             >Project ID</TableHeaderColumn>
             <TableHeaderColumn

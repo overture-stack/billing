@@ -33,6 +33,9 @@ module.exports = {
   },
 
   settings: {
+    "react": {
+      "version": "detect"
+    },
     'import/ignore': [
       'node_modules',
       '\\.(json|css|jpg|png|gif|eot|svg|ttf|woff|woff2|mp4|webm)$',
@@ -184,7 +187,6 @@ module.exports = {
 
     // https://github.com/evcohen/eslint-plugin-jsx-a11y/tree/master/docs/rules
     'jsx-a11y/aria-role': 'warn',
-    'jsx-a11y/img-has-alt': 'warn',
     'jsx-a11y/img-redundant-alt': 'warn',
     'jsx-a11y/no-access-key': 'warn',
 

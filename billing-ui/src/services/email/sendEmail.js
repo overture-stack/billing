@@ -14,8 +14,8 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import {fetchHeaders} from '~/utils';
-import user from '~/user';
+import fetchHeaders from '../../utils/fetchHeaders';
+import user from '../../user';
 
 export function sendEmail(invoice, notification) {
   notification.addNotification({
@@ -29,7 +29,7 @@ export function sendEmail(invoice, notification) {
     notification.clearNotifications();
     user.token = response.headers.get('authorization');
     if (response.status === 401) user.logout();
-    else if(response.status === 200) {
+    else if (response.status === 200) {
       notification.addNotification({
         message: 'Email Sent!',
         level: 'success',
