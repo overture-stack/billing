@@ -3,10 +3,10 @@
 ## Getting Started ##
 
 Software is made better by people like you. If you wish to contribute code to the project we can definitely help you get started. Before continuing please read through this document to ensure that you
-understand the expectations set fourth for anyone wishing to make this project better.
+understand the expectations set forth for anyone wishing to make this project better.
 
 * Github is our project source home so please ensure you have a registered Github account before continuing.
-* We use a variant of the [Gitflow](https://datasift.github.io/gitflow/index.html)  workflow for our version control management. This means that your
+* We use a variant of the [Gitflow](https://datasift.github.io/gitflow/index.html) workflow for our version control management. This means that your
 contributions will be managed using [git branching](http://nvie.com/posts/a-successful-git-branching-model/) and Pull Requests.
 * Our main stable branch is ```develop``` so please clone and perform your Pull Requests (PRs) towards this branch.
 
