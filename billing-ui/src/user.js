@@ -73,8 +73,6 @@ const user = observable({
 
   setRoles: action(async function () {
     const projects = await fetchProjects();
-    console.log('projects', projects);
-
     const report = !!_.find(projects, (project) => _.includes(project.roles, 'billing'));
     const invoices = !!_.find(projects, (project) => _.includes(project.roles, 'invoice'));
     return {

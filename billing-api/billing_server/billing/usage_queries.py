@@ -231,7 +231,7 @@ class Collaboratory:
             ''', user_id=user_id)
 
         result_list = results.all(as_dict=True)
-        role_map = {}
+        role_map = {} # {[project_id]: [role_name, role_name],}
         for result in result_list:
             if result['project_id'] in role_map:
                 role_map[result['project_id']].append(result['name'].lower())

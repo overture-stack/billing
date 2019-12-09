@@ -128,15 +128,16 @@ def login():
 @authenticate
 def get_projects(client, user_id, database):
     role_map = projects.get_tenants(user_id, database, sessions.list_projects(client, user_id))
-    update_role_map_for_nonpi(role_map, user_id, database)
-    return list(role_map)
+    role_map_list = list(role_map)
+    update_role_map_for_nonpi(role_map_list, user_id, database)
+    return role_map_list
 
 
-def update_role_map_for_nonpi(role_map, user_id, database):
+def update_role_map_for_nonpi(role_map_list, user_id, database):
     if is_admin_user(user_id, database):
-        for elem in role_map:
+        for elem in role_map_list:
             elem['roles'].append(app.config['INVOICE_ROLE'])
-        return
+    return 
 
 
 def is_admin_user(user_id, database):
@@ -197,7 +198,7 @@ def generate_report_data(client, user_id, database):
     if projects is not None:
         project_list = projects.split(',')
     else:
-        project_list = map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client,user_id))
+        project_list = list(map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client,user_id)))
 
     role_map = database.get_user_roles(user_id)
 
@@ -379,7 +380,7 @@ def get_last_invoice_number(client, user_id, database):
         request_payload = dict()
         if(request.json is not None): request_payload = request.json
         retval = requests.get(url, params={'username':user_name, 'email':user_email})
-        if retval.content.find("error") >= 0:
+        if str(retval.content, 'utf-8').find("error") >= 0:
             raise StandardError(retval.content)
         return retval.content
     else:

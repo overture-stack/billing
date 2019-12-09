@@ -87,7 +87,7 @@ export default
           hover={true}
           pagination={false}
           ignoreSinglePage
-          // keyField="key"
+          keyField="key"
           options={{
             hideSizePerPage: true,
             sizePerPage: 10,
