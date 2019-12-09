@@ -1,6 +1,6 @@
 {
   "smtpConfig": {
-    "host": "<fill in smtp hostname>",
+    "host": "localhost",
     "port": "25",
     "secure": false,
     "ignoreTLS": true,
@@ -13,11 +13,12 @@
   },
   "billingConfig": {
     "api": "http://localhost:5000",
-    "username": "admin",
-    "password": "test",
+    "username": "",
+    "password": "",
     "rejectInsecure": true
   },
   "invoiceConfig": {
-    "api": "http://localhost:5000"
-  }
+    "api": "http://localhost:4000"
+  },
+  "invoiceNumberPrefix": "OCG-"
 }

@@ -1,5 +1,6 @@
 {
   "name": "invoice-api",
+  "repository": "billing/invoice-api",
   "version": "1.0.0",
   "description": "API to create and access Invoices",
   "main": "server.js",
@@ -9,7 +10,7 @@
     "start": "node ./build/server.js"
   },
   "author": "",
-  "license": "GPLv3",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@types/lodash": "^4.14.80",
     "@types/node": "^7.0.46",
@@ -17,7 +18,7 @@
     "typescript": "^2.6.1"
   },
   "dependencies": {
-    "axios": "^0.15.3",
+    "axios": "^0.19.0",
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",
     "express": "^4.16.2",
