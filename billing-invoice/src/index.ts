@@ -105,7 +105,6 @@ let invoiceGeneration = new Promise((resolve, reject) => {
     logger.info("Target list of projects:%j", projects);
     // get last invoice number
     billing.getLastInvoiceNumber().then((lastInvoiceNumber) => {
-      console.log("lastInvoiceNumber", lastInvoiceNumber);
 
       if (lastInvoiceNumber.indexOf("error") >= 0) throw Error(lastInvoiceNumber);
       projects = combineProjectUsers(projects);
@@ -134,8 +133,6 @@ let invoiceGeneration = new Promise((resolve, reject) => {
             invoicesProcessed++;
             if (invoicesProcessed == totalProjectCount) resolve();
           } else {
-            console.log('project.invoiceNumber', project.invoiceNumber);
-
             logger.info(`Sending Invoice: ${project.invoiceNumber} for project: ${project.project_name}`);
             billing.sendInvoice(project.emails, report, price, project.invoiceNumber).then(() => {
               invoicesProcessed++;
