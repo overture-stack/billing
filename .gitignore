@@ -208,3 +208,5 @@ logs/
 #Customize configuration
 configs.py
 configs.js
+billing-invoice/config.json
+invoice-api/config.json
