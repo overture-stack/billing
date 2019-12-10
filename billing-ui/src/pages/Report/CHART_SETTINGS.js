@@ -14,8 +14,8 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import { Highcharts } from 'react-highcharts';
-import { getSeriesFromReportEntries } from './getSeriesFromReportEntries';
+import {Highcharts} from 'react-highcharts';
+import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
 
 export default {
   chart: {
@@ -23,7 +23,7 @@ export default {
     alignTicks: true
   },
   credits: {
-    enabled: false
+      enabled: false
   },
   subtitle: {
     useHTML: true,

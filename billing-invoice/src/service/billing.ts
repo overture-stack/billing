@@ -56,38 +56,38 @@ class BillingApi {
    * Dependencies
    */
   private config: BillingConfig;
-  private logger: any;
+  private logger:any;
   /**
    * State
    */
   private token: string;
   private agent: https.Agent;
+  
 
-
-  constructor(config: BillingConfig, logger: any) {
+  constructor(config: BillingConfig, logger:any) {
     this.config = config;
-    this.agent = new https.Agent({
+    this.agent = new https.Agent({  
       rejectUnauthorized: config.rejectInsecure
     });
-    logger != null ? this.logger = logger : this.logger = console;
+    logger != null? this.logger = logger : this.logger = console;
   }
 
-  public async login(): Promise<string> {
+  public async login() : Promise<string> {
     let json = {
       username: this.config.username,
       password: this.config.password
     };
-
+    
     this.logger.info('Logging in...')
 
-    return axios.post(`${this.config.api}/login`, json, { httpsAgent: this.agent })
-      .then(response => {
+    return axios.post(`${ this.config.api }/login`, json, { httpsAgent: this.agent })
+      .then( response => {
         this.token = response.headers.authorization;
         return this.token;
       });
   }
 
-  public async price(year: number, month: number, projects: Array<any>): Promise<Price> {
+  public async price(year: number, month: number, projects : Array<any>) : Promise<Price> {
     let firstDay = new Date(year, month - 1, 1);
 
     // Bill based on first price at first day of the month
@@ -96,43 +96,41 @@ class BillingApi {
     _.each(projects, (project) => {
       projectNames.push(project.project_name);
     });
-    this.logger.info(`Getting Price for Date: ${isoDate}`);
-    return axios.get(`${this.config.api}/price?date=${isoDate}&projects=${projectNames}`, { httpsAgent: this.agent })
-      .then(response => {
+    this.logger.info(`Getting Price for Date: ${ isoDate }`);
+    return axios.get(`${ this.config.api }/price?date=${ isoDate }&projects=${ projectNames }`, { httpsAgent: this.agent })
+      .then( response => {
         return response.data;
       });
   }
 
-  public async projects(): Promise<Array<BillableProject>> {
+  public async projects() : Promise<Array<BillableProject>> {
     let headers = {
       authorization: `Bearer ${this.token}`
     };
 
     this.logger.info('Searching for billable projects...')
-    return axios.get(`${this.config.api}/billingprojects`, { headers: headers, httpsAgent: this.agent })
-      .then(response => {
+    return axios.get(`${ this.config.api }/billingprojects`, {headers: headers, httpsAgent: this.agent})
+      .then( response => {
         let projects: Array<BillableProject> = response.data;
-        console.log("projects!!!!!!!!", projects);
-
         return projects;
       });
   }
 
-  public async monthlyReport(project: any, year: number, month: number): Promise<any> {
+  public async monthlyReport(project: any, year:number, month: number) : Promise<any> {
     let headers = {
       authorization: `Bearer ${this.token}`
     };
 
-    this.logger.info(`Generating report for projectId: ${project.project_name}`)
+    this.logger.info(`Generating report for projectId: ${ project.project_name }`)
 
     var date = new Date();
     var firstDay = (new Date(year, month - 1, 1)).toISOString();
-    var lastDay = (new Date(year, month, 0, 20)).toISOString();// to offset +4 of UTC time
+    var lastDay = (new Date(year, month, 0,20)).toISOString();// to offset +4 of UTC time
 
     return await axios.get(
-      `${this.config.api}/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,
-      { headers: headers, httpsAgent: this.agent })
-      .then(response => {
+      `${ this.config.api }/reports?bucket=monthly&fromDate=${firstDay}&toDate=${lastDay}&projects=${project.project_id}`,
+      {headers: headers, httpsAgent: this.agent})
+      .then( response => {
         if (response.data.entries.length > 0) {
           var report = this.getTotals(response.data['entries']);
           return report;
@@ -146,9 +144,9 @@ class BillingApi {
             imageCost: 0,
           };
         }
-      }).catch(err => {
+      }).catch(err =>{
         this.logger.error("Error fetching report data for:", project.name);
-        this.logger.error("Error :", err);
+        this.logger.error("Error :",err);
 
       });
   }
@@ -159,39 +157,39 @@ class BillingApi {
     };
     this.logger.info(`Getting last invoice number...`);
 
-    return axios.get(`${this.config.api}/getLastInvoiceNumber`,
-      { headers: headers, httpsAgent: this.agent })
-      .then(response => {
-        return response.data;
-      });
+    return axios.get(`${ this.config.api }/getLastInvoiceNumber`,
+        {headers: headers, httpsAgent: this.agent})
+        .then( response => {
+          return response.data;
+        });
 
   }
 
-  public async sendInvoice(projectEmails: any, report: any, price: any, invoiceNumber: string) {
+  public async sendInvoice(projectEmails: any, report: any, price: any, invoiceNumber:string) {
     let that = this;
     let headers = {
       authorization: `Bearer ${this.token}`
     };
 
     let invoicePayload = {
-      'emails': projectEmails,
-      'report': report,
-      'price': price,
-      'invoiceNumber': invoiceNumber
+      'emails':projectEmails,
+      'report' : report,
+      'price' : price,
+      'invoiceNumber':invoiceNumber
     };
-    return axios.post(`${this.config.api}/emailNewInvoice`, invoicePayload, { headers: headers, httpsAgent: this.agent })
-      .then(response => {
+    return axios.post(`${ this.config.api }/emailNewInvoice`,invoicePayload,{headers: headers, httpsAgent: this.agent})
+        .then( response => {
 
-        that.logger.info(`Sent Invoice: ${invoiceNumber}`);
-        return response.data;
-      });
+          that.logger.info(`Sent Invoice: ${ invoiceNumber }`);
+          return response.data;
+        });
 
   };
 
   /*
    generates invoices summary table for invoices created on current date
     */
-  public async generateInvoicesSummary(month: string, outputFolder: string): Promise<any> {
+  public async generateInvoicesSummary(month:string, outputFolder:string): Promise<any>  {
 
     let flattenedInovicesJson = await this.getInvoicesSummaryData();
     let fields = [
@@ -229,33 +227,33 @@ class BillingApi {
       },
     ];
 
-    return this.writeCSVDataToFile(flattenedInovicesJson, fields, outputFolder + month + ".csv");
+    return this.writeCSVDataToFile(flattenedInovicesJson,fields, outputFolder+ month +".csv");
 
   };
 
-  public async writeCSVDataToFile(data: any, fields: any, fileName: string) {
+  public async writeCSVDataToFile(data:any, fields:any, fileName:string){
     let that = this;
     let invoicesCSV = json2csv({ data: data, fields: fields });
 
-    this.logger.info(`Saving file: ${fileName}`);
+    this.logger.info(`Saving file: ${ fileName }`);
 
-    return fs.writeFile(fileName, invoicesCSV, function (err) {
+    return fs.writeFile(fileName, invoicesCSV, function(err) {
       if (err) throw err;
-      that.logger.info(fileName + ' saved');
+      that.logger.info(fileName+' saved');
     });
   }
 
-  private async getInvoicesSummaryData() {
+  private async getInvoicesSummaryData(){
     let headers = {
       authorization: `Bearer ${this.token}`
     };
     let currentDate = new Date();
-    let dateText = currentDate.toISOString().slice(0, 10);
-    return axios.get(`${this.config.api}/getAllInvoices?date=${dateText}`,
-      { headers: headers, httpsAgent: this.agent })
-      .then(response => {
-        return response.data;
-      });
+    let dateText = currentDate.toISOString().slice(0,10);
+    return axios.get(`${ this.config.api }/getAllInvoices?date=${ dateText }`,
+        {headers: headers, httpsAgent: this.agent})
+        .then( response => {
+          return response.data;
+        });
   }
 
   private getTotals(entries: Array<any>) {
