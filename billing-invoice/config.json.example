@@ -1,6 +1,6 @@
 {
   "smtpConfig": {
-    "host": "localhost",
+    "host": "<fill in smtp hostname>",
     "port": "25",
     "secure": false,
     "ignoreTLS": true,
@@ -13,8 +13,8 @@
   },
   "billingConfig": {
     "api": "http://localhost:5000",
-    "username": "",
-    "password": "",
+    "username": "admin",
+    "password": "test",
     "rejectInsecure": true
   },
   "invoiceConfig": {
