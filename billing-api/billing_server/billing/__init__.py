@@ -351,7 +351,7 @@ def get_all_invoices(client, user_id, database):
             return
 
     retval = requests.post(url, json={"user":user_info}, params=request.args)
-    if retval.content.find("error") >= 0:
+    if str(retval.content).find("error") >= 0:
         raise StandardError(retval.content)
     return json.loads(retval.content)
 
