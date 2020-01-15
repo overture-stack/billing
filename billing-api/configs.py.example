@@ -49,13 +49,13 @@ PRICING_PERIODS = [
 # 5. Invoice periods and discount periods will always align
 DISCOUNTS = {
     "oicr_demo_ironman" : [{
-        'period_start': '2017-05',
-        'period_end': '2017-05',
+        'period_start': '2020-05',
+        'period_end': '2020-05',
         'discount': 0.9
     },
     {
-        'period_start': '2017-06',
-        'period_end': '2017-06',
+        'period_start': '2020-06',
+        'period_end': '2020-06',
         'discount': 0.7
     }],
     "oicr_demo_captainamerica" : [{

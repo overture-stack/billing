@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (c) 2017 The Ontario Institute for Cancer Research. All rights reserved.
+ * Copyright (c) 2020 The Ontario Institute for Cancer Research. All rights reserved.
  *
  * This program and the accompanying materials are made available under the terms of the GNU Public License v3.0.
  * You should have received a copy of the GNU General Public License along with
@@ -62,11 +62,11 @@ class BillingApi {
    */
   private token: string;
   private agent: https.Agent;
-  
+
 
   constructor(config: BillingConfig, logger:any) {
     this.config = config;
-    this.agent = new https.Agent({  
+    this.agent = new https.Agent({
       rejectUnauthorized: config.rejectInsecure
     });
     logger != null? this.logger = logger : this.logger = console;
@@ -77,7 +77,7 @@ class BillingApi {
       username: this.config.username,
       password: this.config.password
     };
-    
+
     this.logger.info('Logging in...')
 
     return axios.post(`${ this.config.api }/login`, json, { httpsAgent: this.agent })

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
+# Copyright 2020(c) The Ontario Institute for Cancer Research. All rights reserved.
 
 service nginx restart
 source env/bin/activate

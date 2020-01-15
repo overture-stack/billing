@@ -1,4 +1,4 @@
-# Copyright (c) 2016 The Ontario Institute for Cancer Research. All rights reserved.
+# Copyright (c) 2020 The Ontario Institute for Cancer Research. All rights reserved.
 #
 # This program and the accompanying materials are made available under the terms of the GNU Public License v3.0.
 # You should have received a copy of the GNU General Public License along with
@@ -40,7 +40,6 @@ from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 CORS(app)
-
 
 app.config.from_object(default)
 
@@ -137,7 +136,7 @@ def update_role_map_for_nonpi(role_map_list, user_id, database):
     if is_admin_user(user_id, database):
         for elem in role_map_list:
             elem['roles'].append(app.config['INVOICE_ROLE'])
-    return 
+    return
 
 
 def is_admin_user(user_id, database):
@@ -549,5 +548,3 @@ def parse_period_end(period_end_str):
     period_end = period_end_str.split("-")
     month_range = calendar.monthrange(int(period_end[0]), int(period_end[1]))
     return parse(period_end_str+"-"+str(month_range[1]))
-
-

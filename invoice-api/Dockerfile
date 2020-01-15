@@ -1,7 +1,7 @@
-
-# Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
+# Copyright 2020(c) The Ontario Institute for Cancer Research. All rights reserved.
 
 FROM ubuntu:18.04
+
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Install
