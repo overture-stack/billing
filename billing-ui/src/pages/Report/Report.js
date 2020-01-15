@@ -16,15 +16,15 @@
  */
 import React, { Component } from 'react';
 import { browserHistory } from 'react-router';
-import {observable, autorun, computed} from 'mobx';
-import {observer} from 'mobx-react';
+import { observable, autorun, computed } from 'mobx';
+import { observer } from 'mobx-react';
 import _ from 'lodash';
-import {aggregateEntries} from './aggregateEntries';
+import { aggregateEntries } from './aggregateEntries';
 
 import moment from 'moment';
 
 import CHART_SETTINGS from './CHART_SETTINGS';
-import user from '~/user';
+import user from '../../user';
 
 import { Button, DatePicker, Radio } from 'antd';
 const { MonthPicker } = DatePicker;
@@ -40,9 +40,9 @@ import 'react-select/dist/react-select.css';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 
-import {fetchReport} from '~/services/reports'; 
-import {fetchProjects} from '~/services/projects';
-import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
+import fetchReport from '../../services/reports/fetchReport';
+import fetchProjects from '../../services/projects/fetchProjects';
+import { getSeriesFromReportEntries } from './getSeriesFromReportEntries';
 
 const ReactHighcharts = require('react-highcharts').withHighcharts(require('highcharts'));
 
@@ -90,11 +90,11 @@ class extends Component {
 
   @observable aggregationFields = defaultAggregationFields;
   @computed get entriesToDisplay() {
-    return aggregateEntries(this.report.entries, x => _(x).pick(this.aggregationFields.slice()).values().value().join(',') );
+    return aggregateEntries(this.report.entries, x => _(x).pick(this.aggregationFields.slice()).values().value().join(','));
   }
 
   @computed get reportSummary() {
-    return aggregateEntries(this.report.entries, "" );
+    return aggregateEntries(this.report.entries, "");
   }
 
   @computed get isEmpty() {
@@ -115,9 +115,9 @@ class extends Component {
 
   constructor(props) {
     super(props);
-    if(!user.roles.report && user.roles.invoices) {
+    if (!user.roles.report && user.roles.invoices) {
       browserHistory.push('/invoices');
-    } else if(!user.roles.report && !user.roles.invoices) {
+    } else if (!user.roles.report && !user.roles.invoices) {
       user.logout();
     }
   }
@@ -133,16 +133,12 @@ class extends Component {
     switch (bucket) {
       case TIME_PERIODS.DAILY:
         return moment(entry.fromDate, moment.ISO_8601).format('DD MMM YYYY');
-        break;
       case TIME_PERIODS.WEEKLY:
         return `${moment(entry.fromDate, moment.ISO_8601).format('MMM DD YYYY')} - ${moment(entry.toDate, moment.ISO_8601).subtract('days', 1).format('MMM DD YYYY')}`;
-        break;
       case TIME_PERIODS.MONTHLY:
         return moment(entry.fromDate, moment.ISO_8601).format('MMMM YYYY');
-        break;
       case TIME_PERIODS.YEARLY:
         return moment(entry.fromDate, moment.ISO_8601).format('YYYY');
-        break;
       default:
         return moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD');
     }
@@ -153,15 +149,15 @@ class extends Component {
   }
 
   formatCurrency = (n) => {
-    return n ? `$${n.toLocaleString(undefined, {minimumFractionDigits: 2})}` : '';
+    return n ? `$${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '';
   }
 
   updatePeriod = (period) => {
     this.filters.bucketSize = period;
-    if(period === TIME_PERIODS.MONTHLY) {
+    if (period === TIME_PERIODS.MONTHLY) {
       this.handleFromDateFilterChange(moment(this.filters.fromDate).startOf('month'));
       this.handleToDateFilterChange(moment(this.filters.toDate).endOf('month'));
-    } else if(period === TIME_PERIODS.YEARLY) {
+    } else if (period === TIME_PERIODS.YEARLY) {
       this.handleFromDateFilterChange(moment(this.filters.fromDate).startOf('year'));
       this.handleToDateFilterChange(moment(this.filters.toDate).endOf('year'));
     } else {
@@ -183,15 +179,15 @@ class extends Component {
   }
 
   redrawChart = () => {
-    const newSeries = getSeriesFromReportEntries(this.report.entries, {shouldShowCost:this.shouldShowCost}).slice();
+    const newSeries = getSeriesFromReportEntries(this.report.entries, { shouldShowCost: this.shouldShowCost }).slice();
     const chart = this.refs.chart.getChart();
     const subtitle = new Date(this.report.fromDate || this.filters.fromDate.toISOString()).toDateString().concat(
-        ' - ',
-        new Date(this.report.toDate || this.filters.toDate.toISOString()).toDateString());
+      ' - ',
+      new Date(this.report.toDate || this.filters.toDate.toISOString()).toDateString());
     chart.setTitle(
-        { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
-        { text: `<div style="text-align:center;">${subtitle}<br/><br/>Toggle Chart Area</div>` });
-    chart.yAxis[0].update({title: {text: `${this.shouldShowCost ? 'Cost ($)' : 'Usage (hrs)'}`}})
+      { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
+      { text: `<div style="text-align:center;">${subtitle}<br/><br/>Toggle Chart Area</div>` });
+    chart.yAxis[0].update({ title: { text: `${this.shouldShowCost ? 'Cost ($)' : 'Usage (hrs)'}` } })
     chart.series.forEach(serie => serie.setData(newSeries.find(newSerie => newSerie.name === serie.name).data, false, false));
     chart.update({
       colors: [
@@ -210,7 +206,7 @@ class extends Component {
     label: x.name
   }))
 
-  render () {
+  render() {
     return (
       <div className="Report">
         <h1 className="page-heading">
@@ -242,7 +238,7 @@ class extends Component {
               From
             </label>
             <div className="range-select">
-              { 
+              {
                 _.includes([TIME_PERIODS.DAILY, TIME_PERIODS.WEEKLY], this.filters.bucketSize) && <DatePicker
                   format="YYYY-MM-DD"
                   onChange={this.handleFromDateFilterChange}
@@ -278,7 +274,7 @@ class extends Component {
               To
             </label>
             <div className="range-select">
-              { 
+              {
                 _.includes([TIME_PERIODS.DAILY, TIME_PERIODS.WEEKLY], this.filters.bucketSize) && <DatePicker
                   format="YYYY-MM-DD"
                   onChange={this.handleToDateFilterChange}
@@ -346,7 +342,7 @@ class extends Component {
                 type='primary'
                 loading={this.isLoading}
                 onClick={this.updateChart}
-               >Generate Report</Button>
+              >Generate Report</Button>
             </div>
           </div>
 
@@ -356,22 +352,24 @@ class extends Component {
           <RadioGroup>
             <RadioButton
               checked={this.shouldShowCost}
-              onClick={() => this.shouldShowCost = true}
+              onClick={() => { this.shouldShowCost = true }}
               value={true}
+              key="RadioButton1"
             >Cost</RadioButton>
             <RadioButton
               checked={!this.shouldShowCost}
-              onClick={() => this.shouldShowCost = false}
+              onClick={() => { this.shouldShowCost = false }}
               value={false}
+              key="RadioButton2"
             >Usage</RadioButton>
           </RadioGroup>
           <div
             className="summary-table">
             <BootstrapTable
-               data={this.reportSummary}
-               striped={true}
-               keyField="key"
-               width="200px"
+              data={this.reportSummary}
+              striped={true}
+              keyField="key"
+              width="200px"
             >
               <TableHeaderColumn
                 dataField="cpu"
@@ -428,7 +426,7 @@ class extends Component {
         </div>
 
         <h2 className="section-heading">Details</h2>
-        
+
         <div className={`usage-table ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
           <div className="form-item">
             <label>
@@ -437,18 +435,18 @@ class extends Component {
             <div>
               <RadioGroup>
                 <RadioButton
-                  checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD) }
-                  onClick={() => this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.PERIOD])}
+                  checked={this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
+                  onClick={() => { this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.PERIOD]) }}
                   value={AGGREGATION_FIELDS.PERIOD}
                 >Period</RadioButton>
                 <RadioButton
-                  checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT) }
-                  onClick={() => this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.PROJECT])}
+                  checked={this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
+                  onClick={() => { this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.PROJECT]) }}
                   value={AGGREGATION_FIELDS.PROJECT}
                 >Projects</RadioButton>
                 <RadioButton
-                  checked={ this.aggregationFields.includes(AGGREGATION_FIELDS.USER) }
-                  onClick={() => this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.USER])}
+                  checked={this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
+                  onClick={() => { this.aggregationFields = _.xor(this.aggregationFields, [AGGREGATION_FIELDS.USER]) }}
                   value={AGGREGATION_FIELDS.USER}
                 >Users</RadioButton>
               </RadioGroup>
@@ -463,13 +461,13 @@ class extends Component {
             hover={true}
             pagination={true}
             ignoreSinglePage
-            keyField="key"
+            keyField="fromDate"
             options={{
               hideSizePerPage: true,
               sizePerPage: 25,
               sizePerPageList: [10, 50, 100]
             }}
-            >
+          >
             <TableHeaderColumn
               dataField="fromDate"
               dataFormat={this.formatDateRange}
@@ -486,20 +484,21 @@ class extends Component {
               dataField="projectId"
               hidden={true}
               dataSort={true}
+              // isKey={true}
               export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
             >Project ID</TableHeaderColumn>
             <TableHeaderColumn
               dataField="projectId"
               filterFormatted={true}
-              dataFormat={id => _.find(this.projects, {id}).name}
-              csvFormat={(id) => _.find(this.projects, {id}).name}
+              dataFormat={id => _.find(this.projects, { id }).name}
+              csvFormat={(id) => _.find(this.projects, { id }).name}
               csvHeader="projectName"
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
               dataSort={true}
             >Project</TableHeaderColumn>
             <TableHeaderColumn
               dataField="username"
-              dataFormat={(cell, row) => cell ? cell : `(Project) ${_.find(this.projects, {'id':row.projectId}).name}`}
+              dataFormat={(cell, row) => cell ? cell : `(Project) ${_.find(this.projects, { 'id': row.projectId }).name}`}
               hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
               width="320px"
               dataSort={true}

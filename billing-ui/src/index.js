@@ -19,14 +19,13 @@ import ReactDOM from 'react-dom';
 import { browserHistory } from 'react-router';
 import './index.scss';
 
-import {observe} from 'mobx';
+import { observe } from 'mobx';
 import { AppContainer } from 'react-hot-loader';
 import 'whatwg-fetch';
 
+import user from '../src/user';
 
-import user from '~/user';
-
-import routes from './routes';
+import Routes from './routes';
 
 const postLoginRoute = '/';
 
@@ -45,9 +44,9 @@ const rootEl = document.getElementById('root');
 
 ReactDOM.render((
   <AppContainer>
-    {routes}
+    <Routes />
   </AppContainer>
-  ), rootEl
+), rootEl
 );
 
 if (module.hot) {
@@ -57,7 +56,7 @@ if (module.hot) {
     const nextRoutes = require('./routes');
     ReactDOM.render(
       <AppContainer>
-         {nextRoutes}
+        {nextRoutes}
       </AppContainer>,
       rootEl
     );

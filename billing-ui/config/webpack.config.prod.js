@@ -1,7 +1,7 @@
 var path = require('path');
 var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var url = require('url');
 var paths = require('./paths');
 
@@ -26,81 +26,79 @@ module.exports = {
     publicPath: publicPath
   },
   resolve: {
-    root: __dirname,
-    modulesDirectories: [
-      "node_modules",
-      "src"
-    ],
-    extensions: ['', '.js', '.json'],
+    modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+    extensions: ['*', '.js', 'jsx', '.json'],
   },
   resolveLoader: {
-    root: paths.ownNodeModules,
-    moduleTemplates: ['*-loader']
+    moduleExtensions: ["-loader"]
   },
   module: {
-    preLoaders: [
+    rules: [
       {
         test: /\.js$/,
-        loader: 'eslint',
+        use: [
+          {
+            loader: "babel-loader",
+            options: {
+              babelrc: false,
+              presets: [
+                '@babel/preset-env',
+                '@babel/preset-react',
+                {
+                  'plugins': [
+                    ['@babel/plugin-proposal-decorators', { "legacy": true }],
+                    ['@babel/plugin-proposal-class-properties', { "loose": true }],
+                    ['@babel/plugin-transform-runtime'],
+                    'react-hot-loader/babel',
+                    'babel-plugin-syntax-trailing-function-commas',
+                    '@babel/plugin-proposal-object-rest-spread',
+                    'add-module-exports',
+                    'babel-plugin-transform-async-to-generator',
+                    ['babel-plugin-root-import', { 'rootPathSuffix': 'src' }],
+                  ]
+                }
+              ]
+            }
+          },
+          { loader: "eslint-loader", }
+
+        ],
         include: paths.appSrc
-      }
-    ],
-    loaders: [
-      {
-        test: /\.js$/,
-        include: paths.appSrc,
-        loader: 'babel',
-        query: require('./babel.prod')
       },
       {
-        test: /\.css$/,
-        include: [paths.appSrc, paths.appNodeModules],
-        loader: 'style!css?sourceMap'
-      },
-      {
-        test: /\.(scss|sass)$/,
-        include: [paths.appSrc, paths.appNodeModules],
-        loader: ExtractTextPlugin.extract('style', 'css!sass')
-      },
-      {
-        test: /\.json$/,
-        include: [paths.appSrc, paths.appNodeModules],
-        loader: 'json'
+        test: /\.(scss|sass|css)$/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+          },
+          'css-loader',
+          'sass-loader',
+        ]
       },
       {
         test: /\.(jpg|png|gif|eot|svg|ttf|woff|woff2)(\?.*)?$/,
         include: [paths.appSrc, paths.appNodeModules],
-        loader: 'file',
-        query: {
-          name: 'static/media/[name].[hash:8].[ext]'
-        }
+        use: [{
+          loader: 'file-loader',
+          options: {
+            name: 'static/media/[name].[hash:8].[ext]'
+          }
+        }],
+
       },
       {
         test: /\.(mp4|webm)(\?.*)?$/,
         include: [paths.appSrc, paths.appNodeModules],
-        loader: 'url',
-        query: {
-          limit: 10000,
-          name: 'static/media/[name].[hash:8].[ext]'
-        }
+        use: [{
+          loader: 'url',
+          options: {
+            limit: 10000,
+            name: 'static/media/[name].[hash:8].[ext]'
+          }
+        }],
+
       }
     ]
-  },
-  sassLoader: {
-    includePaths: [paths.appSrc + '/styles']
-  },
-  eslint: {
-    // TODO: consider separate config for production,
-    // e.g. to enable no-console and no-debugger only in prod.
-    configFile: path.join(__dirname, 'eslint.js'),
-    useEslintrc: false
-  },
-  postcss: function() {
-    return [
-      require('postcss-import'),
-      require('precss'),
-      require('autoprefixer'),
-    ];
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -121,21 +119,16 @@ module.exports = {
       }
     }),
     new webpack.DefinePlugin({ 'process.env.NODE_ENV': '"production"' }),
-    new webpack.optimize.OccurrenceOrderPlugin(),
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        screw_ie8: true,
-        warnings: false
-      },
-      mangle: {
-        screw_ie8: true
-      },
-      output: {
-        comments: false,
-        screw_ie8: true
+    new webpack.LoaderOptionsPlugin({
+      minimize: true,
+      options: {
+        context: __dirname,
+        postcss: [
+          require('precss'),
+          require('autoprefixer'),
+        ]
       }
     }),
-    new ExtractTextPlugin('static/css/[name].[contenthash:8].css')
+    new MiniCssExtractPlugin({ filename: 'static/css/[name].[contenthash:8].css' })
   ]
 };

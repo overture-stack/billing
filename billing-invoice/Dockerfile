@@ -1,6 +1,6 @@
 # Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Install
@@ -14,7 +14,7 @@ RUN \
 
 # NODE & NPM
 RUN wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash
-RUN source ~/.nvm/nvm.sh && nvm install 6.10.1 && npm install -g npm && npm install -g typescript
+RUN source ~/.nvm/nvm.sh && nvm install 12.8.0 && npm install -g npm && npm install -g typescript
 
 RUN mkdir -p /srv
 ADD . /srv/billing-invoice

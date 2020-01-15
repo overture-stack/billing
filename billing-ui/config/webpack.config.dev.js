@@ -3,9 +3,9 @@ var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 var paths = require('./paths');
-
 module.exports = {
   devtool: 'eval-source-map',
+  mode: 'development',
   entry: [
     require.resolve('webpack-dev-server/client') + '?/',
     require.resolve('webpack/hot/only-dev-server'),
@@ -21,66 +21,78 @@ module.exports = {
     publicPath: '/'
   },
   resolve: {
-    extensions: ['', '.js', '.json'],
-  },
-  resolveLoader: {
-    root: paths.ownNodeModules,
-    moduleTemplates: ['*-loader']
+    modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+    extensions: ['.js', 'jsx', '.json'],
   },
   module: {
-    preLoaders: [
+    rules: [
       {
         test: /\.js$/,
-        loader: 'eslint',
-        include: paths.appSrc,
-      }
-    ],
-    loaders: [
-      {
-        test: /\.js$/,
-        include: paths.appSrc,
-        loaders: ['babel?' + JSON.stringify(require('./babel.dev'))],
+        enforce: "pre",
+        use: [
+          {
+            loader: "babel-loader",
+            options: {
+              babelrc: false,
+              cacheDirectory: true,
+              presets: [
+                ['@babel/preset-env', { modules: false }],
+                '@babel/preset-react',
+                {
+                  'plugins': [
+                    ['@babel/plugin-proposal-decorators', { "legacy": true }],
+                    ['@babel/plugin-proposal-class-properties', { "loose": true }],
+                    ['@babel/plugin-transform-runtime', {
+                      helpers: false,
+                    }],
+                    'react-hot-loader/babel',
+                    'babel-plugin-syntax-trailing-function-commas',
+                    '@babel/plugin-proposal-object-rest-spread',
+                    'add-module-exports',
+                    'babel-plugin-transform-async-to-generator',
+                    ['babel-plugin-root-import', { 'rootPathSuffix': 'src' }],
+                  ]
+                }
+              ],
+            },
+
+          },
+          { loader: "eslint-loader", }
+
+        ],
+        include: paths.appSrc
       },
       {
-        test: /\.css$/,
+        test: /\.(scss|sass|css)$/,
         include: [paths.appSrc, paths.appNodeModules],
-        loader: 'style!css?sourceMap'
-      },
-      {
-        test: /\.(scss|sass)$/,
-        include: [paths.appSrc, paths.appNodeModules],
-        loaders: ['style', 'css?sourceMap', 'sass?sourceMap']
-      },
-      {
-        test: /\.json$/,
-        include: [paths.appSrc, paths.appNodeModules],
-        loader: 'json'
+        use: [
+          'style-loader',
+          'css-loader',
+          'sass-loader',
+        ],
       },
       {
         test: /\.(jpg|png|gif|eot|svg|ttf|woff|woff2)(\?.*)?$/,
         include: [paths.appSrc, paths.appNodeModules],
-        loader: 'file',
-        query: {
-          name: 'static/media/[name].[ext]'
-        }
+        use: [{
+          loader: 'file-loader',
+          options: {
+            name: 'static/media/[name].[ext]'
+          }
+        }]
       },
       {
         test: /\.(mp4|webm)(\?.*)?$/,
         include: [paths.appSrc, paths.appNodeModules],
-        loader: 'url',
-        query: {
-          limit: 10000,
-          name: 'static/media/[name].[ext]'
-        }
+        use: [{
+          loader: 'url',
+          options: {
+            limit: 10000,
+            name: 'static/media/[name].[ext]'
+          }
+        }]
       }
     ]
-  },
-  sassLoader: {
-    includePaths: [paths.appSrc + '/styles']
-  },
-  eslint: {
-    configFile: path.join(__dirname, 'eslint.js'),
-    useEslintrc: false
   },
   plugins: [
     new HtmlWebpackPlugin({

@@ -16,7 +16,7 @@ RUN \
 RUN \
   wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash && \
   source ~/.nvm/nvm.sh && \
-  nvm install 6.10.3 && \
+  nvm install 12.8.0 && \
   npm install -g npm && \
   mkdir -p /srv
 

@@ -145,10 +145,10 @@ class BillingApi {
           };
         }
       }).catch(err =>{
-				this.logger.error("Error fetching report data for:", project.name);
-				this.logger.error("Error :",err);
+        this.logger.error("Error fetching report data for:", project.name);
+        this.logger.error("Error :",err);
 
-			});
+      });
   }
 
   public async getLastInvoiceNumber() {

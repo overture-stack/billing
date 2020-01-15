@@ -14,12 +14,12 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import {fetchHeaders} from '~/utils';
+import fetchHeaders from '../../utils/fetchHeaders';
 import _ from 'lodash';
 import encodeUriSegment from 'encode-uri-query';
-import user from '~/user';
+import user from '../../user';
 
-export async function fetchReport ({projects, bucketSize, fromDate, toDate}) {
+async function fetchReport({ projects, bucketSize, fromDate, toDate }) {
   const query = _.map(Object.assign({
     bucket: bucketSize,
     fromDate,
@@ -37,3 +37,5 @@ export async function fetchReport ({projects, bucketSize, fromDate, toDate}) {
 
   return data;
 }
+
+export default fetchReport;

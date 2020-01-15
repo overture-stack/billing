@@ -15,11 +15,10 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-import { findDOMNode } from 'react-dom';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import animate from '@jam3/gsap-promise';
-import user from '~/user';
+import user from '../../user';
 
 import './Login.scss';
 
@@ -107,7 +106,7 @@ class extends Component {
             ref="logo"
             alt="Cancer Genome COLLABORATORY"
             className="logo"
-            src={require('~/assets/images/logo-full.png')}
+            src={require('../../assets/images/logo-full.png')}
           />
 
           {this.errorMessage && (
@@ -147,7 +146,7 @@ class extends Component {
                 Login
                 </button>
             </div>
-            <div class="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
+            <div className="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
           </form>
         </div>
       </div>
