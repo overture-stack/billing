@@ -461,7 +461,7 @@ class extends Component {
             hover={true}
             pagination={true}
             ignoreSinglePage
-            keyField="fromDate"
+            keyField="key"
             options={{
               hideSizePerPage: true,
               sizePerPage: 25,
