@@ -1,5 +1,0 @@
-var config = {
-    target: "http://localhost:5000"
-};
-
-module.exports = config;

@@ -9,7 +9,7 @@ var opn = require('opn');
 var detect = require('./utils/detectPort');
 var prompt = require('./utils/prompt');
 var config = require('../config/webpack.config.dev');
-var targetEndpoint = require('../configs').target;
+var {target: targetEndpoint} = require('../config');
 
 // Tools like Cloud9 rely on this
 var DEFAULT_PORT = process.env.PORT || 3500;

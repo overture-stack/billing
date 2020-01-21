@@ -22,6 +22,5 @@ node build/index.js <path_to_config> <path_to_email.html> [<month_num: 0-11> <pr
 
 ```bash
 docker pull collaboratory/billing-invoice:latest
-docker run -v <path_to_config>:/srv/billing-invoice/config.json -v <path_to_email>:/srv/billing-invoice/collab-billing.html collaboratory/billing-invoice
+docker run -v <path_to_config>:/srv/billing-invoice/config.js -v <path_to_email>:/srv/billing-invoice/collab-billing.html collaboratory/billing-invoice
 ```
-

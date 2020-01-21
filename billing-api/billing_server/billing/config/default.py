@@ -13,23 +13,22 @@
 # OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import configs
-DEBUG = configs.DEBUG  # Debug mode for flask
-SECRET_KEY = configs.SECRET_KEY
-AUTH_URI = configs.AUTH_URI  # Keystone/Identity API endpoint
-INVOICE_API = configs.INVOICE_API
-MYSQL_URI = configs.MYSQL_URI  # Mysql URI
-TEST_MYSQL_URL = configs.TEST_MYSQL_URL # Mysql URI for test
-VALID_BUCKET_SIZES = configs.VALID_BUCKET_SIZES  # Bucketing options for query.
+import config
+DEBUG = config.DEBUG  # Debug mode for flask
+SECRET_KEY = config.SECRET_KEY
+AUTH_URI = config.AUTH_URI  # Keystone/Identity API endpoint
+INVOICE_API = config.INVOICE_API
+MYSQL_URI = config.MYSQL_URI  # Mysql URI
+TEST_MYSQL_URL = config.TEST_MYSQL_URL # Mysql URI for test
+VALID_BUCKET_SIZES = config.VALID_BUCKET_SIZES  # Bucketing options for query.
 #FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
-FLASK_LOG_FILE = configs.FLASK_LOG_FILE
-BILLING_ROLE = configs.BILLING_ROLE
-INVOICE_ROLE = configs.INVOICE_ROLE
-# INVOICE_ROLE = 'invoice_test'
-OICR_ADMIN = configs.OICR_ADMIN
+FLASK_LOG_FILE = config.FLASK_LOG_FILE
+BILLING_ROLE = config.BILLING_ROLE
+INVOICE_ROLE = config.INVOICE_ROLE
+OICR_ADMIN = config.OICR_ADMIN
 #OICR Admin user ids or email addresses
-OICR_ADMINS = configs.OICR_ADMINS
-PRICING_PERIODS = configs.PRICING_PERIODS
+OICR_ADMINS = config.OICR_ADMINS
+PRICING_PERIODS = config.PRICING_PERIODS
 
 # each project can have different discount during differnt billing periods
 # discounts are always offered as a percentage of the total bill amount
@@ -48,4 +47,4 @@ PRICING_PERIODS = configs.PRICING_PERIODS
 #    individual project's discounts will be updated (potentially using a script)
 # 4. Discounts are only applicable to Invoice; the billing application UI will never have to show it
 # 5. Invoice periods and discount periods will always align
-DISCOUNTS = configs.DISCOUNTS
+DISCOUNTS = config.DISCOUNTS

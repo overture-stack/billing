@@ -1,0 +1,25 @@
+module.exports = {
+    billingConfig: {
+        api: 'http://localhost:5000',
+        password: 'test',
+        rejectInsecure: true,
+        username: 'admin',
+    },
+    emailConfig: {
+        fromAddress: 'foo@bar.org',
+        replyTo: 'reply@bar.org',
+        subject: 'Usage Report',
+    },
+    invoiceConfig: {
+        api: 'http://localhost:4000',
+    },
+    invoiceNumberPrefix: 'OCG-',
+    mode: 'csv',
+    smtpConfig: {
+        auth: null,
+        host: '<fill in smtp hostname>',
+        ignoreTLS: true,
+        port: '25',
+        secure: false,
+    },
+};

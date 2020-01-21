@@ -48,14 +48,15 @@ const DICOUNT_TEXT = "discount";
 /**
  * Argument Parsing for Config Path
  */
-let args = process.argv;
+const args = process.argv;
 if (args.length < 3) {
   logger.error('Missing arguments');
   process.exit(1);
 }
-let configPath = args[2];
-let config = JSON.parse(fs.readFileSync(configPath).toString());
-
+const configPath = args[2] || 'config.js';
+const config :any = configPath.endsWith('.js')
+    ? module.require(`${['/', '.'].includes(configPath[0]) ? '' : '../'}${configPath}`)
+    : JSON.parse(fs.readFileSync(configPath).toString());
 
 /**
  * Extra params for specific months/projects
