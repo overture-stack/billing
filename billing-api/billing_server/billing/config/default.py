@@ -13,37 +13,23 @@
 # OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-DEBUG = True  # Debug mode for flask
-SECRET_KEY = 'random, secret, super duper secret key'
-AUTH_URI = 'http://142.1.177.54:5000/v2.0'  # Keystone/Identity API endpoint
-INVOICE_API = 'http://localhost:4000/invoice'
-MYSQL_URI = 'mysql://root:test@142.1.177.54:3306'  # Mysql URI
-TEST_MYSQL_URL =  'mysql://<user_name>:<password>@localhost:3306' # Mysql URI for test
-VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
+import configs
+DEBUG = configs.DEBUG  # Debug mode for flask
+SECRET_KEY = configs.SECRET_KEY
+AUTH_URI = configs.AUTH_URI  # Keystone/Identity API endpoint
+INVOICE_API = configs.INVOICE_API
+MYSQL_URI = configs.MYSQL_URI  # Mysql URI
+TEST_MYSQL_URL = configs.TEST_MYSQL_URL # Mysql URI for test
+VALID_BUCKET_SIZES = configs.VALID_BUCKET_SIZES  # Bucketing options for query.
 #FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
-FLASK_LOG_FILE = './logs/billing.log'
-BILLING_ROLE = 'billing_test'
-#INVOICE_ROLE = 'invoice'
-INVOICE_ROLE = 'invoice_test'
-OICR_ADMIN = 'oicr_admin'
+FLASK_LOG_FILE = configs.FLASK_LOG_FILE
+BILLING_ROLE = configs.BILLING_ROLE
+INVOICE_ROLE = configs.INVOICE_ROLE
+# INVOICE_ROLE = 'invoice_test'
+OICR_ADMIN = configs.OICR_ADMIN
 #OICR Admin user ids or email addresses
-OICR_ADMINS = ['Rahul.Verma@oicr.on.ca', 'Sid.Joshi@oicr.on.ca']
-PRICING_PERIODS = [
-    {
-        'period_start': '2013-01-01',
-        'period_end': '2016-11-03',
-        'cpu_price': 0.04,
-        'volume_price': 0.02,
-        'image_price': 0.04
-    },
-    {
-        'period_start': '2016-11-03',
-        'period_end': '2016-12-22',
-        'cpu_price': 0.06,
-        'volume_price': 0.03,
-        'image_price': 0.03
-    }
-]
+OICR_ADMINS = configs.OICR_ADMINS
+PRICING_PERIODS = configs.PRICING_PERIODS
 
 # each project can have different discount during differnt billing periods
 # discounts are always offered as a percentage of the total bill amount
@@ -62,18 +48,4 @@ PRICING_PERIODS = [
 #    individual project's discounts will be updated (potentially using a script)
 # 4. Discounts are only applicable to Invoice; the billing application UI will never have to show it
 # 5. Invoice periods and discount periods will always align
-DISCOUNTS = {
-    "oicr_demo_rahul" : [{
-        'period_start': '2017-05',
-        'period_end': '2017-05',
-        'discount': 0.9
-    },
-    {
-        'period_start': '2017-06',
-        'period_end': '2017-06',
-        'discount': 0.7
-    }],
-    "oicr_demo_dusan" : [{
-        'discount': 0.8
-    }]
-}
+DISCOUNTS = configs.DISCOUNTS

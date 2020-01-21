@@ -9,6 +9,7 @@ var opn = require('opn');
 var detect = require('./utils/detectPort');
 var prompt = require('./utils/prompt');
 var config = require('../config/webpack.config.dev');
+var targetEndpoint = require('../configs').target;
 
 // Tools like Cloud9 rely on this
 var DEFAULT_PORT = process.env.PORT || 3500;
@@ -63,12 +64,12 @@ function clearConsole() {
 function setupCompiler(port) {
   compiler = webpack(config, handleCompile);
 
-  compiler.plugin('invalid', function() {
+  compiler.plugin('invalid', function () {
     clearConsole();
     console.log('Compiling...');
   });
 
-  compiler.plugin('done', function(stats) {
+  compiler.plugin('done', function (stats) {
     clearConsole();
     var hasErrors = stats.hasErrors();
     var hasWarnings = stats.hasWarnings();
@@ -159,10 +160,9 @@ function runDevServer(port) {
     },
     proxy: {
       '/api/**': {
-        //target: 'http://142.1.177.54:6000',
-        target: 'https://billing.cancercollaboratory.org',
+        target: targetEndpoint,
         secure: false,
-        pathRewrite: {'^/api' : ''},
+        pathRewrite: { '^/api': '' },
       },
     },
   }).listen(port, (err, result) => {

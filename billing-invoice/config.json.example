@@ -17,11 +17,8 @@
     "password": "test",
     "rejectInsecure": true
   },
-  "emailRecipients" : {
-    "oicr_finance_email": [],
-    "invoice_recipients" : [],
-    "summary_recipients" : []
-  }
-  
-
+  "invoiceConfig": {
+    "api": "http://localhost:4000"
+  },
+  "invoiceNumberPrefix": "OCG-"
 }

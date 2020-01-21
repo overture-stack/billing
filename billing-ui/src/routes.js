@@ -15,10 +15,15 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React from 'react';
-import { Router, Route, browserHistory, IndexRedirect } from 'react-router'
+import { Router, Route, browserHistory, IndexRedirect } from 'react-router';
 
-import user from '~/user.js';
-
+import user from './user';
+import App from './App';
+import Login from './pages/Login/Login';
+import Report from './pages/Report/Report.js';
+import Base from './layouts/Base/Base';
+import Invoices from './pages/Invoices/Invoices.js';
+import Test from './pages/Test.js';
 function requireAuth(nextState, replace) {
   if (!user.isLoggedIn) {
     replace({
@@ -27,19 +32,17 @@ function requireAuth(nextState, replace) {
     })
   }
 }
-
-const routes = (
-    <Router history={browserHistory}>
-      <Route name="App" path="/" component={require('./App.js')}>
-        <IndexRedirect to="/report"/>
-        <Route name="Login" path="login" component={require('./pages/Login/Login.js')} />
-        <Route name="BaseLayout" component={require('./layouts/Base/Base')} onEnter={requireAuth}>
-          <Route name="Report" path="report" component={require('./pages/Report/Report.js')} />
-          <Route name="Invoices" path="invoices" component={require('./pages/Invoices/Invoices.js')} />
-        </Route>
-        <Route name="Test" path="test" component={require('./pages/Test.js')} />
+const Routes = () =>
+  (<Router history={browserHistory}>
+    <Route name="App" path="/" component={App}>
+      <IndexRedirect to="/report" />
+      <Route name="Login" path="login" component={Login} />
+      <Route name="BaseLayout" component={Base} onEnter={requireAuth}>
+        <Route name="Report" path="report" component={Report} />
+        <Route name="Invoices" path="invoices" component={Invoices} />
       </Route>
-    </Router>
-)
+      <Route name="Test" path="test" component={Test} />
+    </Route>
+  </Router>)
 
-export default routes;
+export default Routes;

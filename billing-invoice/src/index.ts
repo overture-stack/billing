@@ -28,12 +28,12 @@ import Big from 'big.js';
 /*
 Configure logger
  */
-const tsFormat = () => ( new Date() ).toLocaleDateString() + '  ' + ( new Date() ).toLocaleTimeString();
+const tsFormat = () => (new Date()).toLocaleDateString() + '  ' + (new Date()).toLocaleTimeString();
 
 let logger = new (winston.Logger)({
-    transports: [
-        new (winston.transports.Console)({'timestamp':tsFormat,colorize: true})
-    ]
+  transports: [
+    new (winston.transports.Console)({ 'timestamp': tsFormat, colorize: true })
+  ]
 });
 
 logger.info("*** Starting Invoice Reporting ***");
@@ -60,8 +60,8 @@ let config = JSON.parse(fs.readFileSync(configPath).toString());
 /**
  * Extra params for specific months/projects
  */
-let reportMonth : number;
-let reportYear : number;
+let reportMonth: number;
+let reportYear: number;
 let month: string;
 if (args.length >= 4) {
   let dateArgs = args[3].split('-');
@@ -70,13 +70,13 @@ if (args.length >= 4) {
   month = MONTH_NAMES[reportMonth - 1];
 } else {
   let monthIndex = (new Date()).getMonth();
-  reportMonth = monthIndex - 1 < 0 ? 11 : monthIndex-1;
+  reportMonth = monthIndex - 1 < 0 ? 11 : monthIndex - 1;
   reportYear = monthIndex - 1 < 0 ? (new Date()).getFullYear() - 1 : (new Date()).getFullYear();
   month = MONTH_NAMES[reportMonth];
 }
 var allProjects = true;
-var projectList : Array<string>;
-if(args.length === 5) {
+var projectList: Array<string>;
+if (args.length === 5) {
   if (args[4] !== 'ALL') {
     allProjects = false;
     projectList = args[4].split(",")
@@ -86,7 +86,7 @@ if(args.length === 5) {
 // default mode is to generate a csv
 let mode = config['mode'] || 'csv';
 
-logger.info("Reporting mode: %s",mode);
+logger.info("Reporting mode: %s", mode);
 logger.info("Reporting for the month of: %s", month + " " + reportYear);
 
 // used only if mode is csv
@@ -100,137 +100,138 @@ let billing = new BillingApi(config['billingConfig'], logger);
 let invoiceGeneration = new Promise((resolve, reject) => {
   let projectsPromise = billing.login().then(() => billing.projects());
   projectsPromise.then(results => {
-    let projects : any;
-    projects = _.filter(results, r => (allProjects || projectList.indexOf(r.project_name) >= 0) && typeof  r.extra.email !== 'undefined');
+    let projects: any;
+    projects = _.filter(results, r => (allProjects || projectList.indexOf(r.project_name) >= 0) && typeof r.extra.email !== 'undefined');
     logger.info("Target list of projects:%j", projects);
     // get last invoice number
     billing.getLastInvoiceNumber().then((lastInvoiceNumber) => {
-        if(lastInvoiceNumber.indexOf("error") >=0) throw Error(lastInvoiceNumber);
-        projects = combineProjectUsers(projects);
-        setInvoiceNumbersForProject(projects, lastInvoiceNumber);
-        logger.info("Invoice number of last generated invoice:%s", lastInvoiceNumber);
-        let pricePromise = billing.price(reportYear, reportMonth, projects);
-        pricePromise.then(perProjectPrices => {
-          let totalProjectCount = projects.length;
-          let invoicesProcessed = 0;
-          logger.info("Retrieved price information for each project");
-          projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
-            logger.info(`Retrieved data for project ${project.project_name}`);
-            report.month = month;
-            report.year = reportYear;
-            report.project_name = project.project_name;
-            let price = perProjectPrices[project.project_name];
-            if(typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
-						// add discount if there is a difference in total cost vs itemQty * itemRate
-						// this is applicable for scenarios such as when collab offers discounts for usage that was
-						// during the maintenance window
-						addDiscountsToReflectActualUsage(price, report);
-						price["discount"] = price["discount"] ? (price["discount"]*100).toFixed(4) : 0.0000;
-            if(mode != EMAIL_MODE){
-                  logger.info(`Generating Invoice data for invoice: ${ project.invoiceNumber } for project: ${ project.project_name }`);
-                  generateInvoiceDataJSON(project.emails,project.project_name, project.invoiceNumber,report, price, aggregatedInvoices);
-                  invoicesProcessed++;
-                  if(invoicesProcessed == totalProjectCount) resolve();
-              } else {
-                  logger.info(`Sending Invoice: ${ project.invoiceNumber } for project: ${ project.project_name }`);
-                  billing.sendInvoice(project.emails, report, price, project.invoiceNumber).then(() => {
-                      invoicesProcessed++;
-                      if (invoicesProcessed == totalProjectCount) resolve();
-                  }).catch(err => {
-                      logger.error(`Error while processing Inovice for project: ${project.project_name}`, err);
-                      // we increment the counter regardless of an error; this makes sure that promise is always resolved
-                      // and summary generation happens
-                      invoicesProcessed++;
-                      if (invoicesProcessed == totalProjectCount) resolve();
-                  });
-              }
-          }).catch(err =>{
-            logger.error("Error while processing Inovice:", err);
+
+      if (lastInvoiceNumber.indexOf("error") >= 0) throw Error(lastInvoiceNumber);
+      projects = combineProjectUsers(projects);
+      setInvoiceNumbersForProject(projects, lastInvoiceNumber);
+      logger.info("Invoice number of last generated invoice:%s", lastInvoiceNumber);
+      let pricePromise = billing.price(reportYear, reportMonth, projects);
+      pricePromise.then(perProjectPrices => {
+        let totalProjectCount = projects.length;
+        let invoicesProcessed = 0;
+        logger.info("Retrieved price information for each project");
+        projects.map(project => billing.monthlyReport(project, reportYear, reportMonth).then(report => {
+          logger.info(`Retrieved data for project ${project.project_name}`);
+          report.month = month;
+          report.year = reportYear;
+          report.project_name = project.project_name;
+          let price = perProjectPrices[project.project_name];
+          if (typeof price == 'undefined') price = perProjectPrices[0];// for backward compatiblity
+          // add discount if there is a difference in total cost vs itemQty * itemRate
+          // this is applicable for scenarios such as when collab offers discounts for usage that was
+          // during the maintenance window
+          addDiscountsToReflectActualUsage(price, report);
+          price["discount"] = price["discount"] ? (price["discount"] * 100).toFixed(4) : 0.0000;
+          if (mode != EMAIL_MODE) {
+            logger.info(`Generating Invoice data for invoice: ${project.invoiceNumber} for project: ${project.project_name}`);
+            generateInvoiceDataJSON(project.emails, project.project_name, project.invoiceNumber, report, price, aggregatedInvoices);
             invoicesProcessed++;
-          }));
-        });
-     });
+            if (invoicesProcessed == totalProjectCount) resolve();
+          } else {
+            logger.info(`Sending Invoice: ${project.invoiceNumber} for project: ${project.project_name}`);
+            billing.sendInvoice(project.emails, report, price, project.invoiceNumber).then(() => {
+              invoicesProcessed++;
+              if (invoicesProcessed == totalProjectCount) resolve();
+            }).catch(err => {
+              logger.error(`Error while processing Inovice for project: ${project.project_name}`, err);
+              // we increment the counter regardless of an error; this makes sure that promise is always resolved
+              // and summary generation happens
+              invoicesProcessed++;
+              if (invoicesProcessed == totalProjectCount) resolve();
+            });
+          }
+        }).catch(err => {
+          logger.error("Error while processing Inovice:", err);
+          invoicesProcessed++;
+        }));
+      });
+    });
   });
 });
 
 // wait till all invoices are generated and then generate the summary .csv file
 invoiceGeneration.then(() => {
 
-    if(mode != EMAIL_MODE) {
-        logger.info("CSV Mode. Generating Summary CSV file...");
-        generatePreInvoiceSummaryCSV(aggregatedInvoices).then(() =>logger.info("Finished Processing Invoices."));
-    } else {
-        logger.info("Email Mode. Generating Summary CSV file that will be emailed...");
-        billing.generateInvoicesSummary(month,config['outputDir']).then(() => {
-            let mailer = new Mailer({
-                emailConfig: config['emailConfig'],
-                smtpConfig: config['smtpConfig'],
-                emailRecipients: config['emailRecipients']
-            }, null, logger);
-            logger.info("Emailing summary csv file...");
-            mailer.sendSummaryCSVEmail( config['outputDir'] + month + ".csv", month, reportYear);
-            logger.info("Finished Processing Invoices.");
-        })
-    }
+  if (mode != EMAIL_MODE) {
+    logger.info("CSV Mode. Generating Summary CSV file...");
+    generatePreInvoiceSummaryCSV(aggregatedInvoices).then(() => logger.info("Finished Processing Invoices."));
+  } else {
+    logger.info("Email Mode. Generating Summary CSV file that will be emailed...");
+    billing.generateInvoicesSummary(month, config['outputDir']).then(() => {
+      let mailer = new Mailer({
+        emailConfig: config['emailConfig'],
+        smtpConfig: config['smtpConfig'],
+        emailRecipients: config['emailRecipients']
+      }, null, logger);
+      logger.info("Emailing summary csv file...");
+      mailer.sendSummaryCSVEmail(config['outputDir'] + month + ".csv", month, reportYear);
+      logger.info("Finished Processing Invoices.");
+    })
+  }
 });
 
 /*
     Helper functions
  */
-function combineProjectUsers(projects:Array<any>): Array<any> {
-    let output = {};
-    projects.map(project => {
-        if (output.hasOwnProperty(project.project_id)) {
-            if (project.extra.hasOwnProperty("email"))
-                output[project.project_id].emails.push(project.extra.email);
-        } else {
-            output[project.project_id] = {
-                "project_id": project.project_id,
-                "project_name": project.project_name,
-                "user_id": project.user_id,
-                "emails": project.extra.hasOwnProperty("email") ? [project.extra.email] : []
-            };
-        }
+function combineProjectUsers(projects: Array<any>): Array<any> {
+  let output = {};
+  projects.map(project => {
+    if (output.hasOwnProperty(project.project_id)) {
+      if (project.extra.hasOwnProperty("email"))
+        output[project.project_id].emails.push(project.extra.email);
+    } else {
+      output[project.project_id] = {
+        "project_id": project.project_id,
+        "project_name": project.project_name,
+        "user_id": project.user_id,
+        "emails": project.extra.hasOwnProperty("email") ? [project.extra.email] : []
+      };
+    }
 
-    });// project iteration ends here
-    return _.values(output);
+  });// project iteration ends here
+  return _.values(output);
 }
 
-function buildInvoiceNumber(prefix:string, projectSequence:number, maxChars:number) : string {
+function buildInvoiceNumber(prefix: string, projectSequence: number, maxChars: number): string {
   let numCharsInSequence = projectSequence.toString().length;
   let numLeadingZeros = maxChars - numCharsInSequence - prefix.length;
 
   // Check for errors
-  if (numLeadingZeros < 0){
+  if (numLeadingZeros < 0) {
     // how do you handle the case where you cannot make anymore invoices?
   }
 
   // Build the output
   let output = prefix;
   var i;
-  for (i =0 ; i < numLeadingZeros ; i++){
+  for (i = 0; i < numLeadingZeros; i++) {
     output += '0';
   }
   output += projectSequence;
   return output;
 }
 
-function setInvoiceNumbersForProject(projects:any, lastInvoiceNumber:string){
-    let increment = 1;
-    let maxCharsInInvoiceNumber = 10;
-    let invoiceNumberPrefix = config['invoiceNumberPrefix'];
-    lastInvoiceNumber = lastInvoiceNumber.replace(invoiceNumberPrefix,"");
-    let lastSequence = Number(lastInvoiceNumber);
-    projects.map((item) => {
-        let projectSequence = lastSequence + increment;
-        increment++;
-        item["invoiceNumber"] = buildInvoiceNumber(invoiceNumberPrefix, projectSequence, maxCharsInInvoiceNumber);
-    });
+function setInvoiceNumbersForProject(projects: any, lastInvoiceNumber: string) {
+  let increment = 1;
+  let maxCharsInInvoiceNumber = 10;
+  let invoiceNumberPrefix = config['invoiceNumberPrefix'];
+  lastInvoiceNumber = lastInvoiceNumber.replace(invoiceNumberPrefix, "");
+  let lastSequence = Number(lastInvoiceNumber);
+  projects.map((item) => {
+    let projectSequence = lastSequence + increment;
+    increment++;
+    item["invoiceNumber"] = buildInvoiceNumber(invoiceNumberPrefix, projectSequence, maxCharsInInvoiceNumber);
+  });
 }
 
-function addDiscountsToReflectActualUsage(price, report){
+function addDiscountsToReflectActualUsage(price, report) {
   // ignore if usage is already 100% discounted
-  if(price.discount && price.discount >= 1) return;
+  if (price.discount && price.discount >= 1) return;
 
   // effective total cost from report
   let effectiveTotalCost =
@@ -243,102 +244,102 @@ function addDiscountsToReflectActualUsage(price, report){
   let diff =
     totalCost.minus(effectiveTotalCost);
   // adjust for javascript float precision
-  if(diff.gt(0.01) && totalCost.gt(0.00)){
+  if (diff.gt(0.01) && totalCost.gt(0.00)) {
     let effectiveDiscount = diff.div(totalCost);
 
-		// max discount should be 100%
+    // max discount should be 100%
     price["discount"] =
       price["discount"] ? _.clamp(Number(effectiveDiscount.plus(price["discount"]).toPrecision(3)), 1) :
-                          _.clamp(Number(effectiveDiscount.toPrecision(3)), 1);
-	}
+        _.clamp(Number(effectiveDiscount.toPrecision(3)), 1);
+  }
 }
 
-function generateInvoiceDataJSON(projectEmails:Array<string>, projectName:string, invoiceNumber:string, report:any, price:any, invoicesAggregator:Array<any>){
-    let creationDate = new Date();
-    let creationDateText = creationDate.toISOString().slice(0,10);
-    let projectEmail = "";
-    projectEmails.map((item) => projectEmail = projectEmail + item + ",");
-    // generate invoice data
-    let invoiceData = {
-        'pi_email': projectEmail.substring(0,projectEmail.lastIndexOf(",")),
-        'project_name':projectName,
-        'invoice_number':invoiceNumber,
-        'date' : creationDateText,
-        'cpu_cost' : report.cpuCost,
-        'cpu_qty' : report.cpu,
-        'cpu_unit_cost' : price.cpuPrice,
-        'image_cost' : report.imageCost,
-        'image_qty' : report.image,
-        'image_unit_cost' : price.imagePrice,
-        'volume_cost' : report.volumeCost,
-        'volume_qty' : report.volume,
-        'volume_unit_cost' : price.volumePrice,
-        'discount' : price.discount
-    };
-    invoicesAggregator.push(invoiceData);
+function generateInvoiceDataJSON(projectEmails: Array<string>, projectName: string, invoiceNumber: string, report: any, price: any, invoicesAggregator: Array<any>) {
+  let creationDate = new Date();
+  let creationDateText = creationDate.toISOString().slice(0, 10);
+  let projectEmail = "";
+  projectEmails.map((item) => projectEmail = projectEmail + item + ",");
+  // generate invoice data
+  let invoiceData = {
+    'pi_email': projectEmail.substring(0, projectEmail.lastIndexOf(",")),
+    'project_name': projectName,
+    'invoice_number': invoiceNumber,
+    'date': creationDateText,
+    'cpu_cost': report.cpuCost,
+    'cpu_qty': report.cpu,
+    'cpu_unit_cost': price.cpuPrice,
+    'image_cost': report.imageCost,
+    'image_qty': report.image,
+    'image_unit_cost': price.imagePrice,
+    'volume_cost': report.volumeCost,
+    'volume_qty': report.volume,
+    'volume_unit_cost': price.volumePrice,
+    'discount': price.discount
+  };
+  invoicesAggregator.push(invoiceData);
 
 }
 
-function generatePreInvoiceSummaryCSV(invoicesData:Array<any>): Promise<any>{
-    let fields = [
-        {
-            label: 'Project Name',
-            value: 'project_name'
-        },
-        {
-            label: 'Email',
-            value: 'pi_email'
-        },
-        {
-            label: 'Target Invoice Number',
-            value: 'invoice_number'
-        },
-        {
-            label: 'Date',
-            value: 'date'
-        },
-        {
-            label: 'CPU Cost',
-            value: 'cpu_cost'
-        },
-        {
-            label: 'CPU Qty',
-            value: 'cpu_qty'
-        },
-        {
-            label: 'CPU Unit Cost',
-            value: 'cpu_unit_cost'
-        },
-        {
-            label: 'Image Cost',
-            value: 'image_cost'
-        },
-        {
-            label: 'Image Qty',
-            value: 'image_qty'
-        },
-        {
-            label: 'Image Unit Cost',
-            value: 'image_unit_cost'
-        },
-        {
-            label: 'Volume Cost',
-            value: 'volume_cost'
-        },
-        {
-            label: 'Volume Qty',
-            value: 'volume_qty'
-        },
-        {
-            label: 'Volume Unit Cost',
-            value: 'volume_unit_cost'
-        },
-        {
-            label: 'Discount',
-            value: 'discount'
-        },
+function generatePreInvoiceSummaryCSV(invoicesData: Array<any>): Promise<any> {
+  let fields = [
+    {
+      label: 'Project Name',
+      value: 'project_name'
+    },
+    {
+      label: 'Email',
+      value: 'pi_email'
+    },
+    {
+      label: 'Target Invoice Number',
+      value: 'invoice_number'
+    },
+    {
+      label: 'Date',
+      value: 'date'
+    },
+    {
+      label: 'CPU Cost',
+      value: 'cpu_cost'
+    },
+    {
+      label: 'CPU Qty',
+      value: 'cpu_qty'
+    },
+    {
+      label: 'CPU Unit Cost',
+      value: 'cpu_unit_cost'
+    },
+    {
+      label: 'Image Cost',
+      value: 'image_cost'
+    },
+    {
+      label: 'Image Qty',
+      value: 'image_qty'
+    },
+    {
+      label: 'Image Unit Cost',
+      value: 'image_unit_cost'
+    },
+    {
+      label: 'Volume Cost',
+      value: 'volume_cost'
+    },
+    {
+      label: 'Volume Qty',
+      value: 'volume_qty'
+    },
+    {
+      label: 'Volume Unit Cost',
+      value: 'volume_unit_cost'
+    },
+    {
+      label: 'Discount',
+      value: 'discount'
+    },
 
-    ];
-    return billing.writeCSVDataToFile(invoicesData,fields, config['outputDir'] + 'InvoicesSummary.csv');
+  ];
+  return billing.writeCSVDataToFile(invoicesData, fields, config['outputDir'] + 'InvoicesSummary.csv');
 
 }

@@ -15,11 +15,10 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-import {findDOMNode} from 'react-dom';
-import {observable} from 'mobx';
-import {observer} from 'mobx-react';
-import animate from 'gsap-promise';
-import user from '~/user';
+import { observable } from 'mobx';
+import { observer } from 'mobx-react';
+import animate from '@jam3/gsap-promise';
+import user from '../../user';
 
 import './Login.scss';
 
@@ -56,7 +55,7 @@ class extends Component {
   }
 
   async componentWillAppear(callback) {
-    this.animateIn({delay: 1})
+    this.animateIn({ delay: 1 })
       .then(callback);
   }
 
@@ -68,7 +67,7 @@ class extends Component {
     this.animateOut().then(callback);
   }
 
-  animateIn({delay} = {delay: 0}) {
+  animateIn({ delay } = { delay: 0 }) {
     const elements = [
       this.refs.logo,
       this.refs.usernameInput,
@@ -99,7 +98,7 @@ class extends Component {
     );
   }
 
-  render () {
+  render() {
     return (
       <div className="Login" ref="container">
         <div className="login-inner">
@@ -107,11 +106,11 @@ class extends Component {
             ref="logo"
             alt="Cancer Genome COLLABORATORY"
             className="logo"
-            src={require('~/assets/images/logo-full.png')}
+            src={require('../../assets/images/logo-full.png')}
           />
-          
+
           {this.errorMessage && (
-            <div className="alert alert-danger" dangerouslySetInnerHTML={{__html: this.errorMessage}}>
+            <div className="alert alert-danger" dangerouslySetInnerHTML={{ __html: this.errorMessage }}>
             </div>
           )}
 
@@ -128,7 +127,7 @@ class extends Component {
                 className="form-control"
                 name="username"
                 placeholder="Username"
-                onChange={e => {this.username = e.target.value}}
+                onChange={e => { this.username = e.target.value }}
               />
             </div>
             <div className="form-group">
@@ -139,15 +138,15 @@ class extends Component {
                 className="form-control"
                 name="password"
                 placeholder="Password"
-                onChange={e => {this.password = e.target.value}}
+                onChange={e => { this.password = e.target.value }}
               />
             </div>
             <div className="form-group">
-                <button ref="loginButton" type="submit" className="dcc form-control btn btn-primary">
-                  Login
+              <button ref="loginButton" type="submit" className="dcc form-control btn btn-primary">
+                Login
                 </button>
             </div>
-            <div class="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
+            <div className="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
           </form>
         </div>
       </div>

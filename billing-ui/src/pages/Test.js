@@ -16,22 +16,12 @@
  */
 import React, { Component } from 'react';
 
-import { DatePicker, Select, Radio } from 'antd';
-const RangePicker = DatePicker.RangePicker;
-const Option = Select.Option;
+import { Radio } from 'antd';
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 
-
-const TIME_PERIODS = {
-  DAILY: 'DAILY',
-  WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY',
-  YEARLY: 'YEARLY',
-};
-
-export default 
-class extends Component {
+export default
+  class extends Component {
 
   handleProjectsSelect(e) {
     console.log(e);
@@ -40,15 +30,15 @@ class extends Component {
   handlePeriodChange(e) {
     console.log(e);
   }
-  render () {
+  render() {
     return (
       <div className="Test">
-          <RadioGroup
-            defaultValue="a"
-          >
-            <RadioButton value="a">Daily</RadioButton>
-            <RadioButton value="b">Weekly</RadioButton>
-          </RadioGroup>
+        <RadioGroup
+          defaultValue="a"
+        >
+          <RadioButton value="a">Daily</RadioButton>
+          <RadioButton value="b">Weekly</RadioButton>
+        </RadioGroup>
       </div>
     );
   }

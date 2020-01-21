@@ -15,10 +15,16 @@ var paths = require('../config/paths');
 rimrafSync(paths.appBuild + '/*');
 
 console.log('Creating an optimized production build...');
-webpack(config).run(function(err, stats) {
-  if (err) {
+webpack(config).run(function (err, stats) {
+  var statsErrors = stats && stats.compilation && stats.compilation.errors;
+  if (err || statsErrors && statsErrors.length > 0) {
     console.error('Failed to create a production build. Reason:');
-    console.error(err.message || err);
+    if (err) {
+      console.error(err.message || err);
+    }
+    if (statsErrors.length > 0) {
+      console.error(statsErrors);
+    }
     process.exit(1);
   }
 
@@ -76,7 +82,7 @@ webpack(config).run(function(err, stats) {
     console.log('For example:');
     console.log();
     console.log('  npm install -g pushstate-server');
-    console.log('  pushstate-server build');
+    console.log('  pushstate-server -d <build folder>');
     console.log('  ' + openCommand + ' http://localhost:9000');
     console.log();
     console.log(chalk.dim('The project was built assuming it is hosted at the root.'));

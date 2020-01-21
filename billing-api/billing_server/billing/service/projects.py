@@ -44,12 +44,10 @@ def get_billing_info(user_id, invoice_role, database, admin=False):
 
 def get_billing_map(database):
         project_map = get_project_name_map(database)
-        billing_maps = get_project_billing_map(database)
-
+        billing_maps = list(get_project_billing_map(database))
         for entry in billing_maps:
             entry['project_name'] = project_map.get(entry.get('project_id'))
             entry['extra'] = json.loads(database.get_user_extras(entry.get('user_id')).get('extra'))
-
         return billing_maps
 
 

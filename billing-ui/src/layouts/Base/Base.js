@@ -15,8 +15,8 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import React, { Component } from 'react';
-import {findDOMNode} from 'react-dom';
-import animate from 'gsap-promise';
+import { findDOMNode } from 'react-dom';
+import animate from '@jam3/gsap-promise';
 import TransitionGroup from 'react-transition-group-plus';
 
 import Header from './Header/Header';
@@ -39,9 +39,9 @@ const animationStates = {
 };
 
 export default
-class extends Component {
+  class extends Component {
   componentDidMount() {
-    animate.set(this.refs.container, {position: 'absolute', left: 0, top: 0});
+    animate.set(this.refs.container, { position: 'absolute', left: 0, top: 0 });
     animate.set(findDOMNode(this.refs.childContainer), animationStates.beforeEnter);
   }
 
@@ -57,7 +57,7 @@ class extends Component {
     this.animateOut().then(callback);
   }
 
-  animateIn({delay} = {delay: 0}) {
+  animateIn({ delay } = { delay: 0 }) {
     this.refs.header.animateIn();
     return animate.to(
       findDOMNode(this.refs.childContainer),
@@ -66,21 +66,21 @@ class extends Component {
         clearProps: 'all',
         delay: delay + 0.4
       })
-    ).then(() => animate.set(this.refs.container, {clearProps: 'all'}) );
+    ).then(() => animate.set(this.refs.container, { clearProps: 'all' }));
   }
 
   animateOut() {
     return Promise.resolve();
   }
 
-  render () {
+  render() {
     const { pathname } = this.props.location;
     const key = pathname.split('/')[2] || 'root';
 
     return (
-      <div ref="container" className="Base" style={{height: '100%'}}>
-        <Header ref="header"/>
-        <TransitionGroup ref="childContainer" transitionMode="out-in" className="BaseChildContainer" style={{position: 'relative'}} component="div">
+      <div ref="container" className="Base" style={{ height: '100%' }}>
+        <Header ref="header" />
+        <TransitionGroup ref="childContainer" transitionMode="out-in" className="BaseChildContainer" style={{ position: 'relative' }} component="div">
           {React.cloneElement(this.props.children || <div />, { key: key })}
         </TransitionGroup>
       </div>
