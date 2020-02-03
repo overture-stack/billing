@@ -8,25 +8,35 @@ RUN \
   sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
   apt-get update && \
   apt-get -y upgrade && \
-  apt-get install -y build-essential libssl-dev && \
+  apt-get install -y build-essential libssl-dev bash-completion && \
   apt-get install -y curl git man vim wget && \
-  apt-get install -y python3 python3-dev virtualenv nginx libmysqlclient-dev
+  apt-get install -y python3 python3-dev virtualenv nginx libmysqlclient-dev && \
+  apt-get clean
+
+ # nvm environment variables
+ENV NODE_VERSION 13.6.0
+ENV NVM_DIR /root/.nvm
 
 # NODE & NPM
 RUN \
-  wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash && \
-  source ~/.nvm/nvm.sh && \
-  nvm install 12.8.0 && \
-  npm install -g npm && \
-  mkdir -p /srv
+  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.1/install.sh | bash && \
+  source $NVM_DIR/nvm.sh && \
+  nvm install $NODE_VERSION && \
+  nvm alias default $NODE_VERSION && \
+  nvm use default && \
+  npm install -g npm
 
+# add node and npm to path so the commands are available
+ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+RUN mkdir -p /srv
 ADD billing-api /srv/billing-api
 ADD billing-ui /srv/billing-ui
 
 # UI
 WORKDIR /srv/billing-ui
-RUN  \
-  source ~/.nvm/nvm.sh && \
+RUN \
   npm install && \
   npm rebuild node-sass && \
   npm run build
