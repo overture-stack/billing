@@ -325,9 +325,12 @@ def email_new_invoice(client, user_id, database):
     if is_admin_user(user_id, database):
         request_payload = request.json
         request_payload["user"] = {'username': user_name, "email": user_email}
+
         retval = requests.post(url, json=request_payload)
-        if retval.content.find("error") >= 0:
-            raise StandardError(retval.content)
+
+        if str(retval.content, 'utf-8').find("error") >= 0:
+            raise Exception('at /emailNewInvoice', retval.content)
+
         return retval.content
     else:
         abort(403)
@@ -350,8 +353,10 @@ def get_all_invoices(client, user_id, database):
             return
 
     retval = requests.post(url, json={"user":user_info}, params=request.args)
-    if str(retval.content).find("error") >= 0:
-        raise StandardError(retval.content)
+
+    if str(retval.content, 'utf-8').find("error") >= 0:
+        raise Exception('at /getAllInvoices', retval.content)
+
     return json.loads(retval.content)
 
 
@@ -360,11 +365,12 @@ def get_all_invoices(client, user_id, database):
 def email_me_invoice(client, user_id, database):
     url = app.config['INVOICE_API']  + EMAIL_INVOICE_PATH
     user_email = projects.get_user_email(user_id, database)
-    retval = requests.get(url,
-                          params={'email':user_email,
-                                  'invoice':request.args.get('invoice')})
-    if retval.content.find("error") >= 0:
-        raise StandardError(retval.content)
+
+    retval = requests.get(url, params={'email':user_email, 'invoice':request.args.get('invoice')})
+
+    if str(retval.content, 'utf-8').find("error") >= 0:
+        raise Exception('at /email', retval.content)
+
     return retval.content
 
 
@@ -380,7 +386,8 @@ def get_last_invoice_number(client, user_id, database):
         if(request.json is not None): request_payload = request.json
         retval = requests.get(url, params={'username':user_name, 'email':user_email})
         if str(retval.content, 'utf-8').find("error") >= 0:
-            raise StandardError(retval.content)
+            raise Exception('at /getLastInvoiceNumber',retval.content)
+
         return retval.content
     else:
         abort(403)
