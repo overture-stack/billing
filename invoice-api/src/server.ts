@@ -27,6 +27,7 @@ import { FreshBooksAuth } from "./global/freshbooks-auth";
 import * as cors from 'cors';
 import * as morgan from 'morgan';
 import * as winston from 'winston';
+import { format } from 'logform';
 
 let app: express.Application;
 let freshbooksAuth: FreshBooksAuth;
@@ -59,17 +60,35 @@ const config :any = configPath.endsWith('.js')
 /*
  Configure logger
  */
-const tsFormat = () => (new Date()).toLocaleDateString() + '  ' + (new Date()).toLocaleTimeString();
-let logFolder = config['logs'] || '';
-let logger = new (winston.Logger)({
+const tsFormat = () => (new Date()).toLocaleDateString('en-CA', {
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+    month: '2-digit',
+    second: '2-digit',
+    year: 'numeric',
+});
+const logFolder = config.logs || '';
+
+const logger = winston.createLogger({
+    format: format.combine(
+        format.colorize(),
+        format.timestamp({ format: tsFormat() }),
+        format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`),
+    ),
     transports: [
-        new (winston.transports.File)({ filename: logFolder + 'invoice.log', 'timestamp': tsFormat, colorize: true })
-    ]
+        new winston.transports.File({
+            // colorize: true,
+            filename: `${logFolder}invoice.log`,
+            // timestamp: tsFormat,
+        }),
+    ],
 });
 
 
 // create a write stream (in append mode)
-var accessLogStream = fs.createWriteStream(logFolder + 'invoiceAccess.log', { flags: 'a' });
+const accessLogStream = fs.createWriteStream(`${logFolder}invoiceAccess.log`, { flags: 'a' });
 app.use(morgan('combined', { stream: accessLogStream }));
 
 

@@ -13,7 +13,6 @@ module.exports = {
     emailRecipients: {
         invoice_recipients: [],
         oicr_finance_email: [],
-        summary_recipients: [],
     },
     freshbooksConfig: {
         account_id: 'r8XRQ',

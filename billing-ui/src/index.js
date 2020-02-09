@@ -23,7 +23,7 @@ import { observe } from 'mobx';
 import { AppContainer } from 'react-hot-loader';
 import 'whatwg-fetch';
 
-import user from '../src/user';
+import user from './user';
 
 import Routes from './routes';
 

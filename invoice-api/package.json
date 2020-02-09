@@ -5,16 +5,17 @@
   "main": "server.js",
   "scripts": {
     "test": "node ./build/server.js",
-    "dev": "node ./build/server.js",
+    "dev": "nodemon ./src/server.ts",
     "start": "node ./build/server.js"
   },
   "author": "",
   "license": "GPLv3",
   "devDependencies": {
     "@types/lodash": "^4.14.149",
-    "@types/node": "^7.0.46",
-    "tslint": "^4.5.1",
-    "typescript": "^2.6.1"
+    "@types/node": "^13.7.0",
+    "nodemon": "^2.0.2",
+    "tslint": "^6.0.0",
+    "typescript": "^3.7.5"
   },
   "dependencies": {
     "axios": "^0.19.0",
@@ -23,7 +24,16 @@
     "express": "^4.16.2",
     "lodash": "^4.17.15",
     "morgan": "^1.9.0",
-    "winston": "^2.4.0"
+    "winston": "^3.2.1"
   },
-  "false": {}
+  "false": {},
+  "nodemonConfig": {
+    "delay": "2500",
+    "execMap": {
+      "ts": "npx ts-node"
+    },
+    "watch": [
+      "src"
+    ]
+  }
 }

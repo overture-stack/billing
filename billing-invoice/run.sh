@@ -1,5 +1,4 @@
 #!/bin/bash
-source ~/.nvm/nvm.sh
 
 # Date format: YYYY-MM
 if [ -z "$BILL_PERIOD" ]; then
@@ -9,5 +8,5 @@ fi
 if [ -z "$PROJECTS" ]; then
   PROJECTS="ALL"
 fi
-
+echo $BILL_PERIOD
 node /srv/billing-invoice/build/index.js /srv/billing-invoice/config.json $BILL_PERIOD $PROJECTS
