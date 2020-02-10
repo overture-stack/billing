@@ -8,8 +8,7 @@
     "dev": "nodemon ./src/server.ts",
     "start": "node ./build/server.js"
   },
-  "author": "",
-  "license": "GPLv3",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@types/lodash": "^4.14.149",
     "@types/node": "^13.7.0",

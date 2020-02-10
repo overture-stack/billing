@@ -13,6 +13,7 @@
 # OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import decimal
 import json
 from datetime import datetime
@@ -50,10 +51,13 @@ app.pricing_periods = app.config['PRICING_PERIODS']
 app.discounts = app.config['DISCOUNTS']
 
 handler = RotatingFileHandler(app.config['FLASK_LOG_FILE'], maxBytes=100000, backupCount=3)
+
 if app.config['DEBUG']:
     handler.setLevel(logging.DEBUG)
+
 else:
     handler.setLevel(logging.info)
+
 app.logger.addHandler(handler)
 
 
@@ -73,8 +77,10 @@ for period in app.pricing_periods:
 def parse_decimal(obj):
     if isinstance(obj, decimal.Decimal):
         return int(obj)
+
     elif obj is None:
         return 0
+
     else:
         return obj
 
@@ -82,22 +88,35 @@ def parse_decimal(obj):
 def authenticate(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        app.logger.info('Authorizing')
+        app.logger.info('Attempting authorization')
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
+
             try:
                 token = auth_header.split()[1]
+
             except IndexError:
+                app.logger.error('Cannot parse authorization token')
                 raise AuthenticationError('Cannot parse authorization token')
-            c = sessions.validate_token(app.config['AUTH_URI'], token)
+
+            client = sessions.validate_token(app.config['AUTH_URI'], token)
             new_token = sessions.renew_token(app.config['AUTH_URI'], token)
-            database = Collaboratory(app.config['MYSQL_URI'], app.logger, app.config['BILLING_ROLE'])
-            retval = func(c, new_token['user_id'], database, *args, **kwargs)
+            database = Collaboratory(
+                app.config['MYSQL_URI'],
+                app.logger,
+                app.config['BILLING_ROLE']
+            )
+            retval = func(client, new_token['user_id'], database, *args, **kwargs)
             response = make_response(jsonify(retval), 200)
             response.headers['Authorization'] = new_token['token']
+            app.logger.info('Authorization successful!')
+
             return response
+
         else:
-            raise AuthenticationError('Authentication required: Token not provided')
+            app.logger.error('Authentication failed: Token not provided')
+            raise AuthenticationError('Authentication failed: Token not provided')
+
     return inner
 
 
@@ -109,17 +128,20 @@ def api_error_handler(e):
 @app.route('/login', methods=['POST'])
 def login():
     database = Collaboratory(app.config['MYSQL_URI'], app.logger,  app.config['BILLING_ROLE'])
+
     if 'username' not in request.json or 'password' not in request.json:
-        app.logger.info('Username or password not found in the request')
+        app.logger.error('Username or password not found in the request')
         raise BadRequestError('Please provide username and password in the body of your request')
+
     token = sessions.get_new_token(
         auth_url=app.config['AUTH_URI'],
         username=request.json['username'],
-        password=request.json['password'])
-    app.logger.info('Username: %s', request.json['username'])
+        password=request.json['password']
+    )
     database.refresh_user_id_map()
     response = Response(status=200, content_type='application/json')
     response.headers['Authorization'] = token['token']
+
     return response
 
 
@@ -129,6 +151,7 @@ def get_projects(client, user_id, database):
     role_map = projects.get_tenants(user_id, database, sessions.list_projects(client, user_id))
     role_map_list = list(role_map)
     update_role_map_for_nonpi(role_map_list, user_id, database)
+
     return role_map_list
 
 
@@ -136,17 +159,18 @@ def update_role_map_for_nonpi(role_map_list, user_id, database):
     if is_admin_user(user_id, database):
         for elem in role_map_list:
             elem['roles'].append(app.config['INVOICE_ROLE'])
+
     return
 
 
 def is_admin_user(user_id, database):
     #is user admin
     user_email = projects.get_user_email(user_id, database)
+
     if len(user_email) is 0: user_email=""
+
     # add invoice role if user is admin
-    if database.get_username(user_id).lower() in app.config['OICR_ADMINS'] or user_email.lower() in app.config['OICR_ADMINS']:
-        return True
-    else: return False
+    return database.get_username(user_id).lower() in app.config['OICR_ADMINS'] or user_email.lower() in app.config['OICR_ADMINS']
 
 
 @app.route('/billingprojects', methods=['GET'])
@@ -154,21 +178,30 @@ def is_admin_user(user_id, database):
 def get_billing_projects(client, user_id, database):
     # only admin can use this feature
     if is_admin_user(user_id, database):
-        return projects.get_billing_info(user_id, app.config['INVOICE_ROLE'],database, True)
+        return projects.get_billing_info(
+            user_id,
+            app.config['INVOICE_ROLE'],
+            database,
+            app.logger
+        )
+
     else:
         abort(403)
 
 
 @app.route('/price', methods=['GET'])
 def get_price():
-
     if request.args.get('date') is None:
         date = datetime.today()
+
     else:
         date = parse(request.args.get('date'), ignoretz=True)
+
     if request.args.get('projects') is not None:
         projects = request.args.get('projects').split(",")
+
         return get_per_project_price(date, projects)
+
     else:
         return get_price_period(date)
 
@@ -179,16 +212,22 @@ def generate_report_data(client, user_id, database):
     projects = request.args.get('projects')
     user = request.args.get('user')
     bucket_size = request.args.get('bucket')
+
     try:
         if 'fromDate' in request.args:
             original_start_date = parse(request.args.get('fromDate'), ignoretz=True)
+
         else:
             original_start_date = datetime(year=datetime.today().year, month=datetime.today().month, day=1)
+
         if 'toDate' in request.args:
             original_end_date = parse(request.args.get('toDate'), ignoretz=True)
+
         else:
             original_end_date = datetime.today()
+
     except ValueError:
+        app.logger.error('Please define fromDate and toDate in the format YYYY-MM-DD')
         raise BadRequestError('Please define fromDate and toDate in the format YYYY-MM-DD')
 
     start_date = original_start_date
@@ -196,6 +235,7 @@ def generate_report_data(client, user_id, database):
 
     if projects is not None:
         project_list = projects.split(',')
+
     else:
         project_list = list(map(lambda tenant: tenant.to_dict()['id'], sessions.list_projects(client,user_id)))
 
@@ -203,35 +243,43 @@ def generate_report_data(client, user_id, database):
 
     billing_projects = []  # The projects we want to grab all info for
     user_projects = []     # The projects we want to only grab info for one user for
+
     for project in project_list:
         if project in role_map:
             if app.config['BILLING_ROLE'] in role_map[project] or app.config['INVOICE_ROLE'] in role_map[project]:
                 billing_projects.append(project)
+
             else:
                 user_projects.append(project)
 
     if user is not None and user == user_id:
         user_projects += billing_projects
         billing_projects = ['']
+
     elif user is not None:
         user_projects = billing_projects
         billing_projects = ['']
+
     else:
         user = user_id
 
-    date_ranges, bucket_size, same_bucket, next_bucket, start_of_bucket = divide_time_range(start_date,
-                                                                                            end_date,
-                                                                                            bucket_size)
+    date_ranges, bucket_size, same_bucket, next_bucket, start_of_bucket = divide_time_range(
+        start_date,
+        end_date,
+        bucket_size
+    )
 
     # Generate list of responses
     responses = []
     for bucket_range in date_ranges:
+        records = database.get_instance_core_hours(
+            bucket_range['start_date'],
+            bucket_range['end_date'],
+            billing_projects,
+            user_projects,
+            user
+        )
 
-        records = database.get_instance_core_hours(bucket_range['start_date'],
-                                                   bucket_range['end_date'],
-                                                   billing_projects,
-                                                   user_projects,
-                                                   user)
         for record in records:
             record['fromDate'] = bucket_range['start_date']
             record['toDate'] = bucket_range['end_date']
@@ -239,11 +287,14 @@ def generate_report_data(client, user_id, database):
             record['username'] = database.get_username(record['user'])
             responses.append(record)
 
-        records = database.get_volume_gigabyte_hours(bucket_range['start_date'],
-                                                     bucket_range['end_date'],
-                                                     billing_projects,
-                                                     user_projects,
-                                                     user)
+        records = database.get_volume_gigabyte_hours(
+            bucket_range['start_date'],
+            bucket_range['end_date'],
+            billing_projects,
+            user_projects,
+            user
+        )
+
         for record in records:
             record['fromDate'] = bucket_range['start_date']
             record['toDate'] = bucket_range['end_date']
@@ -251,9 +302,12 @@ def generate_report_data(client, user_id, database):
             record['username'] = database.get_username(record['user'])
             responses.append(record)
 
-        images = database.get_image_storage_gigabyte_hours_by_project(bucket_range['start_date'],
-                                                                      bucket_range['end_date'],
-                                                                      billing_projects)
+        images = database.get_image_storage_gigabyte_hours_by_project(
+            bucket_range['start_date'],
+            bucket_range['end_date'],
+            billing_projects
+        )
+
         for image in images:
             image['fromDate'] = bucket_range['start_date']
             image['toDate'] = bucket_range['end_date']
@@ -264,25 +318,32 @@ def generate_report_data(client, user_id, database):
     def sort_results_into_buckets(report, item):
         # Try to match a row to a previous row so that they can be put together
         for report_item in report:
-            if (report_item['user'] == item['user'] and
-                    report_item['projectId'] == item['projectId'] and
-                    same_bucket(parse(report_item['fromDate']), parse(item['fromDate']))):
+            if (
+                report_item['user'] == item['user'] and
+                report_item['projectId'] == item['projectId'] and
+                same_bucket(parse(report_item['fromDate']), parse(item['fromDate']))
+            ):
                 if 'user' in report_item and report_item['user'] is not None:
                     if 'cpu' in item and item['cpu'] is not None:
                         if 'cpu' not in report_item:
                             report_item['cpu'] = 0
                             report_item['cpuCost'] = 0
+
                         report_item['cpu'] += item['cpu']
                         report_item['cpuCost'] += round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
+
                     if 'volume' in item and item['volume'] is not None:
                         if 'volume' not in report_item:
                             report_item['volume'] = 0
                             report_item['volumeCost'] = 0
+
                         report_item['volume'] += item['volume']
                         report_item['volumeCost'] += round(parse_decimal(item['volume']) * item['volumePrice'], 4)
+
                 elif 'image' in report_item and report_item['image'] is not None:
                     report_item['image'] += item['image']
                     report_item['imageCost'] += round(parse_decimal(item['image']) * item['imagePrice'], 4)
+
                 return report
 
         # If it couldn't find a match to merge the item on to, create a new one
@@ -294,33 +355,43 @@ def generate_report_data(client, user_id, database):
             'user': item['user'],
             'projectId': item['projectId']
         }
+
         if 'user' in new_item and new_item['user'] is not None:
             new_item['username'] = item['username']
+
             if 'cpu' in item and item['cpu'] is not None:
                 new_item['cpu'] = parse_decimal(item['cpu'])
                 new_item['cpuCost'] = round(parse_decimal(item['cpu']) * item['cpuPrice'], 4)
+
             if 'volume' in item and item['volume'] is not None:
                 new_item['volume'] = parse_decimal(item['volume'])
                 new_item['volumeCost'] = round(parse_decimal(item['volume']) * item['volumePrice'], 4)
         else:
             new_item['image'] = item['image']
             new_item['imageCost'] = round(parse_decimal(item['image']) * item['imagePrice'], 4)
+
         report.append(new_item)
+
         return report
+
     report = reduce(sort_results_into_buckets, responses, list())
 
-    return {'fromDate': original_start_date.isoformat(' '),
-            'toDate': original_end_date.isoformat(' '),
-            'bucket': bucket_size,
-            'entries': report}
+    return {
+        'bucket': bucket_size,
+        'entries': report,
+        'fromDate': original_start_date.isoformat(' '),
+        'toDate': original_end_date.isoformat(' '),
+    }
 
 
 @app.route('/emailNewInvoice', methods=['POST'])
 @authenticate
 def email_new_invoice(client, user_id, database):
-    url = app.config['INVOICE_API']  + EMAIL_NEW_INVOICE_PATH
+    url = app.config['INVOICE_API'] + EMAIL_NEW_INVOICE_PATH
+    print('user', user_id)
     user_name = database.get_username(user_id)
     user_email = projects.get_user_email(user_id, database)
+
     # only admin can use this feature
     if is_admin_user(user_id, database):
         request_payload = request.json
@@ -329,10 +400,13 @@ def email_new_invoice(client, user_id, database):
         retval = requests.post(url, json=request_payload)
 
         if str(retval.content, 'utf-8').find("error") >= 0:
+            app.logger.error(retval.content)
             raise Exception('at /emailNewInvoice', retval.content)
 
         return retval.content
+
     else:
+        app.logger.error('403, Request denied at /emailNewInvoice')
         abort(403)
 
 
@@ -341,12 +415,15 @@ def email_new_invoice(client, user_id, database):
 def get_all_invoices(client, user_id, database):
     url = app.config['INVOICE_API']  + GET_ALL_INVOICES
     user_info = dict()
+
     # check projects where user has invoice role
     user_info["email"] = projects.get_user_email(user_id, database)
     user_info["username"] = database.get_username(user_id)
+
     # get user's role map
     role_map = database.get_user_roles(user_id)
     role_flatmap = [role for role_list in role_map.values() for role in role_list]
+
     # abort if user is neither admin nor user has invoice role on any project
     if (not is_admin_user(user_id, database)) and (app.config['INVOICE_ROLE'] not in role_flatmap):
             abort(403)
@@ -355,6 +432,7 @@ def get_all_invoices(client, user_id, database):
     retval = requests.post(url, json={"user":user_info}, params=request.args)
 
     if str(retval.content, 'utf-8').find("error") >= 0:
+        app.logger.error(retval.content)
         raise Exception('at /getAllInvoices', retval.content)
 
     return json.loads(retval.content)
@@ -369,6 +447,7 @@ def email_me_invoice(client, user_id, database):
     retval = requests.get(url, params={'email':user_email, 'invoice':request.args.get('invoice')})
 
     if str(retval.content, 'utf-8').find("error") >= 0:
+        app.logger.error(retval.content)
         raise Exception('at /email', retval.content)
 
     return retval.content
@@ -380,15 +459,26 @@ def get_last_invoice_number(client, user_id, database):
     url = app.config['INVOICE_API']  + LAST_INVOICE_PATH
     user_name = database.get_username(user_id)
     user_email = projects.get_user_email(user_id, database)
+
     # only admin can use this feature
     if is_admin_user(user_id, database):
         request_payload = dict()
-        if(request.json is not None): request_payload = request.json
-        retval = requests.get(url, params={'username':user_name, 'email':user_email})
+
+        if(request.json is not None):
+            request_payload = request.json
+
+        retval = requests.get(url, params={
+            'email': user_email,
+            'invoicePrefix': request.args.get('invoicePrefix'),
+            'username': user_name,
+        })
+
         if str(retval.content, 'utf-8').find("error") >= 0:
+            app.logger.error(retval.content)
             raise Exception('at /getLastInvoiceNumber',retval.content)
 
         return retval.content
+
     else:
         abort(403)
 
@@ -396,13 +486,16 @@ def get_last_invoice_number(client, user_id, database):
 def divide_time_range(start_date, end_date, bucket_size):
     if bucket_size not in app.valid_bucket_sizes:
         bucket_size = 'daily'
+
     same_bucket, next_bucket, start_of_bucket = get_bucket_functions(bucket_size)
 
     pricing_periods = iter(app.pricing_periods)
     next_period = next(pricing_periods, None)
     period = next_period
+
     while start_date >= period['period_end'] and next_period is not None:
         next_period = next(pricing_periods, None)
+
         if next_period is not None:
             period = next_period
 
@@ -412,16 +505,19 @@ def divide_time_range(start_date, end_date, bucket_size):
     # and 62 is the maximum number of days that 2 months can take.
     query_periods = 62  # refactor to make this configurable
     date_ranges = []
+
     while not start_date == end_date:
         next_bucket_date = next_bucket(start_date)
 
         if start_date >= period['period_end'] and next_period is not None:
             next_period = next(pricing_periods, None)
+
             if next_period is not None:
                 period = next_period
 
         if start_date < period['period_end']:
             period_end_date = min(next_bucket_date, period['period_end'], end_date)
+
         else:
             period_end_date = min(next_bucket_date, end_date)
 
@@ -436,6 +532,7 @@ def divide_time_range(start_date, end_date, bucket_size):
 
         if query_periods > 0:
             query_periods -= 1
+
         else:
             date_ranges.pop(0)
 
@@ -449,15 +546,19 @@ def get_bucket_functions(bucket_size):
         def same_bucket(start, end):
             start_iso = start.isocalendar()
             end_iso = end.isocalendar()
+
             return start_iso[0] == end_iso[0] and start_iso[1] == end_iso[1]
 
         def start_of_bucket(current_date):
             new_date = current_date + relativedelta(weekday=MO(-1))
+
             return datetime(year=new_date.year, month=new_date.month, day=new_date.day)
 
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(days=+1, weekday=MO(+1))
+
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
+
     elif bucket_size == 'yearly':
         def same_bucket(start, end):
             return start.year == end.year
@@ -467,7 +568,9 @@ def get_bucket_functions(bucket_size):
 
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(years=+1)
+
             return datetime(year=date_to_change.year, month=1, day=1)
+
     elif bucket_size == 'monthly':
         def same_bucket(start, end):
             return start.year == end.year and start.month == end.month
@@ -477,11 +580,12 @@ def get_bucket_functions(bucket_size):
 
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(months=+1)
+
             return datetime(year=date_to_change.year, month=date_to_change.month, day=1)
+
     else:
         # Daily bucket size
         # Default bucket size, if not defined
-
         def same_bucket(start, end):
             return start.year == end.year and start.month == end.month and start.day == end.day
 
@@ -490,6 +594,7 @@ def get_bucket_functions(bucket_size):
 
         def next_bucket(date_to_change):
             date_to_change = date_to_change + relativedelta(days=+1)
+
             return datetime(year=date_to_change.year, month=date_to_change.month, day=date_to_change.day)
 
     return same_bucket, next_bucket, start_of_bucket
@@ -499,11 +604,12 @@ def get_per_project_price(date, projects):
     # get price for all projects as price is independent of projects
     all_projects_pricing = get_price_period(date)
     all_projects_pricing = json.loads(all_projects_pricing)
+
     # get discounts specific to the projects
     output = dict()
     for project_name in projects:
             output[project_name] = add_project_discount(project_name, deepcopy(all_projects_pricing), date)
-    # return output
+
     return json.dumps(output)
 
 
@@ -511,8 +617,10 @@ def get_price_period(date):
     pricing_periods = iter(app.pricing_periods)
     next_period = next(pricing_periods, None)
     retval = next_period
+
     while date >= retval['period_end'] and next_period is not None:
         next_period = next(pricing_periods, None)
+
         if next_period is not None:
             retval = next_period
 
@@ -523,35 +631,47 @@ def get_price_period(date):
 
 def add_project_discount(project_name, price, date):
     price['discount'] = 0 # default discount amount
-    if project_name not in app.discounts.keys(): return price
+
+    if project_name not in app.discounts.keys():
+        return price
+
     # get discount value from config
     project_discounts = app.discounts[project_name]
+
     if len(project_discounts) == 1 and 'period_start' not in project_discounts[0].keys():
         # this means that there is a discount value that is always applicable regardless of the dates
         price['discount'] = project_discounts[0]['discount']
         return price
+
     # compute discount value based on the dates
     discount_periods = iter(project_discounts)
     next_period = next(discount_periods, None)
     retval = next_period
+
     while next_period is not None:
         if 'period_end' not in next_period.keys():
             # if we find a discount without any period; set that as target discount
             # this will get overriden in the loop below if there is a discount specific to a period
             price['discount'] = next_period['discount']
             next_period = next(discount_periods, None)
-            if next_period is not None: retval = next_period
+
+            if next_period is not None:
+                retval = next_period
+
         elif date <= parse_period_end(retval['period_end']):
             # this is time period specific discount; no need to iterate further
             price['discount'] = next_period['discount']
             break
+
         else:
             next_period = next(discount_periods, None)
             if next_period is not None: retval = next_period
 
     return price
 
+
 def parse_period_end(period_end_str):
     period_end = period_end_str.split("-")
     month_range = calendar.monthrange(int(period_end[0]), int(period_end[1]))
+
     return parse(period_end_str+"-"+str(month_range[1]))

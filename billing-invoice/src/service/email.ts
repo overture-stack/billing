@@ -17,119 +17,122 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+
 import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
-import * as _ from 'lodash';
+import { each } from 'lodash';
 
 interface SMTPConfig {
 
-    host: string;
-    port: string;
-    secure: boolean;
-    ignoreTLS: boolean;
-    auth: any;
+    host :string;
+    port :string;
+    secure :boolean;
+    ignoreTLS :boolean;
+    auth :any;
 
 }
 
 interface EmailConfig {
-
-  fromAddress: string;
-  subject: string;
-  replyTo: string;
-  text: string;
-
+  fromAddress :string;
+  subject :string;
+  replyTo :string;
+  text :string;
 }
 
-interface  EmailRecipients {
-  "summaryRecipients": Array<string>
-
+interface EmailRecipients {
+  'summaryRecipients' :Array<string>
 }
+
 interface MailerConfig {
-  
-  smtpConfig: SMTPConfig;
-  emailConfig: EmailConfig;
-  emailRecipients:EmailRecipients
-
+  emailConfig :EmailConfig;
+  emailRecipients :EmailRecipients
+  smtpConfig :SMTPConfig;
 }
 
 class Mailer {
+    /**
+     * Dependencies
+     */
+    private config :MailerConfig;
 
-  /**
-   * Dependencies
-   */
-  private config: MailerConfig;
-  private emailPath: string;
-  private logger:any;
+    private emailPath :string;
 
-  /**
-   * State
-   */
-  private transport: nodemailer.Transporter;
+    private logger :any;
 
-  constructor(config: MailerConfig, emailPath: string, logger:any) {
-    this.config = config;
-    this.emailPath = emailPath;
-    this.transport = nodemailer.createTransport(this.config.smtpConfig);
-    logger != null? this.logger = logger : this.logger = console;
+    /**
+     * State
+     */
+    private transport :nodemailer.Transporter;
 
-  }
+    constructor(config :MailerConfig, emailPath :string, logger :any = console) {
+        this.config = config;
+        this.emailPath = emailPath;
+        this.transport = nodemailer.createTransport(this.config.smtpConfig);
+        this.logger = logger;
+    }
 
-  public sendEmail(email: string, report: any, price: any) {
-    let that = this;
-    let emailTemplate = fs.readFileSync(this.emailPath).toString();
-    let html = handlebars.compile(emailTemplate)(this.finishReport(report, price));
-    let message = {
-      from: this.config.emailConfig.fromAddress,
-      replyTo: this.config.emailConfig.replyTo,
-      to: email,
-      subject: `${this.config.emailConfig.subject} - ${report.project_name}`,
-      headers: {
-        'Reply-To': this.config.emailConfig.replyTo
-      },
-      text: JSON.stringify(report),
-      html: html
-    };
-    this.transport.sendMail(message, function(err) {
-      if(err) {
-        that.logger.error(err);
-      }
-    });
-  }
 
-  public sendSummaryCSVEmail(summaryCSVFilePath:string, month:string, year: number) {
-    let that = this;
-    let message = {
-      from: this.config.emailConfig.fromAddress,
-      replyTo: this.config.emailConfig.replyTo,
-      to: this.config.emailRecipients.summaryRecipients,
-      subject: `${this.config.emailConfig.subject} ${month} ${year}`,
-      headers: {
-        'Reply-To': this.config.emailConfig.replyTo
-      },
-      text: this.config.emailConfig.text,
-      attachments: [
-        {
-          // filename and content type is derived from path
-          path: summaryCSVFilePath
+    private finishReport = (report :any, price :any) => {
+        const finalReport = Object.assign(report, price);
+        finalReport.total = (
+            Number(report.cpuCost) +
+            Number(report.volumeCost) +
+            Number(report.imageCost)
+        ).toFixed(2);
 
-        }]
-    };
-    this.transport.sendMail(message, function(err) {
-      if(err) {
-        that.logger.error(err);
-      }
-    });
-  }
+        each(finalReport, (value, key :string) => {
+            if (key !== 'year') finalReport[key] = value.toLocaleString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+        });
 
-  private finishReport(report: any, price: any) {
-    let finalReport = Object.assign(report, price);
-    finalReport.total = (Number(report['cpuCost']) + Number(report['volumeCost']) + Number(report['imageCost'])).toFixed(2);
-    _.each(finalReport, (value, key:string) => {
-      if(key != 'year') finalReport[key] = value.toLocaleString().replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
-    });
-    return finalReport;
-  }
+        return finalReport;
+    }
+
+    sendEmail(email :string, report :any, price :any) {
+        const that = this;
+        const emailTemplate = fs.readFileSync(this.emailPath).toString();
+        const html = handlebars.compile(emailTemplate)(this.finishReport(report, price));
+        const message = {
+            from: this.config.emailConfig.fromAddress,
+            replyTo: this.config.emailConfig.replyTo,
+            to: email,
+            subject: `${this.config.emailConfig.subject} - ${report.project_name}`,
+            headers: {
+                'Reply-To': this.config.emailConfig.replyTo,
+            },
+            text: JSON.stringify(report),
+            html,
+        };
+        this.transport.sendMail(message, (err) => {
+            if (err) {
+                that.logger.error(err);
+            }
+        });
+    }
+
+    sendSummaryCSVEmail = (summaryCSVFilePath :string, month :string, year :number) => {
+        const that = this;
+
+        const message = {
+            // filename and content type are derived from path
+            attachments: [{ path: summaryCSVFilePath }],
+            from: this.config.emailConfig.fromAddress,
+            headers: {
+                'Reply-To': this.config.emailConfig.replyTo,
+            },
+            replyTo: this.config.emailConfig.replyTo,
+            subject: `${this.config.emailConfig.subject} ${month} ${year}`,
+            text: this.config.emailConfig.text,
+            to: this.config.emailRecipients.summaryRecipients,
+        };
+
+        this.transport.sendMail(message, (err) => {
+            if (err) {
+                that.logger.error(err);
+            }
+        });
+    }
 }
 
-export { Mailer };
+export default Mailer;
