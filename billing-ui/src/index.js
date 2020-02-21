@@ -1,5 +1,5 @@
 /*
- * Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
+ * Copyright 2020(c) The Ontario Institute for Cancer Research. All rights reserved.
  *
  * This program and the accompanying materials are made available under the terms of the GNU Public
  * License v3.0. You should have received a copy of the GNU General Public License along with this
@@ -23,7 +23,7 @@ import { observe } from 'mobx';
 import { AppContainer } from 'react-hot-loader';
 import 'whatwg-fetch';
 
-import user from '../src/user';
+import user from './user';
 
 import Routes from './routes';
 

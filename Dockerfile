@@ -1,4 +1,4 @@
-# Copyright 2016(c) The Ontario Institute for Cancer Research. All rights reserved.
+# Copyright 2020(c) The Ontario Institute for Cancer Research. All rights reserved.
 
 FROM ubuntu:18.04
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -13,7 +13,7 @@ RUN \
   apt-get install -y python3 python3-dev virtualenv nginx libmysqlclient-dev && \
   apt-get clean
 
- # nvm environment variables
+# nvm environment variables
 ENV NODE_VERSION 13.6.0
 ENV NVM_DIR /root/.nvm
 

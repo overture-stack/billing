@@ -150,7 +150,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 
 # Flask stuff:
@@ -187,11 +186,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
-### VisualStudioCode template
-.vscode
 
-#Invoice API Service
-invoice-api/node_modules/
+# VisualStudioCode template
+.vscode
 
 *.db
 *.auth
@@ -199,14 +196,18 @@ invoice-api/node_modules/
 # Mac files
 .DS_Store
 
-#rsa
+# rsa
 rsa
 
-#log folder
-logs/
+# NPM modules
+**/node_modules/
 
-#Customize configuration
-configs.py
-configs.js
-billing-invoice/config.json
-invoice-api/config.json
+# Customize configuration
+**/config.py
+**/config.js
+**/config.json
+
+# Logs and Generated files
+**/*.csv
+**/*.log
+**/logs
