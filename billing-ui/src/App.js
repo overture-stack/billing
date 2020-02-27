@@ -14,22 +14,31 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import TransitionGroup from 'react-transition-group-plus';
 import { LocaleProvider } from 'antd';
 import enUS from 'antd/lib/locale-provider/en_US';
 
-class App extends Component {
-  render() {
-    const { pathname } = this.props.location;
-    const key = pathname.split('/')[1] || 'root';
-    return (
-      <LocaleProvider locale={enUS}>
-        <TransitionGroup transitionMode="out-in" className="App" style={{ height: '100%', position: 'relative' }} component="div">
-          {React.cloneElement(this.props.children || <div />, { key })}
+const App = ({
+    children,
+    location: { pathname },
+}) => (
+    <LocaleProvider locale={enUS}>
+        <TransitionGroup
+            className="App"
+            component="div"
+            style={{
+                height: '100%',
+                position: 'relative',
+            }}
+            transitionMode="out-in"
+            >
+            {React.cloneElement(
+                children || <div />,
+                { key: pathname.split('/')[1] || 'root' },
+            )}
         </TransitionGroup>
-      </LocaleProvider>
-    );
-  }
-}
+    </LocaleProvider>
+);
+
 export default App;

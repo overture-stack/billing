@@ -14,28 +14,31 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import fetchHeaders from '../../utils/fetchHeaders';
 import _ from 'lodash';
 import encodeUriSegment from 'encode-uri-query';
+import fetchHeaders from '../../utils/fetchHeaders';
 import user from '../../user';
 
-async function fetchReport({ projects, bucketSize, fromDate, toDate }) {
-  const query = _.map(Object.assign({
-    bucket: bucketSize,
-    fromDate,
-    toDate,
-  }, projects.length ? { projects: projects.map(p => p.id).join(',') } : {}), (value, key) => `${key}=${encodeUriSegment(value)}`).join('&');
+async function fetchReport({
+    bucketSize, fromDate, projects, toDate,
+}) {
+    const query = _.map({
+        bucket: bucketSize,
+        fromDate,
+        toDate,
+        ...(projects.length ? { projects: projects.map(p => p.id).join(',') } : {}),
+    }, (value, key) => `${key}=${encodeUriSegment(value)}`).join('&');
 
-  const response = await fetch(`/api/reports?${query}`, {
-    method: 'GET',
-    headers: fetchHeaders.get(),
-  });
+    const response = await fetch(`/api/reports?${query}`, {
+        headers: fetchHeaders.get(),
+        method: 'GET',
+    });
 
-  const data = await response.json();
-  user.token = response.headers.get('authorization');
-  if (response.status === 401) user.logout();
+    const data = await response.json();
+    user.token = response.headers.get('authorization');
+    if ([401, 404].includes(response.status)) user.logout();
 
-  return data;
+    return data;
 }
 
 export default fetchReport;

@@ -14,32 +14,9 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React, { Component } from 'react';
 
-import { Radio } from 'antd';
-const RadioButton = Radio.Button;
-const RadioGroup = Radio.Group;
+export const formatCurrency = n => (n && typeof parseInt(n, 10) === 'number'
+    ? `$${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+    : '');
 
-export default
-  class extends Component {
-
-  handleProjectsSelect(e) {
-    console.log(e);
-  }
-
-  handlePeriodChange(e) {
-    console.log(e);
-  }
-  render() {
-    return (
-      <div className="Test">
-        <RadioGroup
-          defaultValue="a"
-        >
-          <RadioButton value="a">Daily</RadioButton>
-          <RadioButton value="b">Weekly</RadioButton>
-        </RadioGroup>
-      </div>
-    );
-  }
-}
+export const formatNumber = n => (n && typeof parseInt(n, 10) === 'number' ? n.toLocaleString() : '');

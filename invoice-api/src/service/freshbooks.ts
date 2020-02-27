@@ -28,6 +28,11 @@ import axios from 'axios';
 import * as https from 'https';
 import * as _ from 'lodash';
 
+import {
+    formatCurrency,
+    formatNumber,
+} from '../utils/formats';
+
 const INVOICE_TEXT = 'This is a statement for your usage of the Cancer Genome Collaboratory (Collab) resources during the month of <month>, <year> for the project: "';
 
 interface InvoiceLineItem {
@@ -134,8 +139,8 @@ class FreshbooksService {
     private agent :https.Agent;
 
     private headers = {
-        Authorization: null,
         'Api-Version': 'alpha',
+        Authorization: null,
         'Content-Type': 'application/json',
     };
 
@@ -252,24 +257,53 @@ class FreshbooksService {
         }, projectTax);
     }
 
-    private createVolumeCostItem(report :any, price :any, projectTax :any) :InvoiceLineItem {
+    private createImageCostItem(report :any, price :any, projectTax :any) :InvoiceLineItem {
         return this.createInvoiceLineItem({
-            name: 'Volume Storage:',
-            desc: `Calculated based on: Total Usage/Hour this month: ${report.volume} x ${price.volumePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
-            qty: 1, // Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
-            total_cost: report.volumeCost,
-            unit_cost: report.volumeCost, // price.imagePrice,
+            desc: `Total usage of ${
+                formatNumber(report.image)
+            } GB hour charged at ${
+                formatCurrency(
+                    price.imagePrice,
+                    this.apiConfig.invoiceDefaults.code,
+            )} per GB hour`,
+            name: 'Image Storage:',
+            qty: +(report.image > 0), // Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
+            total_cost: report.imageCost,
+            unit_cost: report.imageCost,
+        }, projectTax);
+    }
+
+    private createObjectsCostItem(report :any, price :any, projectTax :any) :InvoiceLineItem {
+        return this.createInvoiceLineItem({
+            desc: `Total usage of ${
+                formatNumber(report.objects)
+            } GB hour charged at ${
+                formatCurrency(
+                    price.objectsPrice,
+                    this.apiConfig.invoiceDefaults.code,
+            )} per GB hour`,
+            name: 'Object Storage:',
+            qty: +(report.objects > 0), // Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
+            total_cost: report.objectsCost,
+            unit_cost: report.objectsCost,
 
         }, projectTax);
     }
 
-    private createImageCostItem(report :any, price :any, projectTax :any) :InvoiceLineItem {
+    private createVolumeCostItem(report :any, price :any, projectTax :any) :InvoiceLineItem {
         return this.createInvoiceLineItem({
-            desc: `Calculated based on: Total Usage/Hour this month: ${report.image} x ${price.imagePrice} ${this.apiConfig.invoiceDefaults.code} per GB hour of storage`,
-            name: 'Image Storage:',
-            qty: 1, // Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
-            total_cost: report.imageCost,
-            unit_cost: report.imageCost, // price.imagePrice,
+            desc: `Total usage of ${
+                formatNumber(report.volume)
+            } GB hour charged at ${
+                formatCurrency(
+                    price.volumePrice,
+                    this.apiConfig.invoiceDefaults.code,
+            )} per GB hour`,
+            name: 'Volume Storage:',
+            qty: +(report.volume > 0), // Because of floating precision limit in Freshbooks; qty is always 1 and unit cost reflects total amount
+            total_cost: report.volumeCost,
+            unit_cost: report.volumeCost,
+
         }, projectTax);
     }
 
@@ -290,13 +324,15 @@ class FreshbooksService {
 
         // create line items for cpu, volume and image
         const cpuCostItem = this.createCPUCostItem(report, price, projectTax);
-        const volumeCostItem = this.createVolumeCostItem(report, price, projectTax);
         const imageCostItem = this.createImageCostItem(report, price, projectTax);
+        const objectsCostItem = this.createObjectsCostItem(report, price, projectTax);
+        const volumeCostItem = this.createVolumeCostItem(report, price, projectTax);
 
         const invoiceLines = [
             cpuCostItem,
-            volumeCostItem,
             imageCostItem,
+            objectsCostItem,
+            volumeCostItem,
         ].concat(
             // check if there are extra billing items for this project
             this.createExtraBillingItems(report.project_name, projectTax),
@@ -567,8 +603,8 @@ class FreshbooksService {
 
     private getLineItemValue(value :string, list :Array<any>) {
         const output = _.filter(list, r => r.name.indexOf(value) >= 0);
-        if (output.length > 0) return output[0].amount.amount;
-        return 0.0;
+
+        return (output.length > 0) ? output[0].amount.amount : '0.00';
     }
 
     getInvoicesSummaryData = async (date :string, user :any, admin :boolean) => {
@@ -586,17 +622,21 @@ class FreshbooksService {
 
         // currently we have decided to pull all the invoices and ship it to front end in one go
         const allInvoicesForThisPeriod = await this.getAllInvoicesParallel(date, allCustomerIDs);
+
         return allInvoicesForThisPeriod.map(item => ({
-            cpu_cost: this.getLineItemValue('CPU', item.lines),
+            costs: {
+                cpu: this.getLineItemValue('CPU', item.lines),
+                image: this.getLineItemValue('Image', item.lines),
+                objects: this.getLineItemValue('Object', item.lines),
+                volume: this.getLineItemValue('Volume', item.lines),
+                total: item.amount.amount,
+            },
             current_organization: item.current_organization,
             date: item.create_date,
             discount: item.discount_value,
-            image_cost: this.getLineItemValue('Image', item.lines),
             invoice_number: item.invoice_number,
             invoice_status: item.v3_status,
             payment_status: item.payment_status,
-            total: item.amount.amount,
-            volume_cost: this.getLineItemValue('Volume', item.lines),
         }));
     }
 

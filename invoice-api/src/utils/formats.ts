@@ -15,4 +15,14 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-export { default } from './fetchProjects';
+export const formatCurrency = (n = 0, currency = '', fractions?) =>
+    `${currency || ''}$${n
+        ? `$${n.toLocaleString(undefined, typeof fractions === 'number'
+            ? {
+                maximumFractionDigits: fractions,
+                minimumFractionDigits: fractions < 2 ? fractions : 2,
+            }
+            : { maximumFractionDigits: 20 })}`
+        : n}`;
+
+export const formatNumber = n => (n ? n.toLocaleString() : n);

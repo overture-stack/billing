@@ -16,9 +16,11 @@
  */
 import { computed } from 'mobx';
 import user from '../user';
+
 const fetchHeaders = computed(() => ({
-  Authorization: `Bearer ${user.token}`,
-  Accept: 'application/json',
-  'content-type': 'application/json',
+    Accept: 'application/json',
+    Authorization: `Bearer ${user.token}`,
+    'content-type': 'application/json',
 }));
+
 export default fetchHeaders;

@@ -22,112 +22,119 @@ import user from '../../../user';
 import './Header.scss';
 
 const containerAnimationStates = {
-  beforeEnter: {
-    xPercent: '100%'
-  },
-  idle: {
-    xPercent: '0'
-  },
+    beforeEnter: {
+        xPercent: '100%',
+    },
+    idle: {
+        xPercent: '0',
+    },
 };
 
 const elementAnimationStates = {
-  beforeEnter: {
-    opacity: 0,
-    x: 20
-  },
-  idle: {
-    opacity: 1,
-    x: 0,
-  },
+    beforeEnter: {
+        opacity: 0,
+        x: 20,
+    },
+    idle: {
+        opacity: 1,
+        x: 0,
+    },
 };
 
-export default class extends Component {
-  componentDidMount() {
-    this.initUIState();
-  }
+class Header extends Component {
+    componentDidMount() {
+        this.initUIState();
+    }
 
-  initUIState() {
-    const elements = [this.refs.logo, this.refs.logout];
-    return Promise.all([
-      animate.set(this.refs.container, containerAnimationStates.beforeEnter),
-      animate.set(elements, elementAnimationStates.beforeEnter),
-    ]);
-  }
+    initUIState() {
+        const elements = [this.refs.logo, this.refs.logout];
+        return Promise.all([animate.set(this.refs.container, containerAnimationStates.beforeEnter), animate.set(elements, elementAnimationStates.beforeEnter)]);
+    }
 
-  async animateIn() {
-    const elements = [this.refs.logo, this.refs.logout];
-    await animate.to(this.refs.container, 0.1, containerAnimationStates.idle);
-    await animate.staggerTo(elements, 0.2, Object.assign(elementAnimationStates.idle, { clearProps: 'all' }), 0.1);
-  }
+    async animateIn() {
+        const elements = [this.refs.logo, this.refs.logout];
+        await animate.to(this.refs.container, 0.1, containerAnimationStates.idle);
+        await animate.staggerTo(elements, 0.2, Object.assign(elementAnimationStates.idle, { clearProps: 'all' }), 0.1);
+    }
 
-  render() {
-    return (
-      <header>
-        <div
-          ref="topbar"
-          className="topbar">
-          <div
-            className="link-container">
-            <a
-              ref="website-link"
-              className="links"
-              href="http://www.cancercollaboratory.org"
-              target="_blank"
-            >Collaboratory Website</a>
-            <span className="links"> | </span>
-            <a
-              ref="console-link"
-              className="links"
-              href="https://console.cancercollaboratory.org/"
-              target="_blank"
-            >Collaboratory Console</a>
-          </div>
-          <div
-            className="user-container"
-          >
-            <span
-              className="glyphicon glyphicon-user user-icon">
-            </span>
-            <span
-              className="user-logout"
-              onClick={() => user.logout()}
-            >Logout</span>
-          </div>
-        </div>
-        <div className="Header">
-          <div>
-            <img
-              className="logo"
-              src={require('../../../assets/images/logo.svg')}
-              alt="Cancer Genome COLLABORATORY"
-            />
-          </div>
-          <div>
-            <ul className="menu">
-              {user.roles.report &&
-                <li>
-                  <Link
-                    to="/report"
-                    activeClassName="active"
-                  >
-                    Report
-                  </Link>
-                </li>
-              }
-              {user.roles.invoices &&
-                <li>
-                  <Link
-                    to="/invoices"
-                    activeClassName="active"
-                  >
-                    Invoices
-                  </Link>
-                </li>
-              }
-            </ul>
-          </div>
-        </div>
-      </header>
-    );
-  }
+    render() {
+        return (
+            <header>
+                <div
+                    className="topbar"
+                    ref="topbar"
+                    >
+                    <div
+                        className="link-container"
+                        >
+                        <a
+                            className="links"
+                            href="http://www.cancercollaboratory.org"
+                            ref="website-link"
+                            target="_blank"
+                            >
+                            Collaboratory Website
+                        </a>
+                        <span className="links"> | </span>
+                        <a
+                            className="links"
+                            href="https://console.cancercollaboratory.org/"
+                            ref="console-link"
+                            target="_blank"
+                            >
+                            Collaboratory Console
+                        </a>
+                    </div>
+                    <div
+                        className="user-container"
+                        >
+                        <span
+                            className="glyphicon glyphicon-user user-icon"
+                            />
+                        <span
+                            className="user-logout"
+                            onClick={() => user.logout()}
+                            >
+                            Logout
+                        </span>
+                    </div>
+                </div>
+                <div className="Header">
+                    <div>
+                        <img
+                            alt="Cancer Genome COLLABORATORY"
+                            className="logo"
+                            src={require('../../../assets/images/logo.svg')}
+                            />
+                    </div>
+                    <div>
+                        <ul className="menu">
+                            {user.roles.report && (
+                                <li>
+                                    <Link
+                                        activeClassName="active"
+                                        to="/report"
+                                        >
+                                        Report
+                                    </Link>
+                                </li>
+                            )}
+                            {user.roles.invoices && (
+                                <li>
+                                    <Link
+                                        activeClassName="active"
+                                        to="/invoices"
+                                        >
+                                        Invoices
+                                    </Link>
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+                </div>
+            </header>
+        );
+    }
 }
+
+export default Header;

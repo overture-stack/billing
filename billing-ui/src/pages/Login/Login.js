@@ -23,133 +23,142 @@ import user from '../../user';
 import './Login.scss';
 
 const animationStates = {
-  beforeEnter: {
-    opacity: 0,
-    y: -10
-  },
-  idle: {
-    opacity: 1,
-    y: 0,
-  },
-  afterLeave: {
-    opacity: 0,
-    y: -10
-  }
+    afterLeave: {
+        opacity: 0,
+        y: -10,
+    },
+    beforeEnter: {
+        opacity: 0,
+        y: -10,
+    },
+    idle: {
+        opacity: 1,
+        y: 0,
+    },
 };
 
-export default @observer
-class extends Component {
+@observer
+class Login extends Component {
+    @observable username = '';
 
-  @observable username = '';
-  @observable password = '';
-  @observable errorMessage = '';
+    @observable password = '';
 
-  handleSubmit = async (e) => {
-    e.preventDefault();
-    this.errorMessage = '';
-    try {
-      await user.login(this.username, this.password);
-    } catch (e) {
-      this.errorMessage = e.message;
+    @observable errorMessage = '';
+
+    handleSubmit = async (event) => {
+        event.preventDefault();
+        this.errorMessage = '';
+        try {
+            await user.login(this.username, this.password);
+        } catch (error) {
+            this.errorMessage = error.message;
+        }
     }
-  }
 
-  async componentWillAppear(callback) {
-    this.animateIn({ delay: 1 })
-      .then(callback);
-  }
+    async componentWillAppear(callback) {
+        this.animateIn({ delay: 1 })
+            .then(callback);
+    }
 
-  componentWillEnter(callback) {
-    this.animateIn().then(callback);
-  }
+    componentWillEnter(callback) {
+        this.animateIn().then(callback);
+    }
 
-  componentWillLeave(callback) {
-    this.animateOut().then(callback);
-  }
+    componentWillLeave(callback) {
+        this.animateOut().then(callback);
+    }
 
-  animateIn({ delay } = { delay: 0 }) {
-    const elements = [
-      this.refs.logo,
-      this.refs.usernameInput,
-      this.refs.passwordInput,
-      this.refs.loginButton,
-    ];
-    return animate.staggerFromTo(
-      elements,
-      0.25,
-      animationStates.beforeEnter,
-      Object.assign({}, animationStates.idle, { delay, clearProps: 'all' }),
-      0.1
-    );
-  }
+    animateIn({ delay } = { delay: 0 }) {
+        const elements = [
+            this.refs.logo,
+            this.refs.usernameInput,
+            this.refs.passwordInput,
+            this.refs.loginButton,
+        ];
+        return animate.staggerFromTo(
+            elements,
+            0.25,
+            animationStates.beforeEnter,
+            {
+                ...animationStates.idle,
+                delay,
+                clearProps: 'all',
+            },
+            0.1,
+        );
+    }
 
-  animateOut() {
-    const elements = [
-      this.refs.logo,
-      this.refs.usernameInput,
-      this.refs.passwordInput,
-      this.refs.loginButton,
-    ];
-    return animate.staggerTo(
-      elements,
-      0.25,
-      Object.assign(animationStates.afterLeave),
-      0.1
-    );
-  }
+    animateOut() {
+        const elements = [
+            this.refs.logo,
+            this.refs.usernameInput,
+            this.refs.passwordInput,
+            this.refs.loginButton,
+        ];
+        return animate.staggerTo(
+            elements,
+            0.25,
+            Object.assign(animationStates.afterLeave),
+            0.1,
+        );
+    }
 
-  render() {
-    return (
-      <div className="Login" ref="container">
-        <div className="login-inner">
-          <img
-            ref="logo"
-            alt="Cancer Genome COLLABORATORY"
-            className="logo"
-            src={require('../../assets/images/logo-full.png')}
-          />
+    render() {
+        return (
+            <div className="Login" ref="container">
+                <div className="login-inner">
+                    <img
+                        alt="Cancer Genome COLLABORATORY"
+                        className="logo"
+                        ref="logo"
+                        src={require('../../assets/images/logo-full.png')}
+                        />
 
-          {this.errorMessage && (
-            <div className="alert alert-danger" dangerouslySetInnerHTML={{ __html: this.errorMessage }}>
+                    {this.errorMessage && (
+                        <div
+                            className="alert alert-danger"
+                            dangerouslySetInnerHTML={{ __html: this.errorMessage }}
+                            />
+                    )}
+
+                    <form
+                        className="form-horizontal col-sm-3"
+                        id="login-form"
+                        onSubmit={this.handleSubmit}
+                        >
+                        <div className="form-group">
+                            <input
+                                autoFocus
+                                className="form-control"
+                                id="username"
+                                name="username"
+                                onChange={e => { this.username = e.target.value; }}
+                                placeholder="Username"
+                                ref="usernameInput"
+                                />
+                        </div>
+                        <div className="form-group">
+                            <input
+                                className="form-control"
+                                id="password"
+                                name="password"
+                                onChange={e => { this.password = e.target.value; }}
+                                placeholder="Password"
+                                ref="passwordInput"
+                                type="password"
+                                />
+                        </div>
+                        <div className="form-group">
+                            <button className="dcc form-control btn btn-primary" ref="loginButton" type="submit">
+                                Login
+                            </button>
+                        </div>
+                        <div className="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
+                    </form>
+                </div>
             </div>
-          )}
-
-          <form
-            id="login-form"
-            className="form-horizontal col-sm-3"
-            onSubmit={this.handleSubmit}
-          >
-            <div className="form-group">
-              <input
-                ref="usernameInput"
-                id="username"
-                autoFocus={true}
-                className="form-control"
-                name="username"
-                placeholder="Username"
-                onChange={e => { this.username = e.target.value }}
-              />
-            </div>
-            <div className="form-group">
-              <input
-                ref="passwordInput"
-                id="password"
-                type="password"
-                className="form-control"
-                name="password"
-                placeholder="Password"
-                onChange={e => { this.password = e.target.value }}
-              />
-            </div>
-            <div className="form-group">
-              <button ref="loginButton" type="submit" className="dcc form-control btn btn-primary">
-                Login
-                </button>
-            </div>
-            <div className="form-group"><span>Please send an email to help@cancercollaboratory.org if you require a password reset.</span></div>
-          </form>
-        </div>
-      </div>
-    );
-  }
+        );
+    }
 }
+
+export default Login;

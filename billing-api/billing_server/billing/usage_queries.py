@@ -13,17 +13,23 @@
 # OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 # IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import time
+from datetime import datetime
 import records
+import requests
+from dateutil.parser import parse
+from .utils import parsing
 
 
 # TODO: Make this not use Records, as Records caches responses
 class Collaboratory:
 
-    def __init__(self, database_url, logger, billing_role='billing', initialized=True):
+    def __init__(self, database_url, graphite_url, logger, billing_role='billing', initialized=True):
         self.billing_role = billing_role
         self.logger = logger
         logger.info('Acquiring database')
         self.database = records.Database(database_url)
+        self.graphite_url = graphite_url
         logger.info('Successfully connected to database')
         self.user_map = {}
         if initialized:
@@ -201,6 +207,53 @@ class Collaboratory:
             start_date=start_date,
             projects=projects)
         return results.all(as_dict=True)
+
+    def get_object_storage_by_project(self, start_date, end_date, projects):
+        def date_format(date_str):
+            return time.strftime(
+                '%Y%m%d',
+                time.strptime(date_str, '%Y-%m-%d %H:%M:%S%z')
+            )
+
+        url = self.graphite_url + '/render'
+        projects_string = ''
+        projects_string = ','.join(projects)
+
+        if not projects:
+            projects.append('')
+
+        retval = requests.get(url, params={
+            'format': 'json',
+            'from': date_format(start_date),
+            'target':
+                'object_usage.{' +
+                # '2fb7b98d74134a37b9fba88856f60b78,' + # test values
+                projects_string +
+                '}',
+            'tz': 'America/Toronto',
+            'until': date_format(end_date),
+        })
+
+        if str(retval.content, 'utf-8').find("error") >= 0:
+            self.logger.error(retval.content)
+            raise Exception('at get_object_storage_by_project', retval.content)
+
+        responses = []
+
+        for project_usage in retval.json():
+            project = {
+                'projectId': projects_string,
+                'objects': 0
+            }
+            for point in project_usage['datapoints']:
+                if point[0] is not None:
+                    project['objects'] += point[0]
+
+            project['objects'] = project['objects'] / 1000000000  # Bytes to GB
+
+            responses.append(project)
+
+        return responses
 
     def get_user_roles(self, user_id):
         results = self.database.query(

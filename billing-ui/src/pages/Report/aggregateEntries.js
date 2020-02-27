@@ -14,21 +14,24 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 import _ from 'lodash';
 
-export function aggregateEntries(entries, groupByIteratee) {
-  return _(entries)
+const aggregateEntries = (entries, groupByIteratee) => _(entries)
     .groupBy(groupByIteratee)
     .map((items, key) => items.reduce((acc, entry) => ({
-      ...acc,
-      ...entry,
-      cpu: (acc.cpu || 0) + (entry.cpu || 0),
-      volume: (acc.volume || 0) + (entry.volume || 0),
-      image: (acc.image || 0) + (entry.image || 0),
-      cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
-      volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
-      imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
-      key,
+        ...acc,
+        ...entry,
+        cpu: (acc.cpu || 0) + (entry.cpu || 0),
+        cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
+        image: (acc.image || 0) + (entry.image || 0),
+        imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
+        key,
+        objects: (acc.objects || 0) + (entry.objects || 0),
+        objectsCost: (acc.objectsCost || 0) + (entry.objectsCost || 0),
+        volume: (acc.volume || 0) + (entry.volume || 0),
+        volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
     })))
     .value();
-}
+
+export default aggregateEntries;

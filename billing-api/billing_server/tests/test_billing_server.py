@@ -23,7 +23,13 @@ class MyTestCase(unittest.TestCase):
         app.config['TESTING'] = True
         app.config['MYSQL_URI'] = default.TEST_MYSQL_URI
         self.app = app.test_client()
-        self.database = usage_queries.Collaboratory(default.TEST_MYSQL_URI, logging.getLogger('test_usage_queries'), 'billing', False)
+        self.database = usage_queries.Collaboratory(
+            default.TEST_MYSQL_URI,
+            default.TEST_GRAPHITE_URI,
+            logging.getLogger('test_usage_queries'),
+            'billing',
+            False
+        )
         initialize_database(self.database)
 
     def tearDown(self):

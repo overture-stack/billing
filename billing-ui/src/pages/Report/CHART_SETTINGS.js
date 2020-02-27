@@ -14,61 +14,62 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import {Highcharts} from 'react-highcharts';
-import {getSeriesFromReportEntries} from './getSeriesFromReportEntries';
+
+import { Highcharts } from 'react-highcharts';
+import getSeriesFromReportEntries from './getSeriesFromReportEntries';
 
 export default {
-  chart: {
-    type: 'area',
-    alignTicks: true
-  },
-  credits: {
-      enabled: false
-  },
-  subtitle: {
-    useHTML: true,
-  },
-  title: {
-    text: ''
-  },
-  xAxis: {
-    type: 'datetime',
+    chart: {
+        alignTicks: true,
+        type: 'area',
+    },
+    credits: {
+        enabled: false,
+    },
+    legend: {
+        align: 'center',
+        itemMarginTop: 70,
+        verticalAlign: 'top',
+    },
+    plotOptions: {
+        area: {
+            lineColor: '#666666',
+            lineWidth: 0,
+            marker: {
+                lineColor: '#666666',
+                lineWidth: 0,
+            },
+            stacking: 'normal',
+        },
+    },
+    series: getSeriesFromReportEntries([]),
+    subtitle: {
+        useHTML: true,
+    },
     title: {
-      enabled: false
+        text: '',
     },
-    dateTimeLabelFormats: {
-      hour: '%l:%M %p'
+    tooltip: {
+        split: false,
+        valueDecimals: 2,
     },
-    labels: {
-      formatter: function () {
-        return Highcharts.dateFormat('%a %d %b', this.value);
-      }
+    xAxis: {
+        dateTimeLabelFormats: {
+            hour: '%l:%M %p',
+        },
+        labels: {
+            formatter() {
+                return Highcharts.dateFormat('%a %d %b', this.value);
+            },
+        },
+        title: {
+            enabled: false,
+        },
+        type: 'datetime',
     },
-  },
-  yAxis: {
-    title: {
-      text: 'Cost ($)'
+    yAxis: {
+        title: {
+            text: 'Cost ($)',
+        },
     },
-  },
-  legend: {
-    align: 'center',
-    verticalAlign: 'top',
-    itemMarginTop: 70,
-  },
-  tooltip: {
-    split: false,
-    valueDecimals: 2,
-  },
-  plotOptions: {
-    area: {
-      stacking: 'normal',
-      lineColor: '#666666',
-      lineWidth: 0,
-      marker: {
-        lineWidth: 0,
-        lineColor: '#666666'
-      }
-    },
-  },
-  series: getSeriesFromReportEntries([])
 };

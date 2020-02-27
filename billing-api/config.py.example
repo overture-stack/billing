@@ -1,9 +1,11 @@
 DEBUG = True  # Debug mode for flask
 SECRET_KEY = 'random, secret, super duper secret key'
-AUTH_URI = 'http://127.0.0.1:5000/v3'  # Keystone/Identity API endpoint
-INVOICE_API = 'http://127.0.0.1:4000/invoice'
-MYSQL_URI = 'mysql://<user_name>:<password>@127.0.0.1:3306'  # Mysql URI
-TEST_MYSQL_URL =  'mysql://<user_name>:<password>@localhost:3306' # Mysql URI for test
+AUTH_URI = 'http://localhost:5000/v3'  # Keystone/Identity API endpoint
+INVOICE_API = 'http://localhost:4000/invoice'
+MYSQL_URI = 'mysql://<user_name>:<password>@localhost:3306'
+GRAPHITE_URI = 'http://<user_name>:<password>@localhost:8080'
+TEST_MYSQL_URI =  'mysql://<user_name>:<password>@localhost:3306'
+TEST_GRAPHITE_URI =  'http://<user_name>:<password>@localhost:8080'
 VALID_BUCKET_SIZES = ['daily', 'weekly', 'monthly', 'yearly']  # Bucketing options for query.
 #FLASK_LOG_FILE = '/srv/billing-api/logs/billing.log'
 FLASK_LOG_FILE = './logs/billing.log'
@@ -19,18 +21,20 @@ PRICING_PERIODS = [
         'period_end': '2016-11-03',
         'cpu_price': 0.04,
         'volume_price': 0.02,
-        'image_price': 0.04
+        'image_price': 0.04,
+        'object_storage_price': 00.2,
     },
     {
         'period_start': '2016-11-03',
         'period_end': '2016-12-22',
         'cpu_price': 0.06,
         'volume_price': 0.03,
-        'image_price': 0.03
+        'image_price': 0.03,
+        'object_storage_price': 0.03,
     }
 ]
 
-# each project can have different discount during differnt billing periods
+# each project can have different discount during different billing periods
 # discounts are always offered as a percentage of the total bill amount
 # discounts are stored as a dictionary with project-id (matches with Collab project-id) as identifier for each project
 # the amount in front of discount field in this config file indicates the percentage discount e.g. 0.9 means 90% discount
@@ -41,14 +45,14 @@ PRICING_PERIODS = [
 # Assumptions:
 # 0. Discount amount is always a number between 0 - 1
 # 1. For each invoice period; there should be max one entry per project
-# 2. We don't foresee any need of itemized discounts in the future
+# 2. We don't foresee any need of itemised discounts in the future
 # 3. For the sake of simplicity; We are not keeping any global discounts section.
 #    If; there is ever a need of a global discount;
 #    individual project's discounts will be updated (potentially using a script)
 # 4. Discounts are only applicable to Invoice; the billing application UI will never have to show it
 # 5. Invoice periods and discount periods will always align
 DISCOUNTS = {
-    "oicr_demo_ironman" : [{
+    "oicr_demo_ironman": [{
         'period_start': '2020-05',
         'period_end': '2020-05',
         'discount': 0.9
@@ -58,7 +62,7 @@ DISCOUNTS = {
         'period_end': '2020-06',
         'discount': 0.7
     }],
-    "oicr_demo_captainamerica" : [{
+    "oicr_demo_captainamerica": [{
         'discount': 0.8
     }]
 }

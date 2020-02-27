@@ -14,17 +14,19 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 import fetchHeaders from '../../utils/fetchHeaders';
 import user from '../../user';
 
 async function fetchProjects() {
-  const response = await fetch('/api/projects', {
-    method: 'GET',
-    headers: fetchHeaders.get(),
-  });
-  const responseData = await response.json();
-  user.token = response.headers.get('authorization');
-  if (response.status === 401) user.logout();
-  return Promise.resolve(responseData);
+    const response = await fetch('/api/projects', {
+        headers: fetchHeaders.get(),
+        method: 'GET',
+    });
+    const responseData = await response.json();
+    user.token = response.headers.get('authorization');
+    if ([401, 404].includes(response.status)) user.logout();
+
+    return Promise.resolve(responseData);
 }
 export default fetchProjects;
