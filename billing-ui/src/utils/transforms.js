@@ -15,4 +15,24 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-export { default } from './fetchProjects';
+export const collectionFlattener = (item, parnetKey, stem = '') => {
+    const newStem = stem ? `${stem}.${parnetKey}` : parnetKey;
+
+    return typeof item === 'object' && !Array.isArray(item)
+        ? Object.keys(item).reduce((out, key) => ({
+            ...out,
+            ...[out, collectionFlattener(item[key], key, newStem)].reduce(
+                (newItems, subItem) => {
+                    Object.keys(subItem).forEach(subKey => {
+                        newItems[subKey] = subItem[subKey];
+                    });
+                    return newItems;
+                }, {},
+            ),
+        }), {})
+        : { [newStem]: item };
+};
+
+export const customNumberSort = (a, b, order, field) => ((order === 'desc')
+    ? a[field] - b[field]
+    : b[field] - a[field]);

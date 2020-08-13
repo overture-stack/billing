@@ -177,6 +177,7 @@ router.post('/getAllInvoices', ({
     },
 }, res) => {
     const fbService = createFBServiceObject(reqApp.get('settings'));
+    const isAdmin = isAdminUser(user, config.oicr_admins);
 
     if (queryDate) {
         // get all invoices generated on a specific date
@@ -191,7 +192,7 @@ router.post('/getAllInvoices', ({
         return fbService.getInvoicesSummaryData(
             queryDate,
             user,
-            isAdminUser(user, config.oicr_admins),
+            isAdmin,
         )
             .then(invoicesData => res.json(invoicesData))
             .catch(error => {
@@ -204,7 +205,7 @@ router.post('/getAllInvoices', ({
     return fbService.getInvoicesSummaryData(
         null,
         user,
-        isAdminUser(user, config.oicr_admins),
+        isAdmin,
     )
         .then(invoicesData => res.status(200).json(invoicesData))
         .catch(error => {

@@ -110,7 +110,7 @@ const projectList :Array<string> = args[4] && args[4] !== 'ALL' ? args[4].split(
 const mode = config.mode?.toLowerCase() || 'csv';
 
 logger.info(`Reporting mode: ${mode}`);
-logger.info(`Reporting for the month of: ${month} ${reportYear}`);
+logger.info(`Reporting for the period of: ${month} ${reportYear}`);
 
 // used only if mode is csv
 const aggregatedInvoices = [];
@@ -236,16 +236,23 @@ const invoiceGeneration = new Promise((resolve, reject) => {
 // wait till all invoices are generated and then generate the summary .csv file
 invoiceGeneration
     .then(() => {
+        const filenamePrefix = config.outputDir || '';
+
         if (mode === EMAIL_MODE) {
             logger.info('Email Mode. Generating Summary CSV file that will be emailed...');
 
-            billing.generateInvoicesSummary(month, config.outputDir)
+
+            billing.generateInvoicesSummary(
+                month,
+                reportYear,
+                filenamePrefix,
+            )
                 .then(() => {
                     const mailer = new Mailer(
                         {
                             emailConfig: config.emailConfig,
-                            smtpConfig: config.smtpConfig,
                             emailRecipients: config.emailRecipients,
+                            smtpConfig: config.smtpConfig,
                         },
                         null,
                         logger,
@@ -253,7 +260,7 @@ invoiceGeneration
 
                     logger.info('Emailing summary csv file...');
                     mailer.sendSummaryCSVEmail(
-                        `${config.outputDir + month}.csv`,
+                        `${filenamePrefix + month}-${reportYear}.csv`,
                         month,
                         reportYear,
                     );
@@ -264,7 +271,7 @@ invoiceGeneration
         } else {
             logger.info('CSV Mode. Generating Summary CSV file...');
 
-            generatePreInvoiceSummaryCSV(aggregatedInvoices)
+            generatePreInvoiceSummaryCSV(aggregatedInvoices, filenamePrefix)
                 .then(() => logger.info('Finished Processing Invoices.'));
         }
     })
@@ -362,7 +369,8 @@ function generateInvoiceDataJSON(
     projectEmails :Array<string>,
     projectName :string,
     invoiceNumber :string,
-    report :any, price :any,
+    report :any,
+    price :any,
     invoicesAggregator :Array<any>,
 ) {
     const creationDate = new Date();
@@ -381,6 +389,9 @@ function generateInvoiceDataJSON(
         image_cost: report.imageCost,
         image_qty: report.image,
         image_unit_cost: price.imagePrice,
+        objects_cost: report.objectsCost,
+        objects_qty: report.objects,
+        objects_unit_cost: price.objectsPrice,
         volume_cost: report.volumeCost,
         volume_qty: report.volume,
         volume_unit_cost: price.volumePrice,
@@ -389,7 +400,10 @@ function generateInvoiceDataJSON(
     invoicesAggregator.push(invoiceData);
 }
 
-function generatePreInvoiceSummaryCSV(invoicesData :Array<any>) :Promise<any> {
+const generatePreInvoiceSummaryCSV = (
+    invoicesData :Array<any>,
+    filenamePrefix :string,
+) :Promise<any> => {
     const fields = [
         {
             label: 'Project Name',
@@ -432,6 +446,18 @@ function generatePreInvoiceSummaryCSV(invoicesData :Array<any>) :Promise<any> {
             value: 'image_unit_cost',
         },
         {
+            label: 'Objects Cost',
+            value: 'objects_cost',
+        },
+        {
+            label: 'Objects Qty',
+            value: 'objects_qty',
+        },
+        {
+            label: 'Objects Unit Cost',
+            value: 'objects_unit_cost',
+        },
+        {
             label: 'Volume Cost',
             value: 'volume_cost',
         },
@@ -449,5 +475,5 @@ function generatePreInvoiceSummaryCSV(invoicesData :Array<any>) :Promise<any> {
         },
 
     ];
-    return billing.writeCSVDataToFile(invoicesData, fields, `${config.outputDir}InvoicesSummary.csv`);
-}
+    return billing.writeCSVDataToFile(invoicesData, fields, `${filenamePrefix}InvoicesSummary.csv`);
+};

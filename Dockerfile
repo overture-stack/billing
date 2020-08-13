@@ -10,7 +10,7 @@ RUN \
   apt-get -y upgrade && \
   apt-get install -y build-essential libssl-dev bash-completion && \
   apt-get install -y curl git man vim wget && \
-  apt-get install -y python3 python3-dev virtualenv nginx libmysqlclient-dev && \
+  apt-get install -y python3.7 python3.7-dev virtualenv nginx libmysqlclient-dev && \
   apt-get clean
 
 # nvm environment variables
@@ -24,7 +24,7 @@ RUN \
   nvm install $NODE_VERSION && \
   nvm alias default $NODE_VERSION && \
   nvm use default && \
-  npm install -g npm
+  npm install -g npm yarn
 
 # add node and npm to path so the commands are available
 ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
@@ -37,14 +37,14 @@ ADD billing-ui /srv/billing-ui
 # UI
 WORKDIR /srv/billing-ui
 RUN \
-  npm install && \
-  npm rebuild node-sass && \
-  npm run build
+  yarn install && \
+  # yarn add node-sass --force && \
+  yarn run build
 
 # API
 WORKDIR /srv/billing-api
 RUN \
-  virtualenv -p python3 env && \
+  virtualenv -p python3.7 env && \
   source env/bin/activate && \
   pip install -r requirements.txt && \
   pip install gunicorn

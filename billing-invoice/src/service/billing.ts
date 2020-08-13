@@ -18,7 +18,6 @@
  *
  */
 
-
 import axios from 'axios';
 import * as fs from 'fs';
 import * as https from 'https';
@@ -61,12 +60,12 @@ class BillingApi {
     private agent :https.Agent;
 
 
-    constructor(config :BillingConfig, logger :any) {
+    constructor(config :BillingConfig, logger :any = console) {
         this.config = config;
         this.agent = new https.Agent({
             rejectUnauthorized: config.rejectInsecure,
         });
-        this.logger = logger || console;
+        this.logger = logger;
     }
 
 
@@ -93,21 +92,23 @@ class BillingApi {
     }
 
 
-    price = async (year :number, month :number, projects :Array<any>) :Promise<Price> => {
+    price = async (
+        year :number,
+        month :number,
+        projects :Array<any>,
+    ) :Promise<Price> => {
         const firstDay = new Date(year, month - 1, 1);
 
         // Bill based on first price at first day of the month
         const isoDate = firstDay.toISOString();
         const projectNames = [];
-        _.each(projects, (project) => {
+        _.each(projects, project => {
             projectNames.push(project.project_name);
         });
 
         this.logger.info(`Getting Price for Date: ${isoDate}`);
         return axios.get(`${this.config.api}/price?date=${isoDate}&projects=${projectNames}`, { httpsAgent: this.agent })
-            .then(response => {
-                return response.data;
-            });
+            .then(({ data: prices }) => prices);
     }
 
 
@@ -124,7 +125,7 @@ class BillingApi {
                 )
                     .then(({ data: projects } :{ data :Array<BillableProject> }) => projects)
                     .catch(error => {
-                        this.logger.error('Project search error', error.response.status, error.response.statusText);
+                        this.logger.error(`Project search error: ${error.response.status}, ${error.response.statusText}`);
                         return error;
                     })
             )
@@ -137,15 +138,17 @@ class BillingApi {
         cpuCost: (_.sumBy(entries, e => e.cpuCost) || 0).toFixed(2) || '0.00',
         image: _.sumBy(entries, e => e.image) || 0,
         imageCost: (_.sumBy(entries, e => e.imageCost) || 0).toFixed(2) || '0.00',
+        objects: _.sumBy(entries, e => e.objects) || 0,
+        objectsCost: (_.sumBy(entries, e => e.objectsCost) || 0).toFixed(2) || '0.00',
         volume: _.sumBy(entries, e => e.volume) || 0,
         volumeCost: (_.sumBy(entries, e => e.volumeCost) || 0).toFixed(2) || '0.00',
     });
 
-    async monthlyReport(
+    monthlyReport = async (
         project :any,
         year :number,
         month :number,
-    ) :Promise<any> {
+    ) :Promise<any> => {
         this.logger.info(`Generating monthly report for projectId: ${project.project_name}`);
 
         return axios.get(
@@ -155,10 +158,11 @@ class BillingApi {
                 httpsAgent: this.agent,
                 params: {
                     bucket: 'monthly',
-                    fromDate: (new Date(year, month - 1, 1)).toISOString(), // first day
+                    fromDate: (new Date(year, month - 1, 1))
+                        .toISOString(), // first day
                     projects: project.project_id,
-                    toDate: (new Date(year, month, 0, 20)).toISOString(), // last day.
-                    // ^ offsets +4 of UTC time
+                    toDate: (new Date(year, month, 0, 20))
+                        .toISOString(), // last day.
                 },
             },
         )
@@ -167,15 +171,17 @@ class BillingApi {
                     ? this.getTotals(response.data.entries)
                     : {
                         cpu: 0,
-                        cpuCost: 0,
+                        cpuCost: '0.00',
                         image: 0,
                         imageCost: '0.00',
-                        volume: '0.00',
+                        objects: 0,
+                        objectsCost: '0.00',
+                        volume: 0,
                         volumeCost: '0.00',
                     }
             )).catch(err => {
-                this.logger.error('Error fetching report data for:', project.name);
-                this.logger.error('Error :', err);
+                this.logger.error(`Error fetching report data for: ${project.project_name}, ${project.project_id}`);
+                this.logger.error(err);
             });
     }
 
@@ -190,7 +196,7 @@ class BillingApi {
     )
         .then(response => response.data)
         .catch(error => {
-            this.logger.error('at billing/getLastInvoiceNumber:', error);
+            this.logger.error(`at billing/getLastInvoiceNumber: ${error}`);
             throw new Error(error);
         });
 
@@ -223,13 +229,19 @@ class BillingApi {
             {
                 headers: { authorization: `Bearer ${this.token}` },
                 httpsAgent: this.agent,
-                params: { date: new Date().toISOString().slice(0, 10) }, // current date, YYYY-MM-DD
+                params: {
+                    date: new Date().toISOString().slice(0, 10), // current date, YYYY-MM-DD
+                },
             },
         )
-            .then(response => response.data);
+            .then(({ data: invoices }) => {
+                if (invoices.length) { return invoices; }
+
+                throw new Error('No invoices were actually generated?');
+            });
 
 
-    async writeCSVDataToFile(data :any, fields :any, fileName :string) {
+    writeCSVDataToFile = async (data :any, fields :any, fileName :string) => {
         const that = this;
         const invoicesCSV = json2csv.parse(data, {
             fields,
@@ -243,13 +255,25 @@ class BillingApi {
         });
     }
 
-    async generateInvoicesSummary(month :string, outputFolder :string) :Promise<any> {
-        const flattenedInovicesJson = await this.getInvoicesSummaryData();
+    generateInvoicesSummary = async (
+        month :string,
+        year :number,
+        outputFolder :string,
+    ) :Promise<any> => {
+        const flattenedInvoicesJson = await this.getInvoicesSummaryData();
         const fields = [
             {
                 label: 'Organization',
                 value: 'current_organization',
             },
+            // {
+            //     label: 'PI Email',
+            //     value: 'pi_email',
+            // },
+            // {
+            //     label: 'Project Name',
+            //     value: 'project_name',
+            // },
             {
                 label: 'Invoice Number',
                 value: 'invoice_number',
@@ -267,6 +291,10 @@ class BillingApi {
                 value: 'image_cost',
             },
             {
+                label: 'Objects Cost',
+                value: 'objects_cost',
+            },
+            {
                 label: 'Volume Cost',
                 value: 'volume_cost',
             },
@@ -280,7 +308,7 @@ class BillingApi {
             },
         ];
 
-        return this.writeCSVDataToFile(flattenedInovicesJson, fields, `${outputFolder + month}.csv`);
+        return this.writeCSVDataToFile(flattenedInvoicesJson, fields, `${outputFolder + month}-${year}.csv`);
     }
 }
 

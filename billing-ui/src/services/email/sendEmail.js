@@ -14,31 +14,34 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 import fetchHeaders from '../../utils/fetchHeaders';
 import user from '../../user';
 
-export function sendEmail(invoice, notification) {
-  notification.addNotification({
-    message: 'Sending Email',
-    level: 'info'
-  });
-  fetch(`/api/email?invoice=${invoice}`, {
-    method: 'GET',
-    headers: fetchHeaders.get(),
-  }).then((response) => {
-    notification.clearNotifications();
-    user.token = response.headers.get('authorization');
-    if (response.status === 401) user.logout();
-    else if (response.status === 200) {
-      notification.addNotification({
-        message: 'Email Sent!',
-        level: 'success',
-      });
-    } else {
-      notification.addNotification({
-        message: 'There was a problem sending email.<br/> Please try again.',
-        level: 'error',
-      });
-    }
-  });
-}
+const sendEmail = (invoice, notification) => {
+    notification.addNotification({
+        level: 'info',
+        message: 'Sending Email',
+    });
+    fetch(`/api/email?invoice=${invoice}`, {
+        headers: fetchHeaders.get(),
+        method: 'GET',
+    }).then((response) => {
+        notification.clearNotifications();
+        user.token = response.headers.get('authorization');
+        if ([401, 404].includes(response.status)) user.logout();
+        else if (response.status === 200) {
+            notification.addNotification({
+                level: 'success',
+                message: 'Email Sent!',
+            });
+        } else {
+            notification.addNotification({
+                level: 'error',
+                message: 'There was a problem sending email.<br/> Please try again.',
+            });
+        }
+    });
+};
+
+export default sendEmail;

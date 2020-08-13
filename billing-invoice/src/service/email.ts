@@ -25,13 +25,11 @@ import * as fs from 'fs';
 import { each } from 'lodash';
 
 interface SMTPConfig {
-
     host :string;
     port :string;
     secure :boolean;
     ignoreTLS :boolean;
     auth :any;
-
 }
 
 interface EmailConfig {
@@ -78,8 +76,9 @@ class Mailer {
         const finalReport = Object.assign(report, price);
         finalReport.total = (
             Number(report.cpuCost) +
-            Number(report.volumeCost) +
-            Number(report.imageCost)
+            Number(report.imageCost) +
+            Number(report.objectsCost) +
+            Number(report.volumeCost)
         ).toFixed(2);
 
         each(finalReport, (value, key :string) => {
@@ -92,23 +91,27 @@ class Mailer {
     sendEmail(email :string, report :any, price :any) {
         const that = this;
         const emailTemplate = fs.readFileSync(this.emailPath).toString();
-        const html = handlebars.compile(emailTemplate)(this.finishReport(report, price));
-        const message = {
-            from: this.config.emailConfig.fromAddress,
-            replyTo: this.config.emailConfig.replyTo,
-            to: email,
-            subject: `${this.config.emailConfig.subject} - ${report.project_name}`,
-            headers: {
-                'Reply-To': this.config.emailConfig.replyTo,
+        const html = handlebars.compile(emailTemplate)(
+            this.finishReport(report, price),
+        );
+        this.transport.sendMail(
+            {
+                from: this.config.emailConfig.fromAddress,
+                headers: {
+                    'Reply-To': this.config.emailConfig.replyTo,
+                },
+                html,
+                replyTo: this.config.emailConfig.replyTo,
+                subject: `${this.config.emailConfig.subject} - ${report.project_name}`,
+                text: JSON.stringify(report),
+                to: email,
             },
-            text: JSON.stringify(report),
-            html,
-        };
-        this.transport.sendMail(message, (err) => {
-            if (err) {
-                that.logger.error(err);
-            }
-        });
+            (err) => {
+                if (err) {
+                    that.logger.error(err);
+                }
+            },
+        );
     }
 
     sendSummaryCSVEmail = (summaryCSVFilePath :string, month :string, year :number) => {

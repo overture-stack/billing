@@ -30,35 +30,34 @@ import Routes from './routes';
 const postLoginRoute = '/';
 
 observe(user, change => {
-  if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
-    console.log('user just logged in. redirecting to ', postLoginRoute);
-    setTimeout(() => browserHistory.push(postLoginRoute));
-  }
-  if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
-    console.log('user logged out. redirecting to /login');
-    window.location.href = '/login';
-  }
-})
+    if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
+        console.info('user just logged in. redirecting to ', postLoginRoute);
+        setTimeout(() => browserHistory.push(postLoginRoute));
+    }
+    if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
+        console.info('user logged out. redirecting to /login');
+        window.location.href = '/login';
+    }
+});
 
 const rootEl = document.getElementById('root');
 
 ReactDOM.render((
-  <AppContainer>
-    <Routes />
-  </AppContainer>
-), rootEl
-);
+    <AppContainer>
+        <Routes />
+    </AppContainer>
+), rootEl);
 
 if (module.hot) {
-  module.hot.accept('./routes', () => {
+    module.hot.accept('./routes', () => {
     // If you use Webpack 2 in ES modules mode, you can
     // use <App /> here rather than require() a <NextApp />.
-    const nextRoutes = require('./routes');
-    ReactDOM.render(
-      <AppContainer>
-        {nextRoutes}
-      </AppContainer>,
-      rootEl
-    );
-  });
+        const nextRoutes = require('./routes');
+        ReactDOM.render(
+            <AppContainer>
+                {nextRoutes}
+            </AppContainer>,
+            rootEl,
+        );
+    });
 }

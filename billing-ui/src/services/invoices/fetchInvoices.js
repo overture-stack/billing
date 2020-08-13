@@ -17,16 +17,18 @@
 import fetchHeaders from '../../utils/fetchHeaders';
 import user from '../../user';
 
-export async function fetchInvoices() {
+const fetchInvoices = async () => {
+    const response = await fetch('/api/getAllInvoices', {
+        headers: fetchHeaders.get(),
+        method: 'GET',
+    });
 
-  const response = await fetch('/api/getAllInvoices', {
-    method: 'GET',
-    headers: fetchHeaders.get(),
-  });
+    const data = await response.json();
+    user.token = response.headers.get('authorization');
 
-  const data = await response.json();
-  user.token = response.headers.get('authorization');
-  if (response.status === 401) user.logout();
+    if ([401, 404].includes(response.status)) user.logout();
 
-  return data;
-}
+    return data;
+};
+
+export default fetchInvoices;
