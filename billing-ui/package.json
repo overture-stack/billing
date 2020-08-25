@@ -62,7 +62,7 @@
         "antd": "^2.13.11",
         "bootstrap": "3.4.1",
         "encode-uri-query": "^1.0.1",
-        "highcharts": "^6.1.0",
+        "highcharts": "^7.2.2",
         "jquery": "^3.4.1",
         "lodash": "^4.17.15",
         "mobx": "2.4.4",
