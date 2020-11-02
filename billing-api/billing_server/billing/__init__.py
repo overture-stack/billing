@@ -255,17 +255,17 @@ def generate_report_data(client, user_id, database):
             else:
                 user_projects.append(project)
 
-    if user is not None:
+    if user is None:
+        user = user_id
+
+    else:
         if user == user_id:
             user_projects += billing_projects
-            billing_projects = ['']
 
         else:
             user_projects = billing_projects
-            billing_projects = ['']
 
-    else:
-        user = user_id
+        billing_projects = ['']
 
     date_ranges, bucket_size, same_bucket, next_bucket, start_of_bucket = divide_time_range(
         start_date,
