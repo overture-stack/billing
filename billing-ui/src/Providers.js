@@ -15,37 +15,17 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import React from 'react';
-import {
-    Router, Route, browserHistory, IndexRedirect,
-} from 'react-router';
+// import TransitionGroup from 'react-transition-group-plus';
+import { LocaleProvider } from 'antd';
+import enUS from 'antd/lib/locale-provider/en_US';
 
-import user from './user';
-import App from './App';
-import Login from './pages/Login/Login';
-import Report from './pages/Report/Report.js';
-import Base from './layouts/Base/Base';
-import Invoices from './pages/Invoices/Invoices.js';
-
-function requireAuth(nextState, replace) {
-    if (!user.isLoggedIn) {
-        replace({
-            pathname: '/login',
-            state: { nextPathname: nextState.location.pathname },
-        });
-    }
-}
-const Routes = () => (
-    <Router history={browserHistory}>
-        <Route component={App} name="App" path="/">
-            <IndexRedirect to="/report" />
-            <Route component={Login} name="Login" path="login" />
-            <Route component={Base} name="BaseLayout" onEnter={requireAuth}>
-                <Route component={Report} name="Report" path="report" />
-                <Route component={Invoices} name="Invoices" path="invoices" />
-            </Route>
-        </Route>
-    </Router>
+const Providers = ({
+    children,
+    // location: { pathname },
+}) => (
+    <LocaleProvider locale={enUS}>
+        {children}
+    </LocaleProvider>
 );
 
-export default Routes;
+export default Providers;

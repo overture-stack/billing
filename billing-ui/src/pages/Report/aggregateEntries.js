@@ -15,23 +15,103 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import _ from 'lodash';
+import {
+    groupBy,
+} from 'lodash';
 
-const aggregateEntries = (entries, groupByIteratee) => _(entries)
-    .groupBy(groupByIteratee)
-    .map((items, key) => items.reduce((acc, entry) => ({
-        ...acc,
-        ...entry,
-        cpu: (acc.cpu || 0) + (entry.cpu || 0),
-        cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
-        image: (acc.image || 0) + (entry.image || 0),
-        imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
-        key,
-        objects: (acc.objects || 0) + (entry.objects || 0),
-        objectsCost: (acc.objectsCost || 0) + (entry.objectsCost || 0),
-        volume: (acc.volume || 0) + (entry.volume || 0),
-        volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
-    })))
-    .value();
+const aggregateEntries = (entries, groupByIteratee) =>
+    Object.entries(groupBy(entries, groupByIteratee))
+        .map(([key, items]) => items.reduce((acc, entry) => ({
+            ...acc,
+            ...entry,
+            cpu: (acc.cpu || 0) + (entry.cpu || 0),
+            cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
+            image: (acc.image || 0) + (entry.image || 0),
+            imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
+            key,
+            objects: (acc.objects || 0) + (entry.objects || 0),
+            objectsCost: (acc.objectsCost || 0) + (entry.objectsCost || 0),
+            volume: (acc.volume || 0) + (entry.volume || 0),
+            volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
+        }), {}));
 
 export default aggregateEntries;
+
+const mockEntry = {
+    cpu: 0,
+    cpuCost: 0,
+    image: 0,
+    imageCost: 0,
+    objects: 0,
+    objectsCost: 0,
+    volume: 0,
+    volumeCost: 0,
+};
+
+export const noEntries = AGGREGATION_FIELDS => (
+    window.localStorage.getItem('stayOffline')
+        ? [
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+        ].map((each, key) => ({
+            ...each,
+            key: `noEntry${key}`,
+            [AGGREGATION_FIELDS.PROJECT]: `noEntry${key}`,
+            [AGGREGATION_FIELDS.USER]: `userName-${key}`,
+        }))
+        : []
+);
+
+export const noProjects = ({ entries }) => (
+    window.localStorage.getItem('stayOffline')
+        ? entries.map(each => ({
+            id: each.key,
+            name: `projectName-${each.key}`,
+        }))
+        : []
+);

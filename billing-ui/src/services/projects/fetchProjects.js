@@ -25,8 +25,11 @@ async function fetchProjects() {
     });
     const responseData = await response.json();
     user.token = response.headers.get('authorization');
+
     if ([401, 404].includes(response.status)) user.logout();
 
-    return Promise.resolve(responseData);
+    return ([200].includes(response.status))
+        ? Promise.resolve(responseData)
+        : Promise.reject(response);
 }
 export default fetchProjects;

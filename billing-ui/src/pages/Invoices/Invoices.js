@@ -15,20 +15,23 @@
 * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { browserHistory } from 'react-router';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import NotificationSystem from 'react-notification-system';
 import ReactTooltip from 'react-tooltip';
 
-import fetchInvoices from '../../services/invoices';
-import sendEmail from '../../services/email';
-import user from '../../user';
-import { formatCurrency } from '../../utils/formats';
+import fetchInvoices from 'services/invoices';
+import sendEmail from 'services/email';
+import {
+    formatCurrency,
+} from 'utils/formats';
 import {
     collectionFlattener,
     customNumberSort,
-} from '../../utils/transforms';
+} from 'utils/transforms';
+
+import user from '../../user';
 
 import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
 import './Invoices.scss';

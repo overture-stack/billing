@@ -14,28 +14,14 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React, { Component } from 'react';
+
+import { Component } from 'react';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
-import animate from '@jam3/gsap-promise';
 import user from '../../user';
 
+import cancerCollabLogoImg from '../../assets/images/logo-full.png';
 import './Login.scss';
-
-const animationStates = {
-    afterLeave: {
-        opacity: 0,
-        y: -10,
-    },
-    beforeEnter: {
-        opacity: 0,
-        y: -10,
-    },
-    idle: {
-        opacity: 1,
-        y: 0,
-    },
-};
 
 @observer
 class Login extends Component {
@@ -55,63 +41,14 @@ class Login extends Component {
         }
     }
 
-    async componentWillAppear(callback) {
-        this.animateIn({ delay: 1 })
-            .then(callback);
-    }
-
-    componentWillEnter(callback) {
-        this.animateIn().then(callback);
-    }
-
-    componentWillLeave(callback) {
-        this.animateOut().then(callback);
-    }
-
-    animateIn({ delay } = { delay: 0 }) {
-        const elements = [
-            this.refs.logo,
-            this.refs.usernameInput,
-            this.refs.passwordInput,
-            this.refs.loginButton,
-        ];
-        return animate.staggerFromTo(
-            elements,
-            0.25,
-            animationStates.beforeEnter,
-            {
-                ...animationStates.idle,
-                delay,
-                clearProps: 'all',
-            },
-            0.1,
-        );
-    }
-
-    animateOut() {
-        const elements = [
-            this.refs.logo,
-            this.refs.usernameInput,
-            this.refs.passwordInput,
-            this.refs.loginButton,
-        ];
-        return animate.staggerTo(
-            elements,
-            0.25,
-            Object.assign(animationStates.afterLeave),
-            0.1,
-        );
-    }
-
     render() {
         return (
-            <div className="Login" ref="container">
+            <div className="Login">
                 <div className="login-inner">
                     <img
                         alt="Cancer Genome COLLABORATORY"
                         className="logo"
-                        ref="logo"
-                        src={require('../../assets/images/logo-full.png')}
+                        src={cancerCollabLogoImg}
                         />
 
                     {this.errorMessage && (
@@ -128,13 +65,11 @@ class Login extends Component {
                         >
                         <div className="form-group">
                             <input
-                                autoFocus
                                 className="form-control"
                                 id="username"
                                 name="username"
                                 onChange={e => { this.username = e.target.value; }}
                                 placeholder="Username"
-                                ref="usernameInput"
                                 />
                         </div>
                         <div className="form-group">
@@ -144,12 +79,14 @@ class Login extends Component {
                                 name="password"
                                 onChange={e => { this.password = e.target.value; }}
                                 placeholder="Password"
-                                ref="passwordInput"
                                 type="password"
                                 />
                         </div>
                         <div className="form-group">
-                            <button className="dcc form-control btn btn-primary" ref="loginButton" type="submit">
+                            <button
+                                className="dcc form-control btn btn-primary"
+                                type="submit"
+                                >
                                 Login
                             </button>
                         </div>

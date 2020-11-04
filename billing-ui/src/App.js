@@ -14,31 +14,59 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React from 'react';
-import TransitionGroup from 'react-transition-group-plus';
-import { LocaleProvider } from 'antd';
-import enUS from 'antd/lib/locale-provider/en_US';
 
-const App = ({
-    children,
-    location: { pathname },
-}) => (
-    <LocaleProvider locale={enUS}>
-        <TransitionGroup
-            className="App"
-            component="div"
-            style={{
-                height: '100%',
-                position: 'relative',
-            }}
-            transitionMode="out-in"
-            >
-            {React.cloneElement(
-                children || <div />,
-                { key: pathname.split('/')[1] || 'root' },
-            )}
-        </TransitionGroup>
-    </LocaleProvider>
-);
+import { hot } from 'react-hot-loader/root';
+import { observe } from 'mobx';
+import {
+    browserHistory,
+    IndexRedirect,
+    Route,
+    Router,
+} from 'react-router';
+import 'whatwg-fetch';
 
-export default App;
+import Login from 'pages/Login/Login';
+import Report from 'pages/Report/Report.js';
+import Base from 'layouts/Base/Base';
+import Invoices from 'pages/Invoices/Invoices.js';
+
+import user from './user';
+import Providers from './Providers';
+import './index.scss';
+
+function requireAuth(nextState, replace) {
+    if (!user.isLoggedIn) {
+        replace({
+            pathname: '/login',
+            state: { nextPathname: nextState.location.pathname },
+        });
+    }
+}
+
+const postLoginRoute = '/';
+
+observe(user, change => {
+    if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
+        setTimeout(() => browserHistory.push(postLoginRoute));
+    }
+    if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
+        window.location.href = '/login';
+    }
+});
+
+const App = () => {
+    return (
+        <Router history={browserHistory}>
+            <Route component={Providers} name="App" path="/">
+                <IndexRedirect to="/report" />
+                <Route component={Login} name="Login" path="login" />
+                <Route component={Base} name="BaseLayout" onEnter={requireAuth}>
+                    <Route component={Report} name="Report" path="report" />
+                    <Route component={Invoices} name="Invoices" path="invoices" />
+                </Route>
+            </Route>
+        </Router>
+    );
+};
+
+export default hot(App);

@@ -1,11 +1,4 @@
-// Inspired by https://github.com/airbnb/javascript but less opinionated.
-
-// We use eslint-loader so even warnings are very visibile.
-// This is why we only use "WARNING" level for potential errors,
-// and we don't use "ERROR" level at all.
-
-// In the future, we might create a separate list of rules for production.
-// It would probably be more strict.
+const path = require('path');
 
 module.exports = {
     env: {
@@ -16,8 +9,9 @@ module.exports = {
     },
     extends: ['airbnb', 'plugin:react/recommended'],
     globals: {
-        PropTypes: false,
-        React: false,
+        PropTypes: 'readonly',
+        React: 'readonly',
+        uiVersion: 'readonly',
     },
     parser: 'babel-eslint',
     parserOptions: {
@@ -30,11 +24,12 @@ module.exports = {
         sourceType: 'module',
     },
     plugins: [
+        'babel',
         'react',
         'react-hooks',
         'sort-destructure-keys',
         // 'jsx-a11y',
-        // 'import', // disabled, scroll below to see why
+        'import', // disabled, scroll below to see why
     ],
     root: true,
     rules: {
@@ -172,6 +167,7 @@ module.exports = {
             },
         ],
         'padded-blocks': 'error',
+        quotes: ['warn', 'single'],
         semi: ['warn', 'always'],
         'sort-keys': [
             'warn',
@@ -181,7 +177,6 @@ module.exports = {
                 natural: true,
             },
         ],
-        quotes: ['warn', 'single'],
     // 'import/no-extraneous-dependencies': ['warn', {
     //   'packageDir': './'
     // }],
@@ -254,10 +249,10 @@ module.exports = {
         'react/no-direct-mutation-state': 'warn',
         'react/no-multi-comp': 'warn',
         'react/no-unknown-property': 'warn',
+        'react/prop-types': 'off', // Disable prop-types for now.
         'react/sort-comp': 'warn',
         'react/sort-prop-types': 'error',
         'react/state-in-constructor': ['warn', 'never'],
-        'react/prop-types': 'off', // Disable prop-types for now.
         'sort-destructure-keys/sort-destructure-keys': [
             'warn',
             {
@@ -276,6 +271,9 @@ module.exports = {
         'import/resolver': {
             node: {
                 extensions: ['.js', '.json'],
+            },
+            webpack: {
+                config: path.resolve(__dirname, 'webpack.config.base.js'),
             },
         },
         react: {

@@ -1,78 +1,41 @@
-const path = require('path');
 const webpack = require('webpack');
+const { merge } = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
-const paths = require('./paths');
 
-module.exports = {
+const baseConfig = require('./webpack.config.base');
+const paths = require('./paths');
+const { target: targetEndpoint } = require('../config');
+
+module.exports = merge(baseConfig, {
+    devServer: {
+        contentBase: './build',
+        historyApiFallback: {
+            rewrites: [
+                {
+                    from: /^\/releases\/.*$/,
+                    to: '/',
+                },
+            ],
+        },
+        hot: true,
+        port: process.env.PORT || 3500,
+        proxy: {
+            '/api/**': {
+                pathRewrite: { '^/api': '' },
+                secure: false,
+                target: targetEndpoint,
+            },
+        },
+    },
     devtool: 'eval-source-map',
+    entry: [`${require.resolve('webpack-dev-server/client')}?/`, 'react-hot-loader/patch'],
     mode: 'development',
-    entry: [
-        `${require.resolve('webpack-dev-server/client')}?/`,
-        require.resolve('webpack/hot/only-dev-server'),
-        'react-hot-loader/patch',
-        require.resolve('./polyfills'),
-        path.join(paths.appSrc, 'index'),
-    ],
-    output: {
-    // Next line is not used in dev but WebpackDevServer crashes without it:
-        path: paths.appBuild,
-        pathinfo: true,
-        filename: 'static/js/bundle.js',
-        publicPath: '/',
-    },
-    resolve: {
-        modules: [path.resolve(__dirname, 'src'), 'node_modules'],
-        extensions: [
-            '.js',
-            'jsx',
-            '.json',
-        ],
-    },
     module: {
         rules: [
             {
-                test: /\.js$/,
-                enforce: 'pre',
-                use: [
-                    {
-                        loader: 'babel-loader',
-                        options: {
-                            babelrc: false,
-                            cacheDirectory: true,
-                            presets: [
-                                ['@babel/preset-env', { modules: false }],
-                                '@babel/preset-react',
-                                {
-                                    plugins: [
-                                        ['@babel/plugin-proposal-decorators', { legacy: true }],
-                                        ['@babel/plugin-proposal-class-properties', { loose: true }],
-                                        [
-                                            '@babel/plugin-transform-runtime',
-                                            {
-                                                helpers: false,
-                                            },
-                                        ],
-                                        'react-hot-loader/babel',
-                                        'babel-plugin-syntax-trailing-function-commas',
-                                        '@babel/plugin-proposal-object-rest-spread',
-                                        'add-module-exports',
-                                        'babel-plugin-transform-async-to-generator',
-                                        ['babel-plugin-root-import', { rootPathSuffix: 'src' }],
-                                    ],
-                                },
-                            ],
-                        },
-
-                    },
-                    { loader: 'eslint-loader' },
-
-                ],
-                include: paths.appSrc,
-            },
-            {
-                test: /\.(scss|sass|css)$/,
                 include: [paths.appSrc, paths.appNodeModules],
+                test: /\.(s[ac]ss|css)$/,
                 use: [
                     'style-loader',
                     'css-loader',
@@ -80,8 +43,8 @@ module.exports = {
                 ],
             },
             {
-                test: /\.(jpg|png|gif|eot|svg|ttf|woff|woff2)(\?.*)?$/,
                 include: [paths.appSrc, paths.appNodeModules],
+                test: /\.(jpg|png|gif|eot|svg|ttf|woff|woff2)(\?.*)?$/,
                 use: [
                     {
                         loader: 'file-loader',
@@ -92,8 +55,8 @@ module.exports = {
                 ],
             },
             {
-                test: /\.(mp4|webm)(\?.*)?$/,
                 include: [paths.appSrc, paths.appNodeModules],
+                test: /\.(mp4|webm)(\?.*)?$/,
                 use: [
                     {
                         loader: 'url',
@@ -106,15 +69,21 @@ module.exports = {
             },
         ],
     },
+    output: {
+        filename: 'static/js/bundle.js',
+        path: paths.appBuild,
+        pathinfo: true,
+        publicPath: '/',
+    },
     plugins: [
         new HtmlWebpackPlugin({
+            favicon: paths.appFavicon,
             inject: true,
             template: paths.appHtml,
-            favicon: paths.appFavicon,
         }),
         new webpack.DefinePlugin({ 'process.env.NODE_ENV': '"development"' }),
     // Note: only CSS is currently hot reloaded
         new webpack.HotModuleReplacementPlugin(),
         new CaseSensitivePathsPlugin(),
     ],
-};
+});

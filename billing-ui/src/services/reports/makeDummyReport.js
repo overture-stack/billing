@@ -64,9 +64,12 @@ const bucketMaps = {
 const randomDate = (start, end) => new Date(
     start.getTime() + Math.random() * (
         end.getTime() - start.getTime()
-    ));
+    ),
+);
 
-const makeDummyReport = ({number, bucketSize, fromDate, toDate}) => {
+const makeDummyReport = ({
+    bucketSize, fromDate, number, toDate,
+}) => {
     const startDate = moment(fromDate, DATE_FORMAT);
     const endDate = moment(toDate, DATE_FORMAT);
 
