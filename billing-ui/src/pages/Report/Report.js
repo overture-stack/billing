@@ -415,7 +415,9 @@ const Report = () => {
                     <label>Period Grouping</label>
 
                     <div className="interval-select">
-                        <RadioGroup>
+                        <RadioGroup
+                            defaultValue={defaultBucketSize}
+                            >
                             {TIME_PERIODS.map(period => (
                                 <RadioButton
                                     checked={filters.bucketSize === period}
@@ -446,7 +448,9 @@ const Report = () => {
             <h2 className="section-heading">Summary</h2>
 
             <div className="summary">
-                <RadioGroup>
+                <RadioGroup
+                    defaultValue // should show cost by default, i.e. 'true'
+                    >
                     <RadioButton
                         checked={shouldShowCost}
                         key="RadioButton1"
@@ -602,7 +606,7 @@ const Report = () => {
                                     onClick={groupBy(dbField)}
                                     value={dbField}
                                     >
-                                    {fieldName}
+                                    {`${fieldName[0]}${fieldName.slice(1).toLowerCase()}`}
                                 </RadioButton>
                             ))}
                         </RadioGroup>

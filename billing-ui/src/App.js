@@ -32,7 +32,7 @@ import Invoices from 'pages/Invoices/Invoices.js';
 
 import user from './user';
 import Providers from './Providers';
-import './index.scss';
+import './main.scss';
 
 function requireAuth(nextState, replace) {
     if (!user.isLoggedIn) {

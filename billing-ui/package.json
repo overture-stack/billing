@@ -63,9 +63,10 @@
     "dependencies": {
         "@hot-loader/react-dom": "^16.13.0",
         "@jam3/gsap-promise": "^4.0.1",
-        "antd": "^2.13.11",
+        "antd": "^4.8.0",
         "axios": "^0.21.0",
         "bootstrap": "3.4.1",
+        "dayjs": "^1.9.5",
         "encode-uri-query": "^1.0.1",
         "highcharts": "^8.2.2",
         "jquery": "^3.4.1",

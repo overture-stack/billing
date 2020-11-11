@@ -16,16 +16,16 @@
  */
 
 // import TransitionGroup from 'react-transition-group-plus';
-import { LocaleProvider } from 'antd';
-import enUS from 'antd/lib/locale-provider/en_US';
+import { ConfigProvider } from 'antd';
+import enUS from 'antd/lib/locale/en_US';
 
 const Providers = ({
     children,
     // location: { pathname },
 }) => (
-    <LocaleProvider locale={enUS}>
+    <ConfigProvider locale={enUS}>
         {children}
-    </LocaleProvider>
+    </ConfigProvider>
 );
 
 export default Providers;
