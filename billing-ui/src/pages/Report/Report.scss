@@ -14,10 +14,6 @@
     flex-direction: row;
     align-items: flex-start;
     justify-content: space-between;
-
-    .summary-table {
-      max-width: 400px;
-    }
   }
 
   .section-heading {
@@ -66,10 +62,6 @@
   .usage-table {
     margin-bottom: 30px;
     min-height: 300px;
-
-    .react-bs-table {
-      margin: 1em 0 0;
-    }
   }
 }
 

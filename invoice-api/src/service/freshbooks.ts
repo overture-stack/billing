@@ -592,9 +592,12 @@ class FreshbooksService {
         const invoices = await this.getInvoicesListPaged(1, minDate, maxDate, allCustomerIDs);
 
         if (invoices.pages > 1) {
-            const pagedInvoices = await Promise.all(_.range(1, invoices.pages).map(i =>
-                this.getInvoicesListPaged(i, minDate, maxDate, allCustomerIDs)));
-            invoices.invoices = invoices.invoices.concat(_.flatten(pagedInvoices.map(item => item.invoices)));
+            const pagedInvoices = await Promise.all(_.range(1, invoices.pages)
+                .map(i => this.getInvoicesListPaged(i, minDate, maxDate, allCustomerIDs)));
+
+            this.logger.info('Fetched all invoices.');
+
+            return _.flatten(pagedInvoices.map(item => item.invoices));
         }
 
         this.logger.info('Fetched all invoices.');

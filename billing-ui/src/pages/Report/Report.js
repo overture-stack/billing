@@ -25,7 +25,6 @@ import { observer } from 'mobx-react';
 import {
     find,
     range,
-    sum,
     xor,
 } from 'lodash';
 import {
@@ -44,9 +43,7 @@ import {
 import Select from 'react-select';
 // import 'react-select/dist/react-select.css';
 
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
-import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
-
+import BootstrapTableWrapper from 'components/BootstrapTableWrapper';
 import fetchReport from 'services/reports/fetchReport';
 import fetchProjects from 'services/projects/fetchProjects';
 import {
@@ -106,14 +103,10 @@ const defaultBucketSize = TIME_PERIODS[0];
 const AGGREGATION_FIELDS = {
     PERIOD: 'fromDate',
     PROJECT: 'projectId',
-    USER: 'user',
+    USER: 'username',
 };
 
-const defaultAggregationFields = [
-    AGGREGATION_FIELDS.PROJECT,
-    AGGREGATION_FIELDS.USER,
-    AGGREGATION_FIELDS.PERIOD,
-];
+const defaultAggregationFields = Object.values(AGGREGATION_FIELDS);
 
 const START_YEAR = 2013;
 const getYearsSinceStart = () => range(START_YEAR, new Date().getUTCFullYear() + 1);
@@ -292,7 +285,7 @@ const Report = () => {
     }, [report]);
 
     useEffect(() => {
-        redrawChart();
+        report.entries.length && redrawChart();
     }, [report, shouldShowCost]);
 
     useEffect(() => {
@@ -471,112 +464,102 @@ const Report = () => {
                 </RadioGroup>
 
                 <div className="summary-table">
-                    <BootstrapTable
+                    <BootstrapTableWrapper
+                        columns={[
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'cpu',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'CPU (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'cpuCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'CPU Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'image',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Image (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'imageCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Image Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'objects',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Objects (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'objectsCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Objects Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'volume',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Volume (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'volumeCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Volume Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'total',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Total (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'totalCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Total Cost',
+                            },
+                        ]}
                         data={reportSummary}
                         keyField="key"
-                        striped
-                        width="200px"
-                        >
-                        {shouldShowCost
-                        ? [
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="cpuCost"
-                                dataFormat={formatCurrency}
-                                key="cpuCost"
-                                >
-                                CPU Cost
-                            </TableHeaderColumn>,
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="imageCost"
-                                dataFormat={formatCurrency}
-                                key="imageCost"
-                                >
-                                Image Cost
-                            </TableHeaderColumn>,
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="objectsCost"
-                                dataFormat={formatCurrency}
-                                key="objectsCost"
-                                >
-                                Objects Cost
-                            </TableHeaderColumn>,
-
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="volumeCost"
-                                dataFormat={formatCurrency}
-                                key="volumeCost"
-                                >
-                                Volume Cost
-                            </TableHeaderColumn>,
-
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataFormat={(cell, row) => formatCurrency(sum([
-                                    row.cpuCost,
-                                    row.imageCost,
-                                    row.objectsCost,
-                                    row.volumeCost,
-                                ]))}
-                                key="totalCost"
-                                >
-                                Total Cost
-                            </TableHeaderColumn>,
-                        ]
-                        : [
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="cpu"
-                                dataFormat={formatNumber}
-                                key="cpu"
-                                >
-                                CPU (hrs)
-                            </TableHeaderColumn>,
-
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="image"
-                                dataFormat={formatNumber}
-                                key="image"
-                                >
-                                Image (hrs)
-                            </TableHeaderColumn>,
-
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="objects"
-                                dataFormat={formatNumber}
-                                key="objects"
-                                >
-                                Objects (hrs)
-                            </TableHeaderColumn>,
-
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataField="volume"
-                                dataFormat={formatNumber}
-                                key="volume"
-                                >
-                                Volume (hrs)
-                            </TableHeaderColumn>,
-
-                            <TableHeaderColumn
-                                dataAlign="right"
-                                dataFormat={(cell, row) => formatNumber(sum([
-                                    row.cpu,
-                                    row.image,
-                                    row.objects,
-                                    row.volume,
-                                ]))}
-                                key="totalUsage"
-                                >
-                                Total (hrs)
-                            </TableHeaderColumn>,
-                        ]}
-                    </BootstrapTable>
+                        />
                 </div>
             </div>
 
@@ -613,188 +596,195 @@ const Report = () => {
                     </div>
                 </div>
 
-                <BootstrapTable
-                    condensed
+                <BootstrapTableWrapper
+                    columns={[
+                        {
+                            classes: 'date-md',
+                            csvExport: aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            csvFormatter: formatDateRange,
+                            csvText: 'Period Start',
+                            dataField: AGGREGATION_FIELDS.PERIOD,
+                            formatter: formatDateRange,
+                            headerClasses: 'date-md',
+                            hidden: !aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            searchable: aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            sort: true,
+                            text: 'Period',
+                        },
+                        {
+                            csvExport: aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            csvFormatter: formatDateRange,
+                            csvText: 'Period End',
+                            dataField: 'toDate',
+                            hidden: true,
+                            searchable: false,
+                            text: 'Period',
+                        },
+                        {
+                            csvExport: aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
+                            dataField: AGGREGATION_FIELDS.PROJECT,
+                            hidden: true,
+                            searchable: false,
+                            sort: true,
+                            text: 'Project ID',
+                        },
+                        {
+                            csvFormatter: id => find(projects, { id })?.name,
+                            csvText: 'Project Name',
+                            dataField: AGGREGATION_FIELDS.PROJECT,
+                            formatter: id => find(projects, { id })?.name,
+                            hidden: !aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
+                            searchable: aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
+                            sort: true,
+                            // filterFormatted
+                            text: 'Project',
+                        },
+                        {
+                            csvFormatter: cell => cell || '(Project)',
+                            dataField: AGGREGATION_FIELDS.USER,
+                            formatter: (cell, { projectId: id }) => cell ||
+                                `(Project) ${find(projects, { id })?.name || ''}`,
+                            hidden: !aggregationFields.includes(AGGREGATION_FIELDS.USER),
+                            searchable: aggregationFields.includes(AGGREGATION_FIELDS.USER),
+                            sort: true,
+                            style: {
+                                width: '320px',
+                            },
+                            text: 'User',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'cpu',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'CPU (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'cpuCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'CPU Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'image',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Image (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'imageCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Image Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'objects',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Objects (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'objectsCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Objects Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'volume',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Volume (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'volumeCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Volume Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'total',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Total (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'totalCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Total Cost',
+                        },
+                    ]}
                     data={entriesToDisplay}
                     exportCSV
-                    hover
-                    ignoreSinglePage
+                    fileName="report.csv"
                     keyField="key"
-                    options={{
-                        hideSizePerPage: true,
-                        sizePerPage: 25,
-                        sizePerPageList: [
-                            10,
-                            50,
-                            100,
-                        ],
-                    }}
                     pagination
                     search
-                    striped
-                    >
-                    <TableHeaderColumn
-                        dataField="fromDate"
-                        dataFormat={formatDateRange}
-                        dataSort
-                        export={!aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                        hidden={!aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                        >
-                        Period
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataField="toDate"
-                        export={!aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                        hidden
-                        >
-                        Period
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataField="projectId"
-                        dataSort
-                        export={!aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
-                        // isKey={true}
-                        hidden
-                        >
-                        Project ID
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        csvFormat={(id) => find(projects, { id }).name}
-                        csvHeader="projectName"
-                        dataField="projectId"
-                        dataFormat={id => find(projects, { id }).name}
-                        dataSort
-                        filterFormatted
-                        hidden={!aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
-                        >
-                        Project
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataField="username"
-                        dataFormat={(cell, row) => cell ||
-                            `(Project) ${find(projects, { id: row.projectId }).name}`}
-                        dataSort
-                        hidden={!aggregationFields.includes(AGGREGATION_FIELDS.USER)}
-                        width="320px"
-                        >
-                        User
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="cpu"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={shouldShowCost}
-                        sortFunc={(a, b) => (
-                            (a.cpu || 0) - (b.cpu || 0)
-                        )}
-                        >
-                        CPU (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="cpuCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!shouldShowCost}
-                        >
-                        CPU Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="image"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={shouldShowCost}
-                        >
-                        Image (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="imageCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!shouldShowCost}
-                        >
-                        Image Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="objects"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={shouldShowCost}
-                        >
-                        Objects (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="objectsCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!shouldShowCost}
-                        >
-                        Objects Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="volume"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={shouldShowCost}
-                        >
-                        Volume (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="volumeCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!shouldShowCost}
-                        >
-                        Volume Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataFormat={(cell, row) => formatNumber(sum([
-                            row.cpu,
-                            row.image,
-                            row.objects,
-                            row.volume,
-                        ]))}
-                        dataSort
-                        hidden={shouldShowCost}
-                        >
-                        Total (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataFormat={(cell, row) => formatCurrency(sum([
-                            row.cpuCost,
-                            row.imageCost,
-                            row.objectsCost,
-                            row.volumeCost,
-                        ]))}
-                        dataSort
-                        hidden={!shouldShowCost}
-                        >
-                        Total Cost
-                    </TableHeaderColumn>
-                </BootstrapTable>
+                    />
             </div>
         </div>
     );

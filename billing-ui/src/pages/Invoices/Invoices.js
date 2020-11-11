@@ -17,14 +17,15 @@
 
 import { Component } from 'react';
 import { browserHistory } from 'react-router';
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import NotificationSystem from 'react-notification-system';
 import ReactTooltip from 'react-tooltip';
 
+import BootstrapTableWrapper from 'components/BootstrapTableWrapper';
 import fetchInvoices from 'services/invoices';
 import sendEmail from 'services/email';
 import {
     formatCurrency,
+    formatPercentage,
 } from 'utils/formats';
 import {
     collectionFlattener,
@@ -33,7 +34,7 @@ import {
 
 import user from '../../user';
 
-import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
+import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import './Invoices.scss';
 
 class Invoices extends Component {
@@ -51,14 +52,6 @@ class Invoices extends Component {
         }
     }
 
-    setEmailLink = (cell, row) => (
-        <span
-            className="glyphicon glyphicon-envelope"
-            onClick={() => sendEmail(row.invoice_number, this.notification)}
-            style={{ cursor: 'pointer' }}
-            />
-    );
-
     componentDidMount = async () => {
         const invoices = await fetchInvoices();
 
@@ -72,126 +65,132 @@ class Invoices extends Component {
                 <h1 className="page-heading">Invoices</h1>
             </div>
 
-            <BootstrapTable
-                condensed
+            <BootstrapTableWrapper
+                columns={[
+                    {
+                        classes: 'organization',
+                        dataField: 'current_organization',
+                        headerClasses: 'organization',
+                        sort: true,
+                        text: 'Organization',
+                    },
+                    {
+                        classes: 'date-sm',
+                        dataField: 'date',
+                        headerClasses: 'date-sm',
+                        sort: true,
+                        text: 'Date',
+                    },
+                    {
+                        classes: 'invoice-number',
+                        dataField: 'invoice_number',
+                        headerClasses: 'invoice-number',
+                        sort: true,
+                        text: 'Invoice',
+                    },
+                    {
+                        classes: 'invoice-status',
+                        dataField: 'invoice_status',
+                        headerClasses: 'invoice-status',
+                        sort: true,
+                        text: 'Status',
+                    },
+                    {
+                        align: 'right',
+                        classes: 'cost',
+                        dataField: 'costs.cpu',
+                        formatter: formatCurrency,
+                        headerClasses: 'cost',
+                        sort: true,
+                        sortFunc: customNumberSort,
+                        text: 'CPU Cost',
+                    },
+                    {
+                        align: 'right',
+                        classes: 'cost',
+                        dataField: 'costs.image',
+                        formatter: formatCurrency,
+                        headerClasses: 'cost',
+                        sort: true,
+                        sortFunc: customNumberSort,
+                        text: 'Image Cost',
+                    },
+                    {
+                        align: 'right',
+                        classes: 'cost',
+                        dataField: 'costs.objects',
+                        formatter: formatCurrency,
+                        headerClasses: 'cost',
+                        sort: true,
+                        sortFunc: customNumberSort,
+                        text: 'Objects Cost',
+                    },
+                    {
+                        align: 'right',
+                        classes: 'cost',
+                        dataField: 'costs.volume',
+                        formatter: formatCurrency,
+                        headerClasses: 'cost',
+                        sort: true,
+                        sortFunc: customNumberSort,
+                        text: 'Volume Cost',
+                    },
+                    {
+                        align: 'right',
+                        classes: 'discount',
+                        dataField: 'discount',
+                        formatter: formatPercentage,
+                        headerClasses: 'discount',
+                        sort: true,
+                        sortFunc: customNumberSort,
+                        text: 'Discount',
+                    },
+                    {
+                        align: 'right',
+                        classes: 'cost',
+                        dataField: 'costs.total',
+                        formatter: formatCurrency,
+                        headerClasses: 'cost',
+                        sort: true,
+                        sortFunc: customNumberSort,
+                        text: 'Total Cost',
+                    },
+                    {
+                        align: 'center',
+                        classes: 'email',
+                        dataField: 'email',
+                        formatter: (cell, row) => (
+                            <button
+                                aria-label="Email this invoice"
+                                className="glyphicon glyphicon-envelope"
+                                onClick={() => sendEmail(row.invoice_number, this.notification)}
+                                style={{
+                                    background: 'none',
+                                    border: 0,
+                                    padding: 0,
+                                }}
+                                type="button"
+                                />
+                        ),
+                        headerAttrs: {
+                            'data-for': 'email',
+                            'data-tip': true,
+                        },
+                        headerClasses: 'email',
+                        headerStyle: {
+                            textDecoration: 'underline dashed red',
+                        },
+                        isDummyField: true,
+                        searchable: false,
+                        text: 'Email',
+                    },
+                ]}
                 data={this.state.invoices}
                 exportCSV
-                hover
-                ignoreSinglePage
-                keyField="key"
-                options={{
-                    hideSizePerPage: true,
-                    sizePerPage: 10,
-                    sizePerPageList: [
-                        10,
-                        50,
-                        100,
-                    ],
-                }}
-                pagination={false}
+                fileName="invoices.csv"
+                keyField="invoice_number"
                 search
-                striped
-                >
-                <TableHeaderColumn
-                    dataField="current_organization"
-                    dataSort
-                    >
-                    Organization
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataField="date"
-                    dataSort
-                    >
-                    Date
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataField="invoice_number"
-                    dataSort
-                    >
-                    Invoice Number
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataField="invoice_status"
-                    dataSort
-                    >
-                    Invoice Status
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="right"
-                    dataField="costs.cpu"
-                    dataFormat={formatCurrency}
-                    dataSort
-                    sortFunc={customNumberSort}
-                    >
-                    CPU Cost
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="right"
-                    dataField="costs.image"
-                    dataFormat={formatCurrency}
-                    dataSort
-                    sortFunc={customNumberSort}
-                    >
-                    Image Cost
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="right"
-                    dataField="costs.objects"
-                    dataFormat={formatCurrency}
-                    dataSort
-                    sortFunc={customNumberSort}
-                    >
-                    Objects Cost
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="right"
-                    dataField="costs.volume"
-                    dataFormat={formatCurrency}
-                    dataSort
-                    sortFunc={customNumberSort}
-                    >
-                    Volume Cost
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="right"
-                    dataField="discount"
-                    dataSort
-                    >
-                    Discount%
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="right"
-                    dataField="costs.total"
-                    dataFormat={formatCurrency}
-                    dataSort
-                    sortFunc={customNumberSort}
-                    >
-                    Total Cost
-                </TableHeaderColumn>
-
-                <TableHeaderColumn
-                    dataAlign="center"
-                    dataField="email"
-                    dataFormat={this.setEmailLink}
-                    >
-                    <span
-                        data-for="email"
-                        data-tip
-                        style={{ borderBottom: '1px dashed red' }}
-                        >
-                        Email
-                    </span>
-                </TableHeaderColumn>
-            </BootstrapTable>
+                />
 
             <NotificationSystem allowHTML ref="notification" />
 

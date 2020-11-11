@@ -1,0 +1,73 @@
+.react-bootstrap-toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    width: 100%;
+
+    .search-label {
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin-bottom: 0;
+        width: 50%;
+
+        input {
+            height: 30px;
+        }
+    }
+}
+
+.react-bootstrap-table {
+    table {
+        table-layout: auto;
+    }
+
+    th {
+        // align-items: center;
+        color: rgba(0, 0, 0, 0.65);
+        // display: flex;
+        text-align: center;
+        // width: 100%;
+        vertical-align: top !important;
+
+        .react-bootstrap-table-sort-order,
+        .order {
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            height: 1rem;
+            width: 100%;
+
+            .caret {
+                margin: 0 !important;
+            }
+        }
+    }
+
+    .cost {
+        width: 8.5rem;
+    }
+
+    .date-md {
+        width: 6.5rem;
+    }
+
+    .date-sm {
+        width: 6.2rem;
+    }
+
+    .discount {
+        width: 4rem;
+    }
+
+    .email {
+        width: 4.5rem;
+    }
+
+    .invoice-number {
+        width: 7rem;
+    }
+
+    .invoice-status {
+        width: 6rem;
+    }
+}

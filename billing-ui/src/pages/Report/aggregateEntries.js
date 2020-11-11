@@ -18,22 +18,52 @@
 import {
     groupBy,
 } from 'lodash';
+import {
+    formatNumber,
+} from 'utils/formats';
+
+const FIELDS = [
+    'cpu',
+    'cpuCost',
+    'image',
+    'imageCost',
+    'objects',
+    'objectsCost',
+    'volume',
+    'volumeCost',
+];
+
+const addNumbers = (acc, value, key) => {
+    const newNum = Number(formatNumber(value[key]));
+    const prevSum = Number(formatNumber(acc[key]));
+    const newSum = newNum + prevSum || prevSum;
+
+    return newSum ? { [key]: newSum } : {};
+};
 
 const aggregateEntries = (entries, groupByIteratee) =>
     Object.entries(groupBy(entries, groupByIteratee))
-        .map(([key, items]) => items.reduce((acc, entry) => ({
-            ...acc,
+        .map(([key, items]) => items.reduce((prevItems, entry) => ({
+            ...prevItems,
             ...entry,
-            cpu: (acc.cpu || 0) + (entry.cpu || 0),
-            cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
-            image: (acc.image || 0) + (entry.image || 0),
-            imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
-            key,
-            objects: (acc.objects || 0) + (entry.objects || 0),
-            objectsCost: (acc.objectsCost || 0) + (entry.objectsCost || 0),
-            volume: (acc.volume || 0) + (entry.volume || 0),
-            volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
-        }), {}));
+            ...FIELDS.reduce((prevFields, fieldName) => ({
+                ...prevFields,
+                ...addNumbers(prevFields, entry, fieldName),
+            }), { key }),
+        }), {}))
+        .map(item => ({
+            ...item,
+            ...Object.entries(item) // let's generate totals
+                .filter(([key]) => FIELDS.includes(key))
+                .reduce((prevTotals, [key, value]) => {
+                    const total = `total${key.toLowerCase().includes('cost') ? 'Cost' : ''}`;
+
+                    return {
+                        ...prevTotals,
+                        ...{ [total]: value + (prevTotals[total] || 0) },
+                    };
+                }, {}),
+        }));
 
 export default aggregateEntries;
 

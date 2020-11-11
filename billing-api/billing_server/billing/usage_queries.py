@@ -242,7 +242,6 @@ class Collaboratory:
 
             responses = []
 
-            self.logger.info('meep!')
             self.logger.info(str(retval.content, 'utf-8'))
 
             for project_usage in retval.json():

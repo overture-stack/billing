@@ -45,14 +45,13 @@ const getSeriesFromReportEntries = (
             'volume',
         ];
 
-    return metrics
-        .map(metric => ({
-            data: aggregatedEntries.map(entry => ({
-                x: entry.fromDate ? dayjs(entry.fromDate).valueOf() : 0,
-                y: entry[metric] || 0,
-            })),
-            name: metricNameMap[metric] || metric,
-        }));
+    return metrics.map(metric => ({
+        data: aggregatedEntries.map(entry => ({
+            x: entry.fromDate ? dayjs(entry.fromDate).valueOf() : 0,
+            y: entry[metric] || 0,
+        })),
+        name: metricNameMap[metric] || metric,
+    }));
 };
 
 export default getSeriesFromReportEntries;

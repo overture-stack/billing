@@ -26,3 +26,11 @@ export const formatNumber = n => (
       ? ''
       : n.toLocaleString()
 );
+
+export const formatPercentage = n => (
+    Number.isNaN(Number(n))
+      ? ''
+      : Number(n)
+        ? `${n.toLocaleString()}%`
+        : '--'
+);
