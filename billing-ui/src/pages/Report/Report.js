@@ -15,7 +15,6 @@
 * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import { browserHistory } from 'react-router';
 import {
     useEffect,
     useRef,
@@ -118,7 +117,7 @@ const projectsToSelectOptions = projects => projects.map(project => ({
 }));
 // ----
 
-const Report = () => {
+const Report = ({ history }) => {
     const chartRef = useRef();
     const [shouldShowCost, setShowCost] = useState(true);
     const [isLoading, setLoading] = useState(true);
@@ -275,7 +274,7 @@ const Report = () => {
                 .then(updateChart)
                 .catch(res => console.error('failed fetchProjects', res))
         : user.roles.invoices
-            ? browserHistory.push('/invoices')
+            ? history.push('/invoices')
         : user.logout();
     }, []);
 

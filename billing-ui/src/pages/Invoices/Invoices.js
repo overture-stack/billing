@@ -16,7 +16,6 @@
 */
 
 import { Component } from 'react';
-import { browserHistory } from 'react-router';
 import NotificationSystem from 'react-notification-system';
 import ReactTooltip from 'react-tooltip';
 
@@ -46,7 +45,7 @@ class Invoices extends Component {
         super(props);
 
         if (!user.roles.invoices && user.roles.report) {
-            browserHistory.push('/report');
+            props.history.push('/report');
         } else if (!user.roles.invoices && !user.roles.report) {
             user.logout();
         }

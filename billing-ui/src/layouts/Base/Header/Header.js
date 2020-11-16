@@ -15,7 +15,7 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { Link } from 'react-router';
+import { NavLink } from 'react-router-dom';
 import user from '../../../user';
 
 import cancerCollabLogoImg from '../../../assets/images/logo.svg';
@@ -73,22 +73,22 @@ const Header = () => (
                 <ul className="menu">
                     {user.roles.report && (
                         <li>
-                            <Link
+                            <NavLink
                                 activeClassName="active"
                                 to="/report"
                                 >
                                 Report
-                            </Link>
+                            </NavLink>
                         </li>
                     )}
                     {user.roles.invoices && (
                         <li>
-                            <Link
+                            <NavLink
                                 activeClassName="active"
                                 to="/invoices"
                                 >
                                 Invoices
-                            </Link>
+                            </NavLink>
                         </li>
                     )}
                 </ul>

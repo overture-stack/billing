@@ -17,12 +17,17 @@
 
 import { hot } from 'react-hot-loader/root';
 import { observe } from 'mobx';
+import { observer } from 'mobx-react';
 import {
-    browserHistory,
-    IndexRedirect,
-    Route,
     Router,
 } from 'react-router';
+import {
+    Redirect,
+    Route,
+    Switch,
+    // useLocation,
+} from 'react-router-dom';
+import { createBrowserHistory } from 'history';
 import 'whatwg-fetch';
 
 import Login from 'pages/Login/Login';
@@ -34,20 +39,13 @@ import user from './user';
 import Providers from './Providers';
 import './main.scss';
 
-function requireAuth(nextState, replace) {
-    if (!user.isLoggedIn) {
-        replace({
-            pathname: '/login',
-            state: { nextPathname: nextState.location.pathname },
-        });
-    }
-}
+const history = createBrowserHistory();
 
 const postLoginRoute = '/';
 
 observe(user, change => {
     if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
-        setTimeout(() => browserHistory.push(postLoginRoute));
+        setTimeout(() => history.push(postLoginRoute));
     }
     if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
         window.location.href = '/login';
@@ -56,17 +54,29 @@ observe(user, change => {
 
 const App = () => {
     return (
-        <Router history={browserHistory}>
-            <Route component={Providers} name="App" path="/">
-                <IndexRedirect to="/report" />
-                <Route component={Login} name="Login" path="login" />
-                <Route component={Base} name="BaseLayout" onEnter={requireAuth}>
-                    <Route component={Report} name="Report" path="report" />
-                    <Route component={Invoices} name="Invoices" path="invoices" />
-                </Route>
-            </Route>
+        <Router history={history}>
+            {user.isLoggedIn
+                ? (
+                    <Providers>
+                        <Base>
+                            <Switch>
+                                <Route component={Report} path="/report" />
+                                <Route component={Invoices} path="/invoices" />
+                                <Redirect from="*" to="/report" />
+                            </Switch>
+                        </Base>
+                    </Providers>
+                )
+            : (
+                <Switch>
+                    <Route component={Login} path="/login" />
+                    <Redirect to="/login" />
+                </Switch>
+            )}
         </Router>
     );
 };
 
-export default hot(App);
+/// <Route component={} onEnter={requireAuth}>
+
+export default hot(observer(App));
