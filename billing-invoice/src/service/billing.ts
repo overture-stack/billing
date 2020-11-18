@@ -284,19 +284,19 @@ class BillingApi {
             },
             {
                 label: 'CPU Cost',
-                value: 'cpu_cost',
+                value: 'costs.cpu',
             },
             {
                 label: 'Image Cost',
-                value: 'image_cost',
+                value: 'costs.image',
             },
             {
                 label: 'Objects Cost',
-                value: 'objects_cost',
+                value: 'costs.objects',
             },
             {
                 label: 'Volume Cost',
-                value: 'volume_cost',
+                value: 'costs.volume',
             },
             {
                 label: 'Discount %',
@@ -304,7 +304,7 @@ class BillingApi {
             },
             {
                 label: 'Total',
-                value: 'total',
+                value: 'costs.total',
             },
         ];
 

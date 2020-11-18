@@ -749,6 +749,7 @@ class FreshbooksService {
         await this.authenticate('get latest invoice number');
 
         this.logger.info(`Requesting latest invoice number...${invoicePrefix}`);
+
         return axios.get(
             `${this.apiConfig.api}/accounting/account/${this.apiConfig.account_id}/invoices/invoices`,
             {
@@ -759,6 +760,7 @@ class FreshbooksService {
                     'search[invoice_number_like]': invoicePrefix
                         ? invoicePrefix.split('-').shift()
                         : null,
+                    'search[vis_state]': [0, 1, 2],
                     sort: 'invoice_number_desc',
                 },
             },
