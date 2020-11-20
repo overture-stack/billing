@@ -219,7 +219,7 @@ router.get('/emailInvoice', ({
     app: reqApp,
     query: {
         email = '',
-        invoice: { invoiceNumber = '' },
+        invoice:invoiceNumber = '',
         username,
     },
 }, res) => {
