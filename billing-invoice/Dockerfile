@@ -17,7 +17,6 @@ RUN \
   yarn install && \
   tsc -p .
 
-
 ##
 # Jetison the prebuilder to keep the image compact
 ##
@@ -47,6 +46,8 @@ COPY --from=prebuilder\
 COPY --from=prebuilder\
     /app/node_modules/\
     /srv/billing-invoice/node_modules/
+
+RUN mkdir -p /srv/billing-invoice/csv
 
 # SET FILE PERMISSIONS
 RUN chmod +x /srv/billing-invoice/run.sh
