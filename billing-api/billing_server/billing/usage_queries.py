@@ -222,38 +222,47 @@ class Collaboratory:
         if not projects:
             projects.append('')
 
-        retval = requests.get(url, params={
-            'format': 'json',
-            'from': date_format(start_date),
-            'target':
-                'object_usage.{' +
-                # '2fb7b98d74134a37b9fba88856f60b78,' + # test values
-                projects_string +
-                '}',
-            'tz': 'America/Toronto',
-            'until': date_format(end_date),
-        })
+        try:
+            retval = requests.get(url, params={
+                'format': 'json',
+                'from': date_format(start_date),
+                'target':
+                    'object_usage.{' +
+                    # '2fb7b98d74134a37b9fba88856f60b78,' + # test values
+                    projects_string +
+                    '}',
+                'tz': 'America/Toronto',
+                'until': date_format(end_date),
+            })
 
-        if str(retval.content, 'utf-8').find("error") >= 0:
-            self.logger.error(retval.content)
-            raise Exception('at get_object_storage_by_project', retval.content)
+            if str(retval.content, 'utf-8').find("error") >= 0:
+                self.logger.error('at get_object_storage_by_project', retval.content)
+                raise Exception('at get_object_storage_by_project', retval.content)
+                return []
 
-        responses = []
+            responses = []
 
-        for project_usage in retval.json():
-            project = {
-                'projectId': projects_string,
-                'objects': 0
-            }
-            for point in project_usage['datapoints']:
-                if point[0] is not None:
-                    project['objects'] += point[0]
+            self.logger.info('meep!')
+            self.logger.info(str(retval.content, 'utf-8'))
 
-            project['objects'] = project['objects'] / 1000000000  # Bytes to GB
+            for project_usage in retval.json():
+                project = {
+                    'projectId': projects_string,
+                    'objects': 0
+                }
+                for point in project_usage['datapoints']:
+                    if point[0] is not None:
+                        project['objects'] += point[0]
 
-            responses.append(project)
+                project['objects'] = project['objects'] / 1000000000  # Bytes to GB
 
-        return responses
+                responses.append(project)
+
+            return responses
+
+        except requests.exceptions.ConnectionError as err:
+            self.logger.error('at get_object_storage_by_project', err)
+            return []
 
     def get_user_roles(self, user_id):
         results = self.database.query(
@@ -284,7 +293,7 @@ class Collaboratory:
             ''', user_id=user_id)
 
         result_list = results.all(as_dict=True)
-        role_map = {} # {[project_id]: [role_name, role_name],}
+        role_map = {}  # {[project_id]: [role_name, role_name],}
         for result in result_list:
             if result['project_id'] in role_map:
                 role_map[result['project_id']].append(result['name'].lower())
