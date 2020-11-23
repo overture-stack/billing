@@ -14,31 +14,66 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React from 'react';
-import TransitionGroup from 'react-transition-group-plus';
-import { LocaleProvider } from 'antd';
-import enUS from 'antd/lib/locale-provider/en_US';
 
-const App = ({
-    children,
-    location: { pathname },
-}) => (
-    <LocaleProvider locale={enUS}>
-        <TransitionGroup
-            className="App"
-            component="div"
-            style={{
-                height: '100%',
-                position: 'relative',
-            }}
-            transitionMode="out-in"
-            >
-            {React.cloneElement(
-                children || <div />,
-                { key: pathname.split('/')[1] || 'root' },
+import { hot } from 'react-hot-loader/root';
+import { observe } from 'mobx';
+import { observer } from 'mobx-react';
+import {
+    Router,
+} from 'react-router';
+import {
+    Redirect,
+    Route,
+    Switch,
+} from 'react-router-dom';
+import { createBrowserHistory } from 'history';
+import 'whatwg-fetch';
+
+import Login from 'pages/Login/Login';
+import Report from 'pages/Report/Report.js';
+import Base from 'layouts/Base/Base';
+import Invoices from 'pages/Invoices/Invoices.js';
+
+import user from './user';
+import Providers from './Providers';
+import './main.scss';
+
+const history = createBrowserHistory();
+
+const postLoginRoute = '/';
+
+observe(user, change => {
+    if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
+        setTimeout(() => history.push(postLoginRoute));
+    }
+    if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
+        window.location.href = '/login';
+    }
+});
+
+const App = () => {
+    return (
+        <Router history={history}>
+            {user.isLoggedIn
+                ? (
+                    <Providers>
+                        <Base>
+                            <Switch>
+                                <Route component={Report} path="/report" />
+                                <Route component={Invoices} path="/invoices" />
+                                <Redirect from="*" to="/report" />
+                            </Switch>
+                        </Base>
+                    </Providers>
+                )
+            : (
+                <Switch>
+                    <Route component={Login} path="/login" />
+                    <Redirect to="/login" />
+                </Switch>
             )}
-        </TransitionGroup>
-    </LocaleProvider>
-);
+        </Router>
+    );
+};
 
-export default App;
+export default hot(observer(App));

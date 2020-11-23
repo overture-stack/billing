@@ -15,23 +15,133 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import _ from 'lodash';
+import {
+    groupBy,
+} from 'lodash';
+import {
+    formatNumber,
+} from 'utils/formats';
 
-const aggregateEntries = (entries, groupByIteratee) => _(entries)
-    .groupBy(groupByIteratee)
-    .map((items, key) => items.reduce((acc, entry) => ({
-        ...acc,
-        ...entry,
-        cpu: (acc.cpu || 0) + (entry.cpu || 0),
-        cpuCost: (acc.cpuCost || 0) + (entry.cpuCost || 0),
-        image: (acc.image || 0) + (entry.image || 0),
-        imageCost: (acc.imageCost || 0) + (entry.imageCost || 0),
-        key,
-        objects: (acc.objects || 0) + (entry.objects || 0),
-        objectsCost: (acc.objectsCost || 0) + (entry.objectsCost || 0),
-        volume: (acc.volume || 0) + (entry.volume || 0),
-        volumeCost: (acc.volumeCost || 0) + (entry.volumeCost || 0),
-    })))
-    .value();
+const FIELDS = [
+    'cpu',
+    'cpuCost',
+    'image',
+    'imageCost',
+    'objects',
+    'objectsCost',
+    'volume',
+    'volumeCost',
+];
+
+const addNumbers = (acc, value, key) => {
+    const newNum = Number(formatNumber(value[key]));
+    const prevSum = Number(formatNumber(acc[key]));
+    const newSum = newNum + prevSum || prevSum;
+
+    return newSum ? { [key]: newSum } : {};
+};
+
+const aggregateEntries = (entries, groupByIteratee) =>
+    Object.entries(groupBy(entries, groupByIteratee))
+        .map(([key, items]) => items.reduce((prevItems, entry) => ({
+            ...prevItems,
+            ...entry,
+            ...FIELDS.reduce((prevFields, fieldName) => ({
+                ...prevFields,
+                ...addNumbers(prevFields, entry, fieldName),
+            }), { key }),
+        }), {}))
+        .map(item => ({
+            ...item,
+            ...Object.entries(item) // let's generate totals
+                .filter(([key]) => FIELDS.includes(key))
+                .reduce((prevTotals, [key, value]) => {
+                    const total = `total${key.toLowerCase().includes('cost') ? 'Cost' : ''}`;
+
+                    return {
+                        ...prevTotals,
+                        ...{ [total]: value + (prevTotals[total] || 0) },
+                    };
+                }, {}),
+        }));
 
 export default aggregateEntries;
+
+const mockEntry = {
+    cpu: 0,
+    cpuCost: 0,
+    image: 0,
+    imageCost: 0,
+    objects: 0,
+    objectsCost: 0,
+    volume: 0,
+    volumeCost: 0,
+};
+
+export const noEntries = AGGREGATION_FIELDS => (
+    window.localStorage.getItem('stayOffline')
+        ? [
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+            mockEntry,
+        ].map((each, key) => ({
+            ...each,
+            key: `noEntry${key}`,
+            [AGGREGATION_FIELDS.PROJECT]: `noEntry${key}`,
+            [AGGREGATION_FIELDS.USER]: `userName-${key}`,
+        }))
+        : []
+);
+
+export const noProjects = ({ entries }) => (
+    window.localStorage.getItem('stayOffline')
+        ? entries.map(each => ({
+            id: each.key,
+            name: `projectName-${each.key}`,
+        }))
+        : []
+);

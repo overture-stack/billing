@@ -33,6 +33,8 @@ export const collectionFlattener = (item, parnetKey, stem = '') => {
         : { [newStem]: item };
 };
 
-export const customNumberSort = (a, b, order, field) => ((order === 'desc')
-    ? a[field] - b[field]
-    : b[field] - a[field]);
+export const customNumberSort = (a, b, order) => (
+    order === 'desc'
+        ? a - b
+        : b - a
+);

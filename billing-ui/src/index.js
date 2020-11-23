@@ -14,50 +14,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import React from 'react';
+
 import ReactDOM from 'react-dom';
-import { browserHistory } from 'react-router';
-import './index.scss';
-
-import { observe } from 'mobx';
-import { AppContainer } from 'react-hot-loader';
-import 'whatwg-fetch';
-
-import user from './user';
-
-import Routes from './routes';
-
-const postLoginRoute = '/';
-
-observe(user, change => {
-    if (change.name === 'isLoggedIn' && change.oldValue === false && change.newValue === true) {
-        console.info('user just logged in. redirecting to ', postLoginRoute);
-        setTimeout(() => browserHistory.push(postLoginRoute));
-    }
-    if (change.name === 'isLoggedIn' && change.oldValue === true && change.newValue === false) {
-        console.info('user logged out. redirecting to /login');
-        window.location.href = '/login';
-    }
-});
-
-const rootEl = document.getElementById('root');
+import App from './App';
 
 ReactDOM.render((
-    <AppContainer>
-        <Routes />
-    </AppContainer>
-), rootEl);
-
-if (module.hot) {
-    module.hot.accept('./routes', () => {
-    // If you use Webpack 2 in ES modules mode, you can
-    // use <App /> here rather than require() a <NextApp />.
-        const nextRoutes = require('./routes');
-        ReactDOM.render(
-            <AppContainer>
-                {nextRoutes}
-            </AppContainer>,
-            rootEl,
-        );
-    });
-}
+    <App />
+), document.getElementById('root'));

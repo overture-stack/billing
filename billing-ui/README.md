@@ -2,10 +2,10 @@
 
 ## Requirements
 
-- node v4.6+
-- npm 3+
+- node v15+
+- npm 7+
 
-Recommend installing node via nvm. 
+Recommend installing node via nvm.
 
 Installation instructions here:  
 https://github.com/creationix/nvm#install-script
@@ -17,24 +17,26 @@ nvm install node
 nvm use node
 # update npm to the latest version
 npm install npm@latest -g
+# add yarn for great good
+npm install yarn -g
 ```
 
 ## Install
 
 ```
-npm install
+yarn
 ```
 
 ## Develop
 
-Go to the `billing-ui/` directory and run: 
+Go to the `billing-ui/` directory and run:
 ```
-npm start
+yarn start
 ```
  The site will be served out of http://localhost:3500
 
 ## Build
 
 ```
-npm run build
+yarn build
 ```

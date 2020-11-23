@@ -14,7 +14,7 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import _ from 'lodash';
+import { map } from 'lodash';
 import encodeUriSegment from 'encode-uri-query';
 import fetchHeaders from '../../utils/fetchHeaders';
 import user from '../../user';
@@ -22,7 +22,7 @@ import user from '../../user';
 async function fetchReport({
     bucketSize, fromDate, projects, toDate,
 }) {
-    const query = _.map({
+    const query = map({
         bucket: bucketSize,
         fromDate,
         toDate,
@@ -34,11 +34,14 @@ async function fetchReport({
         method: 'GET',
     });
 
-    const data = await response.json();
     user.token = response.headers.get('authorization');
-    if ([401, 404].includes(response.status)) user.logout();
 
-    return data;
+    return ([200].includes(response.status))
+        ? Promise.resolve(response.json())
+        : (
+            [401, 404].includes(response.status) && user.logout(),
+            Promise.reject(response)
+        );
 }
 
 export default fetchReport;

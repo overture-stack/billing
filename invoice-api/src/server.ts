@@ -194,7 +194,7 @@ router.post('/getAllInvoices', ({
             user,
             isAdmin,
         )
-            .then(invoicesData => res.json(invoicesData))
+            .then(invoicesData => res.status(200).json(invoicesData))
             .catch(error => {
                 logger.error('500 from /getAllInvoices');
                 res.status(500).send(error);

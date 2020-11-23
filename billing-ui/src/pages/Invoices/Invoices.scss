@@ -1,12 +1,11 @@
 @import "../../styles/variables";
 
 .Invoices {
-  padding-left: $page-gutter;
-  padding-right: $page-gutter;
+    padding-left: $page-gutter;
+    padding-right: $page-gutter;
 
-  .page-heading {
-    margin: 1em 0 0.5em;
-    color: #333;
-  }
-
+    .page-heading {
+        margin: 1em 0 0.5em;
+        color: #333;
+    }
 }

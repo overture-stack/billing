@@ -15,7 +15,7 @@
 * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import moment from 'moment';
+import dayjs from 'dayjs';
 import aggregateEntries from './aggregateEntries';
 
 // Note: Chang's idea  - chang
@@ -45,14 +45,13 @@ const getSeriesFromReportEntries = (
             'volume',
         ];
 
-    return metrics
-        .map(metric => ({
-            data: aggregatedEntries.map(entry => ({
-                x: moment(entry.fromDate, moment.ISO_8601).valueOf(),
-                y: entry[metric] || 0,
-            })),
-            name: metricNameMap[metric] || metric,
-        }));
+    return metrics.map(metric => ({
+        data: aggregatedEntries.map(entry => ({
+            x: entry.fromDate ? dayjs(entry.fromDate).valueOf() : 0,
+            y: entry[metric] || 0,
+        })),
+        name: metricNameMap[metric] || metric,
+    }));
 };
 
 export default getSeriesFromReportEntries;

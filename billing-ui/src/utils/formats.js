@@ -15,8 +15,22 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-export const formatCurrency = n => (n && typeof parseInt(n, 10) === 'number'
-    ? `$${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-    : '');
+export const formatCurrency = n => (
+  Number.isNaN(Number(n))
+    ? ''
+    : `$${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+);
 
-export const formatNumber = n => (n && typeof parseInt(n, 10) === 'number' ? n.toLocaleString() : '');
+export const formatNumber = n => (
+    Number.isNaN(Number(n))
+      ? ''
+      : n.toLocaleString()
+);
+
+export const formatPercentage = n => (
+    Number.isNaN(Number(n))
+      ? ''
+      : Number(n)
+        ? `${n.toLocaleString()}%`
+        : '--'
+);

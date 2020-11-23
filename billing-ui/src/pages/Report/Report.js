@@ -15,36 +15,51 @@
 * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import React, { Component } from 'react';
-import { browserHistory } from 'react-router';
-import { observable, autorun, computed } from 'mobx';
-import { observer } from 'mobx-react';
-import _ from 'lodash';
-
-import moment from 'moment';
-
 import {
-    Button, DatePicker, Radio, Select as AntdSelect,
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
+import { observer } from 'mobx-react';
+import {
+    find,
+    range,
+    xor,
+} from 'lodash';
+import {
+    flow,
+    join,
+    pick,
+    values,
+} from 'lodash/fp';
+import moment from 'moment';
+import {
+    Button,
+    DatePicker,
+    Radio,
+    Select as AntdSelect,
 } from 'antd';
-
-
 import Select from 'react-select';
-import 'react-select/dist/react-select.css';
 
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
-import user from '../../user';
-import CHART_SETTINGS from './CHART_SETTINGS';
-import aggregateEntries from './aggregateEntries';
-import 'react-bootstrap-table/dist/react-bootstrap-table.min.css';
-
-import fetchReport from '../../services/reports/fetchReport';
-import fetchProjects from '../../services/projects/fetchProjects';
-import getSeriesFromReportEntries from './getSeriesFromReportEntries';
+import BootstrapTableWrapper from 'components/BootstrapTableWrapper';
+import fetchReport from 'services/reports/fetchReport';
+import fetchProjects from 'services/projects/fetchProjects';
 import {
     formatCurrency,
     formatNumber,
-} from '../../utils/formats';
+} from 'utils/formats';
+import {
+    customNumberSort,
+} from 'utils/transforms';
 
+import user from '../../user';
+
+import aggregateEntries, {
+    noEntries,
+    noProjects,
+} from './aggregateEntries';
+import CHART_SETTINGS from './CHART_SETTINGS';
+import getSeriesFromReportEntries from './getSeriesFromReportEntries';
 import './Report.scss';
 
 const { MonthPicker } = DatePicker;
@@ -54,190 +69,140 @@ const { Option } = AntdSelect;
 
 const ReactHighcharts = require('react-highcharts').withHighcharts(require('highcharts'));
 
-const TIME_PERIODS = {
-    DAILY: 'DAILY',
-    MONTHLY: 'MONTHLY',
-    WEEKLY: 'WEEKLY',
-    YEARLY: 'YEARLY',
+const reactSelectStyles = {
+    indicatorSeparator: () => ({
+
+    }),
+    menu: provided => ({
+        ...provided,
+        zIndex: 10,
+    }),
 };
+
+const reactSelectTheme = defaultTheme => ({
+    ...defaultTheme,
+    spacing: {
+        ...defaultTheme.spacing,
+        baseUnit: 2,
+        controlHeight: 0,
+        MenuGutter: 0,
+    },
+});
+
+const TIME_PERIODS = [
+    'DAILY',
+    'WEEKLY',
+    'MONTHLY',
+    'YEARLY',
+];
+
+const defaultBucketSize = TIME_PERIODS[0];
 
 const AGGREGATION_FIELDS = {
     PERIOD: 'fromDate',
     PROJECT: 'projectId',
-    USER: 'user',
+    USER: 'username',
 };
 
-const defaultAggregationFields = [
-    AGGREGATION_FIELDS.PROJECT,
-    AGGREGATION_FIELDS.USER,
-    AGGREGATION_FIELDS.PERIOD,
-];
+const defaultAggregationFields = Object.values(AGGREGATION_FIELDS);
 
 const START_YEAR = 2013;
-const currentYear = new Date().getUTCFullYear();
-const getYearsSinceStart = () => _.range(currentYear - START_YEAR).map(x => x + START_YEAR);
+const getYearsSinceStart = () => range(START_YEAR, new Date().getUTCFullYear() + 1);
 
-@observer
-class Report extends Component {
-    @observable report = {
-        entries: [],
-    };
+const projectsToSelectOptions = projects => projects.map(project => ({
+    label: project.name,
+    value: JSON.stringify(project), // else, the component generates React key errors
+}));
 
-    @observable shouldShowCost = true;
-
-    @observable projects = [];
-
-    @observable chartSettings = CHART_SETTINGS;
-
-    @observable filters = {
-        bucketSize: TIME_PERIODS.DAILY,
-        fromDate: moment().subtract('months', 1).startOf('day'),
+const Report = ({ history }) => {
+    const chartRef = useRef();
+    const [shouldShowCost, setShowCost] = useState(true);
+    const [isLoading, setLoading] = useState(true);
+    const [aggregationFields, setAggregationFields] = useState(defaultAggregationFields);
+    const [report, setReport] = useState({ entries: noEntries(AGGREGATION_FIELDS) });
+    const [entriesToDisplay, setEntriesToDisplay] = useState([]);
+    const [reportSummary, setReportSummary] = useState([]);
+    const [projects, setProjects] = useState(noProjects(report));
+    const [filters, setFilters] = useState({
+        bucketSize: defaultBucketSize,
+        fromDate: moment().subtract(1, 'months').startOf('day'),
         projects: [],
         toDate: moment().startOf('day'),
-    };
+    });
 
-    @observable isLoading = false;
-
-    @observable aggregationFields = defaultAggregationFields;
-
-    constructor(props) {
-        super(props);
-
-        if (!user.roles.report && user.roles.invoices) {
-            browserHistory.push('/invoices');
-        } else if (!user.roles.report && !user.roles.invoices) {
-            user.logout();
-        }
-    }
-
-    @computed get entriesToDisplay() {
-        return aggregateEntries(
-            this.report.entries,
-            x => _(x)
-                .pick(this.aggregationFields.slice())
-                .values()
-                .value()
-                .join(','),
-        );
-    }
-
-    @computed get reportSummary() {
-        return aggregateEntries(this.report.entries, '');
-    }
-
-    @computed get isEmpty() {
-        return this.report.entries.length === 0;
-    }
-
-    handleProjectsChange = (option) => {
-        this.filters.projects = option.map(x => x.value);
-    }
-
-    handleFromDateFilterChange = (date) => {
-        // console.log('handleFromDateFilterChange', this.filters.fromDate, date);
-        this.filters.fromDate = date;
-    }
-
-    handleToDateFilterChange = (date) => {
-        // console.log('handleToDateFilterChange', this.filters.toDate, date);
-        this.filters.toDate = date;
-    }
-
-    componentDidMount = async () => {
-        this.projects = await fetchProjects();
-        this.updateChart();
-        autorun(this.redrawChart);
-    }
-
-    formatDateRange = (cell, entry) => {
-        const bucket = this.report ? this.report.bucket.toUpperCase() : this.filters.bucketSize;
-        // console.log('formatDateRange', cell, entry);
+    const formatDateRange = (cell, entry) => {
+        const bucket = report?.bucket?.toUpperCase() || filters.bucketSize;
 
         switch (bucket) {
-            case TIME_PERIODS.DAILY:
-                return moment(entry.fromDate, moment.ISO_8601).format('DD MMM YYYY');
+            case 'DAILY':
+                return moment(entry.fromDate).format('DD MMM YYYY');
 
-            case TIME_PERIODS.WEEKLY:
-                return `${moment(entry.fromDate, moment.ISO_8601).format('MMM DD YYYY')} - ${moment(entry.toDate, moment.ISO_8601).subtract('days', 1).format('MMM DD YYYY')}`;
+            case 'WEEKLY':
+                return `${
+                    moment(entry.fromDate).format('MMM DD YYYY')} - ${
+                    moment(entry.toDate).subtract(1, 'days').format('MMM DD YYYY')
+                }`;
 
-            case TIME_PERIODS.MONTHLY:
-                return moment(entry.fromDate, moment.ISO_8601).format('MMMM YYYY');
+            case 'MONTHLY':
+                return moment(entry.fromDate).format('MMMM YYYY');
 
-            case TIME_PERIODS.YEARLY:
-                return moment(entry.fromDate, moment.ISO_8601).format('YYYY');
+            case 'YEARLY':
+                return moment(entry.fromDate).format('YYYY');
 
             default:
-                return moment(entry.fromDate, moment.ISO_8601).format('YYYY-MM-DD');
+                return moment(entry.fromDate).format('YYYY-MM-DD');
         }
-    }
+    };
 
-    updatePeriod = period => {
-        this.filters.bucketSize = period;
+    const groupBy = field => () => {
+        setAggregationFields(xor(aggregationFields, [field]));
+    };
 
-        if (period === TIME_PERIODS.MONTHLY) {
-            this.handleFromDateFilterChange(
-                moment(this.filters.fromDate).startOf('month'),
-            );
-            this.handleToDateFilterChange(
-                moment(this.filters.toDate).endOf('month'),
-            );
-        } else if (period === TIME_PERIODS.YEARLY) {
-            this.handleFromDateFilterChange(
-                moment(this.filters.fromDate).startOf('year'),
-            );
-            this.handleToDateFilterChange(
-                moment(this.filters.toDate).endOf('year'),
-            );
-        } else {
-            this.handleFromDateFilterChange(this.filters.fromDate);
-            this.handleToDateFilterChange(this.filters.toDate);
-        }
-    }
+    const handleBucketSizeFilterChange = bucketSize => setFilters(prevFilters => ({
+        ...prevFilters,
+        bucketSize,
+    }));
 
-    updateChart = async () => {
-        this.isLoading = true;
+    const handleDateFromFilterChange = fromDate => setFilters(prevFilters => ({
+        ...prevFilters,
+        fromDate,
+    }));
 
-        // console.log(
-        //     'updateChart',
-        //     this.filters.fromDate.millisecond(0).toISOString('keepOffset'),
-        //     this.filters.toDate.millisecond(0).toISOString('keepOffset'),
-        // );
+    const handleDateToFilterChange = toDate => setFilters(prevFilters => ({
+        ...prevFilters,
+        toDate,
+    }));
 
-        const report = await fetchReport({
-            bucketSize: this.filters.bucketSize.toLowerCase(),
-            fromDate: this.filters.fromDate.millisecond(0).toISOString(),
-            projects: this.filters.projects.slice(),
-            toDate: this.filters.toDate.millisecond(0).toISOString(),
-        });
+    const handleProjectsFilterChange = selectedProjects => setFilters(prevFilters => ({
+        ...prevFilters,
+        projects: selectedProjects?.map(selection => JSON.parse(selection.value)) || [],
+    }));
 
-        this.report = report;
-        this.isLoading = false;
-    }
-
-    redrawChart = () => {
-        const chart = this.refs.chart.getChart();
+    const redrawChart = () => {
+        const chart = chartRef.current;
         const newSeries = getSeriesFromReportEntries(
-            this.report.entries,
-            { shouldShowCost: this.shouldShowCost },
+            report.entries,
+            { shouldShowCost },
         ).slice();
+
         const subtitle = new Date(
-            this.report.fromDate ||
-            this.filters.fromDate.toISOString(),
+            report.fromDate ||
+            filters.fromDate.toISOString(),
         )
             .toDateString()
             .concat(
                 ' - ',
-                new Date(this.report.toDate || this.filters.toDate.toISOString()).toDateString(),
+                new Date(report.toDate || filters.toDate.toISOString()).toDateString(),
             );
 
         chart.setTitle(
-            { text: `Collaboratory ${this.shouldShowCost ? 'Cost' : 'Usage'} Summary` },
+            { text: `Collaboratory ${shouldShowCost ? 'Cost' : 'Usage'} Summary` },
             { text: `<div style="text-align:center;">${subtitle}<br/><br/>Toggle Chart Area</div>` },
         );
 
         chart.yAxis[0].update({
             title: {
-                text: `${this.shouldShowCost ? 'Cost ($)' : 'Usage (hrs)'}`,
+                text: `${shouldShowCost ? 'Cost ($)' : 'Usage (hrs)'}`,
             },
         });
 
@@ -251,10 +216,10 @@ class Report extends Component {
 
         chart.update({
             colors: [
-                '#2C3E50',
-                '#E5D55B',
-                '#E74C3C',
-                '#3498DB',
+                '#2C3E50', // cpu
+                '#E5D55B', // image
+                '#E74C3C', // objects
+                '#3498DB', // volume
             ],
         });
 
@@ -262,15 +227,77 @@ class Report extends Component {
         window.chart = chart;
     };
 
-    projectsToSelectOptions = projects => projects.map(x => ({
-        label: x.name,
-        value: x,
-    }));
+    const updateChart = async () => {
+        setLoading(true);
 
-    render = () => (
+        fetchReport({
+            bucketSize: filters.bucketSize.toLowerCase(),
+            fromDate: filters.fromDate.millisecond(0).toISOString(),
+            projects: filters.projects.slice(),
+            toDate: filters.toDate.millisecond(0).toISOString(),
+        })
+            .then(setReport)
+            .catch(err => console.error('failed fetchReport', err));
+    };
+
+    const updatePeriod = period => () => {
+        handleBucketSizeFilterChange(period);
+
+        if (period === 'MONTHLY') {
+            handleDateFromFilterChange(
+                moment(filters.fromDate).startOf('month'),
+            );
+            handleDateToFilterChange(
+                moment(filters.toDate).endOf('month'),
+            );
+        } else if (period === 'YEARLY') {
+            handleDateFromFilterChange(
+                moment(filters.fromDate).startOf('year'),
+            );
+            handleDateToFilterChange(
+                moment(filters.toDate).endOf('year'),
+            );
+        } else {
+            handleDateFromFilterChange(filters.fromDate);
+            handleDateToFilterChange(filters.toDate);
+        }
+    };
+
+    useEffect(() => {
+        user.roles.report
+            ? fetchProjects()
+                .then(setProjects)
+                .then(updateChart)
+                .catch(res => console.error('failed fetchProjects', res))
+        : user.roles.invoices
+            ? history.push('/invoices')
+        : user.logout();
+    }, []);
+
+    useEffect(() => {
+        setReportSummary(aggregateEntries(report.entries, ''));
+        setLoading(false);
+    }, [report]);
+
+    useEffect(() => {
+        report.entries.length && redrawChart();
+    }, [report, shouldShowCost]);
+
+    useEffect(() => {
+        setEntriesToDisplay(aggregateEntries(
+            report.entries,
+            x => flow([
+                pick(aggregationFields),
+                values,
+                join(','),
+            ])(x),
+        ));
+    }, [aggregationFields, report]);
+
+    return (
         <div className="Report">
             <h1 className="page-heading">
-                {this.isLoading ? 'Loading Usage Report...' : 'Usage Report'}
+                {isLoading ? 'Loading Usage Report...' : 'Usage Report'}
             </h1>
 
             <div className="form-controls">
@@ -279,11 +306,17 @@ class Report extends Component {
 
                     <div className="project-select">
                         <Select
-                            multi
-                            onChange={this.handleProjectsChange}
-                            options={this.projectsToSelectOptions(this.projects.slice())}
+                            closeMenuOnSelect={false}
+                            components={{
+                                indicatorSeparator: null,
+                            }}
+                            isMulti
+                            onChange={handleProjectsFilterChange}
+                            options={projectsToSelectOptions(projects.slice())}
                             placeholder="Showing all projects. Click to filter."
-                            value={this.projectsToSelectOptions(this.filters.projects.slice())}
+                            styles={reactSelectStyles}
+                            theme={reactSelectTheme}
+                            value={projectsToSelectOptions(filters.projects.slice())}
                             />
                     </div>
                 </div>
@@ -292,32 +325,32 @@ class Report extends Component {
                     <label>From</label>
 
                     <div className="range-select">
-                        {_.includes([TIME_PERIODS.DAILY, TIME_PERIODS.WEEKLY], this.filters.bucketSize) && (
+                        {['DAILY', 'WEEKLY'].includes(filters.bucketSize) && (
                             <DatePicker
-                                defaultValue={this.filters.fromDate}
+                                defaultValue={filters.fromDate}
                                 format="YYYY-MM-DD"
-                                onChange={this.handleFromDateFilterChange}
+                                onChange={handleDateFromFilterChange}
                                 />
                         )}
 
-                        {this.filters.bucketSize === TIME_PERIODS.MONTHLY && (
+                        {filters.bucketSize === 'MONTHLY' && (
                             <MonthPicker
-                                defaultValue={moment(this.filters.fromDate).startOf('month')}
+                                defaultValue={moment(filters.fromDate).startOf('month')}
                                 format="MMMM, YYYY"
-                                onChange={this.handleFromDateFilterChange}
+                                onChange={handleDateFromFilterChange}
                                 />
                         )}
 
-                        {this.filters.bucketSize === TIME_PERIODS.YEARLY && (
+                        {filters.bucketSize === 'YEARLY' && (
                             <AntdSelect
-                                defaultValue={moment(this.filters.fromDate).format('YYYY')}
-                                onChange={this.handleFromDateFilterChange}
+                                defaultValue={moment(filters.fromDate).format('YYYY')}
+                                onChange={handleDateFromFilterChange}
                                 showSearch={false}
                                 >
-                                {getYearsSinceStart().map(year => (
+                                {getYearsSinceStart().map((year, index) => (
                                     <Option
-                                        key={year}
-                                        value={moment(year, 'YYYY')}
+                                        key={`${year}${index}`}
+                                        value={moment(year, 'YYYY').format('YYYY')}
                                         >
                                         {year}
                                     </Option>
@@ -331,33 +364,35 @@ class Report extends Component {
                     <label>To</label>
 
                     <div className="range-select">
-                        {_.includes(
-                            [TIME_PERIODS.DAILY, TIME_PERIODS.WEEKLY],
-                            this.filters.bucketSize,
-                        ) && (
+                        {['DAILY', 'WEEKLY'].includes(filters.bucketSize) && (
                             <DatePicker
-                                defaultValue={this.filters.toDate}
+                                defaultValue={filters.toDate}
                                 format="YYYY-MM-DD"
-                                onChange={this.handleToDateFilterChange}
+                                onChange={handleDateToFilterChange}
                                 />
                         )}
 
-                        {this.filters.bucketSize === TIME_PERIODS.MONTHLY && (
+                        {filters.bucketSize === 'MONTHLY' && (
                             <MonthPicker
-                                defaultValue={moment(this.filters.toDate).endOf('month')}
+                                defaultValue={moment(filters.toDate).endOf('month')}
                                 format="MMMM, YYYY"
-                                onChange={this.handleToDateFilterChange}
+                                onChange={handleDateToFilterChange}
                                 />
                         )}
 
-                        {this.filters.bucketSize === TIME_PERIODS.YEARLY && (
+                        {filters.bucketSize === 'YEARLY' && (
                             <AntdSelect
-                                defaultValue={moment(this.filters.toDate).endOf('year').format('YYYY')}
-                                onChange={this.handleToDateFilterChange}
+                                defaultValue={moment(filters.toDate).endOf('year').format('YYYY')}
+                                onChange={handleDateToFilterChange}
                                 showSearch={false}
                                 >
-                                {getYearsSinceStart().map(year => (
-                                    <Option key={year} value={moment(year, 'YYYY').endOf('year')}>{year}</Option>
+                                {getYearsSinceStart().map((year, index) => (
+                                    <Option
+                                        key={`${year}${index}`}
+                                        value={moment(year, 'YYYY').endOf('year').format('YYYY')}
+                                        >
+                                        {year}
+                                    </Option>
                                 ))}
                             </AntdSelect>
                         )}
@@ -368,38 +403,19 @@ class Report extends Component {
                     <label>Period Grouping</label>
 
                     <div className="interval-select">
-                        <RadioGroup>
-                            <RadioButton
-                                checked={this.filters.bucketSize === TIME_PERIODS.DAILY}
-                                onClick={() => this.updatePeriod(TIME_PERIODS.DAILY)}
-                                value={TIME_PERIODS.DAILY}
-                                >
-                                Daily
-                            </RadioButton>
-
-                            <RadioButton
-                                checked={this.filters.bucketSize === TIME_PERIODS.WEEKLY}
-                                onClick={() => this.updatePeriod(TIME_PERIODS.WEEKLY)}
-                                value={TIME_PERIODS.WEEKLY}
-                                >
-                                Weekly
-                            </RadioButton>
-
-                            <RadioButton
-                                checked={this.filters.bucketSize === TIME_PERIODS.MONTHLY}
-                                onClick={() => this.updatePeriod(TIME_PERIODS.MONTHLY)}
-                                value={TIME_PERIODS.MONTHLY}
-                                >
-                                Monthly
-                            </RadioButton>
-
-                            <RadioButton
-                                checked={this.filters.bucketSize === TIME_PERIODS.YEARLY}
-                                onClick={() => this.updatePeriod(TIME_PERIODS.YEARLY)}
-                                value={TIME_PERIODS.YEARLY}
-                                >
-                                Yearly
-                            </RadioButton>
+                        <RadioGroup
+                            defaultValue={defaultBucketSize}
+                            >
+                            {TIME_PERIODS.map(period => (
+                                <RadioButton
+                                    checked={filters.bucketSize === period}
+                                    key={period}
+                                    onClick={updatePeriod(period)}
+                                    value={period}
+                                    >
+                                    {period.slice(0, 1) + period.slice(1).toLowerCase()}
+                                </RadioButton>
+                            ))}
                         </RadioGroup>
                     </div>
                 </div>
@@ -407,8 +423,8 @@ class Report extends Component {
                 <div className="form-item">
                     <div>
                         <Button
-                            loading={this.isLoading}
-                            onClick={this.updateChart}
+                            loading={isLoading}
+                            onClick={updateChart}
                             type="primary"
                             >
                             Generate Report
@@ -420,20 +436,22 @@ class Report extends Component {
             <h2 className="section-heading">Summary</h2>
 
             <div className="summary">
-                <RadioGroup>
+                <RadioGroup
+                    defaultValue // should show cost by default, i.e. 'true'
+                    >
                     <RadioButton
-                        checked={this.shouldShowCost}
+                        checked={shouldShowCost}
                         key="RadioButton1"
-                        onClick={() => { this.shouldShowCost = true; }}
+                        onClick={() => { shouldShowCost || setShowCost(true); }}
                         value
                         >
                         Cost
                     </RadioButton>
 
                     <RadioButton
-                        checked={!this.shouldShowCost}
+                        checked={!shouldShowCost}
                         key="RadioButton2"
-                        onClick={() => { this.shouldShowCost = false; }}
+                        onClick={() => { shouldShowCost && setShowCost(false); }}
                         value={false}
                         >
                         Usage
@@ -441,353 +459,329 @@ class Report extends Component {
                 </RadioGroup>
 
                 <div className="summary-table">
-                    <BootstrapTable
-                        data={this.reportSummary}
+                    <BootstrapTableWrapper
+                        columns={[
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'cpu',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'CPU (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'cpuCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'CPU Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'image',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Image (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'imageCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Image Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'objects',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Objects (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'objectsCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Objects Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'volume',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Volume (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'volumeCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Volume Cost',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'total',
+                                formatter: formatNumber,
+                                headerClasses: 'cost',
+                                hidden: shouldShowCost,
+                                text: 'Total (hrs)',
+                            },
+                            {
+                                align: 'right',
+                                classes: 'cost',
+                                dataField: 'totalCost',
+                                formatter: formatCurrency,
+                                headerClasses: 'cost',
+                                hidden: !shouldShowCost,
+                                text: 'Total Cost',
+                            },
+                        ]}
+                        data={reportSummary}
                         keyField="key"
-                        striped
-                        width="200px"
-                        >
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="cpu"
-                            dataFormat={formatNumber}
-                            hidden={this.shouldShowCost}
-                            >
-                            CPU (hrs)
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="image"
-                            dataFormat={formatNumber}
-                            hidden={this.shouldShowCost}
-                            >
-                            Image (hrs)
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="objects"
-                            dataFormat={formatNumber}
-                            hidden={this.shouldShowCost}
-                            >
-                            Objects (hrs)
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="volume"
-                            dataFormat={formatNumber}
-                            hidden={this.shouldShowCost}
-                            >
-                            Volume (hrs)
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="cpuCost"
-                            dataFormat={formatCurrency}
-                            hidden={!this.shouldShowCost}
-                            >
-                            CPU Cost
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="imageCost"
-                            dataFormat={formatCurrency}
-                            hidden={!this.shouldShowCost}
-                            >
-                            Image Cost
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="objectsCost"
-                            dataFormat={formatCurrency}
-                            hidden={!this.shouldShowCost}
-                            >
-                            Objects Cost
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataField="volumeCost"
-                            dataFormat={formatCurrency}
-                            hidden={!this.shouldShowCost}
-                            >
-                            Volume Cost
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataFormat={(cell, row) => formatNumber(_.sum([
-                                row.cpu,
-                                row.image,
-                                row.objects,
-                                row.volume,
-                            ]))}
-                            hidden={this.shouldShowCost}
-                            >
-                            Total (hrs)
-                        </TableHeaderColumn>
-
-                        <TableHeaderColumn
-                            dataAlign="right"
-                            dataFormat={(cell, row) => formatCurrency(_.sum([
-                                row.cpuCost,
-                                row.imageCost,
-                                row.objectsCost,
-                                row.volumeCost,
-                            ]))}
-                            hidden={!this.shouldShowCost}
-                            >
-                            Total Cost
-                        </TableHeaderColumn>
-                    </BootstrapTable>
+                        />
                 </div>
             </div>
 
-            <div className={`chart-container ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
-                <ReactHighcharts config={this.chartSettings} isPureConfig ref="chart" />
+            <div className={`chart-container ${isLoading ? 'is-loading' : 'not-loading'}`}>
+                <ReactHighcharts
+                    callback={chart => {
+                        chartRef.current = chart;
+                    }}
+                    config={CHART_SETTINGS}
+                    isPureConfig
+                    />
             </div>
 
             <h2 className="section-heading">Details</h2>
 
-            <div className={`usage-table ${this.isLoading ? 'is-loading' : 'not-loading'}`}>
+            <div className={`usage-table ${isLoading ? 'is-loading' : 'not-loading'}`}>
 
                 <div className="form-item">
                     <label>Group By</label>
 
-                    <div>
+                    <div style={{ marginBottom: '1rem' }}>
                         <RadioGroup>
-                            <RadioButton
-                                checked={this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                                onClick={() => {
-                                    this.aggregationFields = _.xor(
-                                        this.aggregationFields,
-                                        [AGGREGATION_FIELDS.PERIOD],
-                                    );
-                                }}
-                                value={AGGREGATION_FIELDS.PERIOD}
-                                >
-                                Period
-                            </RadioButton>
-
-                            <RadioButton
-                                checked={this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
-                                onClick={() => {
-                                    this.aggregationFields = _.xor(
-                                        this.aggregationFields,
-                                        [AGGREGATION_FIELDS.PROJECT],
-                                    );
-                                }}
-                                value={AGGREGATION_FIELDS.PROJECT}
-                                >
-                                Projects
-                            </RadioButton>
-
-                            <RadioButton
-                                checked={this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
-                                onClick={() => {
-                                    this.aggregationFields = _.xor(
-                                        this.aggregationFields,
-                                        [AGGREGATION_FIELDS.USER],
-                                    );
-                                }}
-                                value={AGGREGATION_FIELDS.USER}
-                                >
-                                Users
-                            </RadioButton>
+                            {Object.entries(AGGREGATION_FIELDS).map(([fieldName, dbField]) => (
+                                <RadioButton
+                                    checked={aggregationFields.includes(dbField)}
+                                    key={dbField}
+                                    onClick={groupBy(dbField)}
+                                    value={dbField}
+                                    >
+                                    {`${fieldName[0]}${fieldName.slice(1).toLowerCase()}`}
+                                </RadioButton>
+                            ))}
                         </RadioGroup>
                     </div>
                 </div>
 
-                <BootstrapTable
-                    condensed
-                    data={this.entriesToDisplay}
+                <BootstrapTableWrapper
+                    columns={[
+                        {
+                            classes: 'date-md',
+                            csvExport: aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            csvFormatter: formatDateRange,
+                            csvText: 'Period Start',
+                            dataField: AGGREGATION_FIELDS.PERIOD,
+                            formatter: formatDateRange,
+                            headerClasses: 'date-md',
+                            hidden: !aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            searchable: aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            sort: true,
+                            text: 'Period',
+                        },
+                        {
+                            csvExport: aggregationFields.includes(AGGREGATION_FIELDS.PERIOD),
+                            csvFormatter: formatDateRange,
+                            csvText: 'Period End',
+                            dataField: 'toDate',
+                            hidden: true,
+                            searchable: false,
+                            text: 'Period',
+                        },
+                        {
+                            csvExport: aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
+                            dataField: AGGREGATION_FIELDS.PROJECT,
+                            hidden: true,
+                            searchable: false,
+                            sort: true,
+                            text: 'Project ID',
+                        },
+                        {
+                            csvFormatter: id => find(projects, { id })?.name,
+                            csvText: 'Project Name',
+                            dataField: AGGREGATION_FIELDS.PROJECT,
+                            formatter: id => find(projects, { id })?.name,
+                            hidden: !aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
+                            searchable: aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
+                            sort: true,
+                            text: 'Project',
+                        },
+                        {
+                            csvFormatter: cell => cell || '(Project)',
+                            dataField: AGGREGATION_FIELDS.USER,
+                            formatter: (cell, { projectId: id }) => cell ||
+                                `(Project) ${find(projects, { id })?.name || ''}`,
+                            hidden: !aggregationFields.includes(AGGREGATION_FIELDS.USER),
+                            searchable: aggregationFields.includes(AGGREGATION_FIELDS.USER),
+                            sort: true,
+                            style: {
+                                width: '320px',
+                            },
+                            text: 'User',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'cpu',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'CPU (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'cpuCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'CPU Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'image',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Image (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'imageCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Image Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'objects',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Objects (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'objectsCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Objects Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'volume',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Volume (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'volumeCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Volume Cost',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            dataField: 'total',
+                            formatter: formatNumber,
+                            headerClasses: 'cost',
+                            hidden: shouldShowCost,
+                            searchable: !shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Total (hrs)',
+                        },
+                        {
+                            align: 'right',
+                            classes: 'cost',
+                            csvFormatter: formatCurrency,
+                            dataField: 'totalCost',
+                            formatter: formatCurrency,
+                            headerClasses: 'cost',
+                            hidden: !shouldShowCost,
+                            searchable: shouldShowCost,
+                            sort: true,
+                            sortFunc: customNumberSort,
+                            text: 'Total Cost',
+                        },
+                    ]}
+                    data={entriesToDisplay}
                     exportCSV
-                    hover
-                    ignoreSinglePage
+                    fileName="report.csv"
                     keyField="key"
-                    options={{
-                        hideSizePerPage: true,
-                        sizePerPage: 25,
-                        sizePerPageList: [
-                            10,
-                            50,
-                            100,
-                        ],
-                    }}
                     pagination
                     search
-                    striped
-                    >
-                    <TableHeaderColumn
-                        dataField="fromDate"
-                        dataFormat={this.formatDateRange}
-                        dataSort
-                        export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                        hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                        >
-                        Period
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataField="toDate"
-                        export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PERIOD)}
-                        hidden
-                        >
-                        Period
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataField="projectId"
-                        dataSort
-                        export={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
-                        // isKey={true}
-                        hidden
-                        >
-                        Project ID
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        csvFormat={(id) => _.find(this.projects, { id }).name}
-                        csvHeader="projectName"
-                        dataField="projectId"
-                        dataFormat={id => _.find(this.projects, { id }).name}
-                        dataSort
-                        filterFormatted
-                        hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.PROJECT)}
-                        >
-                        Project
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataField="username"
-                        dataFormat={(cell, row) => cell ||
-                            `(Project) ${_.find(this.projects, { id: row.projectId }).name}`}
-                        dataSort
-                        hidden={!this.aggregationFields.includes(AGGREGATION_FIELDS.USER)}
-                        width="320px"
-                        >
-                        User
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="cpu"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={this.shouldShowCost}
-                        sortFunc={(a, b) => (
-                            (a.cpu || 0) - (b.cpu || 0)
-                        )}
-                        >
-                        CPU (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="cpuCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!this.shouldShowCost}
-                        >
-                        CPU Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="image"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={this.shouldShowCost}
-                        >
-                        Image (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="imageCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!this.shouldShowCost}
-                        >
-                        Image Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="objects"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={this.shouldShowCost}
-                        >
-                        Objects (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="objectsCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!this.shouldShowCost}
-                        >
-                        Objects Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="volume"
-                        dataFormat={formatNumber}
-                        dataSort
-                        hidden={this.shouldShowCost}
-                        >
-                        Volume (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataField="volumeCost"
-                        dataFormat={formatCurrency}
-                        dataSort
-                        hidden={!this.shouldShowCost}
-                        >
-                        Volume Cost
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataFormat={(cell, row) => formatNumber(_.sum([
-                            row.cpu,
-                            row.image,
-                            row.objects,
-                            row.volume,
-                        ]))}
-                        dataSort
-                        hidden={this.shouldShowCost}
-                        >
-                        Total (hrs)
-                    </TableHeaderColumn>
-
-                    <TableHeaderColumn
-                        dataAlign="right"
-                        dataFormat={(cell, row) => formatCurrency(_.sum([
-                            row.cpuCost,
-                            row.imageCost,
-                            row.objectsCost,
-                            row.volumeCost,
-                        ]))}
-                        dataSort
-                        hidden={!this.shouldShowCost}
-                        >
-                        Total Cost
-                    </TableHeaderColumn>
-                </BootstrapTable>
+                    />
             </div>
         </div>
     );
-}
+};
 
-export default Report;
+export default observer(Report);

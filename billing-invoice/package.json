@@ -26,5 +26,8 @@
     "nodemailer": "^6.4.14",
     "request": "^2.88.2",
     "winston": "^3.3.3"
+  },
+  "resolutions": {
+    "minimist": "^1.2.5"
   }
 }
