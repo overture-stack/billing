@@ -53,16 +53,23 @@ const user = observable({
               If you are a PI and having trouble accessing this page, Please
               <a href="https://cancercollaboratory.org/contact-us" target="_blank">Contact Us</a>.`);
                 }
+
                 window.sessionStorage.setItem('username', user.username);
                 window.sessionStorage.setItem('roles', JSON.stringify(user.roles));
                 this.isLoggedIn = true;
-            } else if (response.status === 401) {
-                throw new Error('Incorrect username or password');
-            } else if (response.status === 403) {
-                const errorData = await response.json();
-                throw new Error(errorData.message);
             } else {
-                throw new Error('Login failed');
+                this.token = '';
+                sessionStorage.clear();
+                this.isLoggedIn = false;
+
+                if (response.status === 401) {
+                    throw new Error('Incorrect username or password');
+                } else if (response.status === 403) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message);
+                } else {
+                    throw new Error('Login failed', response);
+                }
             }
         }
     }),
