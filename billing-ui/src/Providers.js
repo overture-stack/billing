@@ -15,13 +15,11 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// import TransitionGroup from 'react-transition-group-plus';
 import { ConfigProvider } from 'antd';
 import enUS from 'antd/lib/locale/en_US';
 
 const Providers = ({
     children,
-    // location: { pathname },
 }) => (
     <ConfigProvider locale={enUS}>
         {children}

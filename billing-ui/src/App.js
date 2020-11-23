@@ -25,7 +25,6 @@ import {
     Redirect,
     Route,
     Switch,
-    // useLocation,
 } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import 'whatwg-fetch';
@@ -76,7 +75,5 @@ const App = () => {
         </Router>
     );
 };
-
-/// <Route component={} onEnter={requireAuth}>
 
 export default hot(observer(App));

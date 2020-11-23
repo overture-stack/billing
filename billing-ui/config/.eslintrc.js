@@ -29,7 +29,7 @@ module.exports = {
         'react-hooks',
         'sort-destructure-keys',
         // 'jsx-a11y',
-        'import', // disabled, scroll below to see why
+        'import',
     ],
     root: true,
     rules: {
@@ -132,30 +132,8 @@ module.exports = {
             },
         ],
         'no-var': 'error', // Must use const or let.
-        'object-curly-newline': 'warn', // ['warn', {
-        'object-property-newline': [
-            'warn',
-            {
-      // allowAllPropertiesOnSameLine: false,
-            },
-        ],
-    // ObjectExpression: {
-    //   'multiline': true,
-    //   'minProperties': 2,
-    // },
-    // ObjectPattern: {
-    //   'multiline': true,
-    //   'minProperties': 2,
-    // },
-    // ImportDeclaration: {
-    //   'multiline': true,
-    //   'minProperties': 2,
-    // },
-    // ExportDeclaration: {
-    //   'multiline': true,
-    //   'minProperties': 2,
-    // },
-    // }],
+        'object-curly-newline': 'warn',
+        'object-property-newline': 'warn',
         'operator-linebreak': [
             'warn',
             'after',
@@ -177,9 +155,6 @@ module.exports = {
                 natural: true,
             },
         ],
-    // 'import/no-extraneous-dependencies': ['warn', {
-    //   'packageDir': './'
-    // }],
         'import/extensions': 'off',
         'react/jsx-closing-bracket-location': ['warn', 'props-aligned'],
         'react/jsx-filename-extension': [

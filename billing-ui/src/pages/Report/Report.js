@@ -40,7 +40,6 @@ import {
     Select as AntdSelect,
 } from 'antd';
 import Select from 'react-select';
-// import 'react-select/dist/react-select.css';
 
 import BootstrapTableWrapper from 'components/BootstrapTableWrapper';
 import fetchReport from 'services/reports/fetchReport';
@@ -110,12 +109,10 @@ const defaultAggregationFields = Object.values(AGGREGATION_FIELDS);
 const START_YEAR = 2013;
 const getYearsSinceStart = () => range(START_YEAR, new Date().getUTCFullYear() + 1);
 
-// ----
 const projectsToSelectOptions = projects => projects.map(project => ({
     label: project.name,
     value: JSON.stringify(project), // else, the component generates React key errors
 }));
-// ----
 
 const Report = ({ history }) => {
     const chartRef = useRef();
@@ -135,7 +132,6 @@ const Report = ({ history }) => {
 
     const formatDateRange = (cell, entry) => {
         const bucket = report?.bucket?.toUpperCase() || filters.bucketSize;
-        // console.log('formatDateRange', cell, entry);
 
         switch (bucket) {
             case 'DAILY':
@@ -635,7 +631,6 @@ const Report = ({ history }) => {
                             hidden: !aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
                             searchable: aggregationFields.includes(AGGREGATION_FIELDS.PROJECT),
                             sort: true,
-                            // filterFormatted
                             text: 'Project',
                         },
                         {

@@ -20,6 +20,7 @@ module.exports = {
                         loader: 'babel-loader',
                         options: babelConfig,
                     },
+                    // use for debugging
                     // { loader: 'eslint-loader' },
                 ],
             },
