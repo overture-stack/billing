@@ -3,7 +3,7 @@ const { merge } = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
-const baseConfig = require('./webpack.config.base');
+const baseConfig = require('./webpack.base');
 const paths = require('./paths');
 const { target: targetEndpoint } = require('../config');
 

@@ -16,7 +16,7 @@ RUN \
   apt-get clean
 
 # nvm environment variables
-ENV NODE_VERSION 15.2.0
+ENV NODE_VERSION 15.2.1
 ENV NVM_DIR /root/.nvm
 
 # NODE & NPM
@@ -33,14 +33,14 @@ ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
 RUN mkdir -p /srv
-ADD billing-api /srv/billing-api
-ADD billing-ui /srv/billing-ui
+COPY billing-api /srv/billing-api
+COPY billing-ui /srv/billing-ui
 
 # UI
 WORKDIR /srv/billing-ui
 RUN \
   yarn install && \
-  # yarn add node-sass --force && \
+  ls -a && ls config -a && \
   yarn run build
 
 # API

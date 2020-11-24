@@ -102,8 +102,8 @@
         "serialize-javascript": "^5.0.1"
     },
     "scripts": {
-        "build": "webpack --config ./config/webpack.config.prod.js --progress",
-        "dev": "node --trace-deprecation node_modules/webpack/bin/webpack serve --config ./config/webpack.config.dev.js"
+        "build": "webpack --config ./config/webpack.prod.js --progress",
+        "dev": "node --trace-deprecation node_modules/webpack/bin/webpack serve --config ./config/webpack.dev.js"
     },
     "eslintConfig": {
         "extends": [

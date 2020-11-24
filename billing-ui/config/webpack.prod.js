@@ -5,7 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const url = require('url');
 
-const baseConfig = require('./webpack.config.base');
+const baseConfig = require('./webpack.base');
 const paths = require('./paths');
 
 const homepagePath = require(paths.appPackageJson).homepage;

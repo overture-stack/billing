@@ -2,8 +2,6 @@
 
 FROM node AS prebuilder
 
-RUN npm install -g typescript
-
 WORKDIR /app
 COPY src/ /app/src/
 COPY \
@@ -15,7 +13,7 @@ COPY \
 # Build JS
 RUN \
   yarn install && \
-  tsc -p .
+  npx tsc -p .
 
 ##
 # Jetison the prebuilder to keep the image compact
