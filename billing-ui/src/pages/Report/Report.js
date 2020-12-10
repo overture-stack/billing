@@ -123,12 +123,14 @@ const Report = ({ history }) => {
     const [entriesToDisplay, setEntriesToDisplay] = useState([]);
     const [reportSummary, setReportSummary] = useState([]);
     const [projects, setProjects] = useState(noProjects(report));
+    const [CSVFileName, setCSVFileName] = useState('');
     const [filters, setFilters] = useState({
         bucketSize: defaultBucketSize,
         fromDate: moment().subtract(1, 'months').startOf('day'),
         projects: [],
         toDate: moment().startOf('day'),
     });
+    const [canGenerateReport, setCanGenerateReport] = useState(filters.fromDate && filters.toDate);
 
     const formatDateRange = (cell, entry) => {
         const bucket = report?.bucket?.toUpperCase() || filters.bucketSize;
@@ -153,6 +155,53 @@ const Report = ({ history }) => {
                 return moment(entry.fromDate).format('YYYY-MM-DD');
         }
     };
+
+    const formatCSVFileName = () => setCSVFileName(() => {
+        const {
+            bucketSize,
+            fromDate,
+            toDate,
+        } = filters;
+        const bucket = report?.bucket?.toUpperCase() || bucketSize;
+
+        switch (bucket) {
+            case 'DAILY': {
+                const from = moment(fromDate).format('YYYYMMDD');
+                const to = moment(toDate).format('YYYYMMDD');
+
+                return from === to
+                    ? from
+                    : `${from}_to_${to}`;
+            }
+            case 'WEEKLY':
+                return `${
+                    moment(fromDate).format('YYYYMMDD')
+                }_to_${
+                    moment(toDate).subtract(1, 'days').format('YYYYMMDD')
+                }`;
+
+            case 'MONTHLY': {
+                const from = moment(fromDate).format('YYYYMM');
+                const to = moment(fromDate).format('YYYYMM');
+
+                return moment(fromDate).format('MM') === moment(toDate).format('MM')
+                    ? from
+                    : `${from}_to_${to}`;
+            }
+
+            case 'YEARLY': {
+                const from = moment(fromDate).format('YYYY');
+                const to = moment(toDate).format('YYYY');
+
+                return from === to
+                    ? from
+                    : `${from}_to_${to}`;
+            }
+
+            default:
+                return moment(fromDate).format('YYYYMMDD');
+        }
+    });
 
     const groupBy = field => () => {
         setAggregationFields(xor(aggregationFields, [field]));
@@ -237,6 +286,7 @@ const Report = ({ history }) => {
             toDate: filters.toDate.millisecond(0).toISOString(),
         })
             .then(setReport)
+            .then(formatCSVFileName)
             .catch(err => console.error('failed fetchReport', err));
     };
 
@@ -268,11 +318,16 @@ const Report = ({ history }) => {
             ? fetchProjects()
                 .then(setProjects)
                 .then(updateChart)
+                .then(formatCSVFileName)
                 .catch(res => console.error('failed fetchProjects', res))
         : user.roles.invoices
             ? history.push('/invoices')
         : user.logout();
     }, []);
+
+    useEffect(() => {
+        setCanGenerateReport(filters.fromDate && filters.toDate)
+    }, [filters]);
 
     useEffect(() => {
         setReportSummary(aggregateEntries(report.entries, ''));
@@ -423,6 +478,7 @@ const Report = ({ history }) => {
                 <div className="form-item">
                     <div>
                         <Button
+                            disabled={!canGenerateReport}
                             loading={isLoading}
                             onClick={updateChart}
                             type="primary"
@@ -774,7 +830,7 @@ const Report = ({ history }) => {
                     ]}
                     data={entriesToDisplay}
                     exportCSV
-                    fileName="report.csv"
+                    fileName={`collaboratory_usage_billing_export_${CSVFileName}.csv`}
                     keyField="key"
                     pagination
                     search
