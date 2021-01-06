@@ -405,7 +405,7 @@ const Report = ({ history }) => {
                         {filters.bucketSize === 'YEARLY' && (
                             <AntdSelect
                                 defaultValue={moment(filters.fromDate).format('YYYY')}
-                                onChange={handleDateFromFilterChange}
+                                onChange={value => handleDateFromFilterChange(moment(value, 'YYYY'))}
                                 showSearch={false}
                                 >
                                 {getYearsSinceStart().map((year, index) => (
@@ -444,7 +444,7 @@ const Report = ({ history }) => {
                         {filters.bucketSize === 'YEARLY' && (
                             <AntdSelect
                                 defaultValue={moment(filters.toDate).endOf('year').format('YYYY')}
-                                onChange={handleDateToFilterChange}
+                                onChange={value => handleDateFromFilterChange(moment(value, 'YYYY'))}
                                 showSearch={false}
                                 >
                                 {getYearsSinceStart().map((year, index) => (

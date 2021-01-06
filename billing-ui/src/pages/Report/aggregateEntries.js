@@ -34,8 +34,8 @@ const FIELDS = [
 ];
 
 const addNumbers = (acc, value, key) => {
-    const newNum = Number(formatNumber(value[key]));
-    const prevSum = Number(formatNumber(acc[key]));
+    const newNum = Number(value[key]);
+    const prevSum = Number(acc[key]);
     const newSum = newNum + prevSum || prevSum;
 
     return newSum ? { [key]: newSum } : {};
@@ -44,12 +44,14 @@ const addNumbers = (acc, value, key) => {
 const aggregateEntries = (entries, groupByIteratee) =>
     Object.entries(groupBy(entries, groupByIteratee))
         .map(([key, items]) => items.reduce((prevItems, entry) => ({
-            ...prevItems,
             ...entry,
             ...FIELDS.reduce((prevFields, fieldName) => ({
                 ...prevFields,
                 ...addNumbers(prevFields, entry, fieldName),
-            }), { key }),
+            }), {
+                key,
+                ...prevItems,
+            }),
         }), {}))
         .map(item => ({
             ...item,
