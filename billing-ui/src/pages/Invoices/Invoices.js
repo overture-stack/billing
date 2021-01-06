@@ -157,6 +157,7 @@ class Invoices extends Component {
                     {
                         align: 'center',
                         classes: 'email',
+                        csvExport: false,
                         dataField: 'email',
                         formatter: (cell, row) => (
                             <button
