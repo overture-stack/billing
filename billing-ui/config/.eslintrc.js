@@ -248,7 +248,7 @@ module.exports = {
                 extensions: ['.js', '.json'],
             },
             webpack: {
-                config: path.resolve(__dirname, 'webpack.config.base.js'),
+                config: path.resolve(__dirname, 'webpack.base.js'),
             },
         },
         react: {

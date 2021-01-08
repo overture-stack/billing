@@ -18,9 +18,6 @@
 import {
     groupBy,
 } from 'lodash';
-import {
-    formatNumber,
-} from 'utils/formats';
 
 const FIELDS = [
     'cpu',
