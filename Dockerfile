@@ -16,7 +16,7 @@ RUN \
   apt-get clean
 
 # nvm environment variables
-ENV NODE_VERSION 15.2.1
+ENV NODE_VERSION 15.5.1
 ENV NVM_DIR /root/.nvm
 
 # NODE & NPM

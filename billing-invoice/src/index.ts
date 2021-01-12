@@ -194,7 +194,7 @@ const invoiceGeneration = new Promise((resolve, reject) => {
                                                 );
                                                 invoicesProcessed++;
                                                 invoicesProcessed === totalProjectCount &&
-                                                    resolve();
+                                                    resolve(null);
                                             })
                                             .catch(error => {
                                                 console.log('failed', error);
@@ -204,7 +204,7 @@ const invoiceGeneration = new Promise((resolve, reject) => {
                                                 // resolved, and summary generation happens
                                                 invoicesProcessed++;
                                                 invoicesProcessed === totalProjectCount &&
-                                                    resolve();
+                                                    resolve(null);
                                             });
                                     } else { // CSV mode
                                         logger.info(`Generating Invoice data for invoice: ${project.invoiceNumber} for project: ${project.project_name}`);
@@ -220,7 +220,7 @@ const invoiceGeneration = new Promise((resolve, reject) => {
 
                                         invoicesProcessed++;
                                         invoicesProcessed === totalProjectCount &&
-                                            resolve();
+                                            resolve(null);
                                     }
                                 })
                                 .catch(error => {

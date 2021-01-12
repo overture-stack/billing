@@ -332,7 +332,7 @@ const Report = ({ history }) => {
     }, []);
 
     useEffect(() => {
-        setCanGenerateReport(filters.fromDate && filters.toDate)
+        setCanGenerateReport(filters.fromDate && filters.toDate);
     }, [filters]);
 
     useEffect(() => {
