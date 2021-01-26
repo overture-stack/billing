@@ -76,7 +76,10 @@ class Collaboratory:
               nova.instances
 
             WHERE
-              vm_state   != 'error'           AND
+              vm_state NOT IN (
+                'error',
+                'shelved_offloaded'
+              ) AND
               (
                 deleted_at >  :start_date  OR
                 deleted_at IS NULL
