@@ -72,7 +72,7 @@
         "lodash": "^4.17.20",
         "mobx": "6.0.4",
         "mobx-react": "^7.0.5",
-        "moment": "^2.27.0",
+        "moment": "^2.29.2",
         "normalize.css": "8.0.1",
         "react": "^17.0.1",
         "react-bootstrap-table-next": "^4.0.3",
